@@ -13,8 +13,6 @@
 
 Sơ đồ ngữ cảnh mô tả hệ thống như **một tiến trình tổng thể duy nhất** tương tác với 4 tác nhân bên ngoài.
 
-> **Ghi chú:** Cơ quan Công an không phải là Actor của hệ thống. Việc xử lý phạt nguội giao thông là quy trình dân sự bên ngoài — Nhân viên/Admin tự tra cứu lịch sử thuê xe trên hệ thống rồi thương lượng với khách hàng offline.
-
 ```mermaid
 graph TB
     %% === EXTERNAL ENTITIES ===
@@ -27,20 +25,20 @@ graph TB
     P0(("0\nHệ thống Quản lý\nvà Cho thuê\nXe máy Thông minh"))
 
     %% === KHÁCH HÀNG ↔ HỆ THỐNG ===
-    E1 -->|"Thong_Tin_Dang_Ky_Va_Xac_Thuc\nYeu_Cau_Dich_Vu_Thue_Xe\nChung_Tu_Thanh_Toan"| P0
-    P0 -->|"Thong_Bao_Va_Ket_Qua_Dich_Vu\nThong_Bao_Nhac_Nho_Tu_Dong\nHoa_Don_Quyet_Toan_Cuoi"| E1
+    E1 -->|"FC.1: Hồ sơ đăng ký & Thông tin xác thực\nFC.2: Yêu cầu thuê xe & Phản hồi chuyến đi\nFC.3: Chứng từ thanh toán dịch vụ"| P0
+    P0 -->|"FC.4: Kết quả giao dịch & Thông tin phản hồi"| E1
 
     %% === NHÂN VIÊN ↔ HỆ THỐNG ===
-    E2 -->|"Ho_So_Giao_Nhan_Xe\nYeu_Cau_Tra_Cuu_Nghiep_Vu"| P0
-    P0 -->|"Thong_Tin_Dieu_Phoi_Cong_Viec\nKet_Qua_Tra_Cuu_Lich_Su"| E2
+    E2 -->|"FC.5: Hồ sơ giao nhận xe & Yêu cầu nghiệp vụ"| P0
+    P0 -->|"FC.6: Thông tin điều phối & Kết quả tra cứu"| E2
 
     %% === ADMIN ↔ HỆ THỐNG ===
-    E3 -->|"Lenh_Duyet_Va_Dieu_Chinh_HT"| P0
-    P0 -->|"Thong_Tin_Cho_Xu_Ly_Va_Bao_Cao"| E3
+    E3 -->|"FC.7: Lệnh duyệt & Quản trị hệ thống"| P0
+    P0 -->|"FC.8: Hồ sơ chờ duyệt & Thông tin báo cáo"| E3
 
     %% === CỔNG THANH TOÁN ↔ HỆ THỐNG ===
-    P0 -->|"Yeu_Cau_Giao_Dich_Online"| E4
-    E4 -->|"Xac_Nhan_Ket_Qua_Giao_Dich"| P0
+    P0 -->|"FC.9: Yêu cầu giao dịch trực tuyến"| E4
+    E4 -->|"FC.10: Kết quả giao dịch trực tuyến"| P0
 
     %% === STYLES ===
     style E1 fill:#4FC3F7,stroke:#0277BD,color:#000,stroke-width:2px
@@ -50,30 +48,28 @@ graph TB
     style P0 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:3px
 ```
 
-### Bảng tổng hợp luồng dữ liệu — Sơ đồ Ngữ cảnh
+### Bảng tổng hợp luồng dữ liệu — Sơ đồ Ngữ cảnh (Context Diagram)
 
-| Tác nhân | Hướng | Luồng ở Context (Gom nhóm) | Hướng chi tiết ở Level 0 | Bao gồm các luồng chi tiết ở Level 0 |
-| :--- | :---: | :--- | :---: | :--- |
-| **E1: KHÁCH HÀNG** | E1 → P0 | `Thong_Tin_Dang_Ky_Va_Xac_Thuc` | E1 → P1.0 | F1.1 (Yêu cầu đăng ký, ảnh GPLX), F1.2 (Đăng nhập) |
-| | E1 → P0 | `Yeu_Cau_Dich_Vu_Thue_Xe` | E1 → P2.0, P3.0, P4.0 | F2.1 (Tìm kiếm), F2.5 (Đặt xe), F3.1 (Gia hạn), F3.6 (Trả sớm), F4.13 (Đánh giá) |
-| | E1 → P0 | `Chung_Tu_Thanh_Toan` | E1 → P2.0 | F2.7 (Thanh toán cọc) |
-| | P0 → E1 | `Thong_Bao_Va_Ket_Qua_Dich_Vu` | P1.0, P2.0, P3.0 → E1 | F1.5 (Kết quả GPLX), F2.2 (Kết quả tìm xe), F2.6 (Khóa xe tạm), F2.12 (Xác nhận đặt xe), F3.4 (Kết quả gia hạn) |
-| | P0 → E1 | `Thong_Bao_Nhac_Nho_Tu_Dong` | P2.0 → E1 | F2.11 (Nhắc nhận/trả xe/hết giờ) |
-| | P0 → E1 | `Hoa_Don_Quyet_Toan_Cuoi` | P4.0 → E1 | F4.9 (Hóa đơn gồm phí phạt, đền bù, tổng thanh toán) |
-| **E2: NHÂN VIÊN** | E2 → P0 | `Ho_So_Giao_Nhan_Xe` | E2 → P4.0 | F4.4 (Biên bản Check-in), F4.6 (Biên bản Check-out/Hư hại) |
-| | E2 → P0 | `Yeu_Cau_Tra_Cuu_Nghiep_Vu` | E2 → P4.0, P5.0 | F4.1 (Xem DS công việc), F5.1 (Tra cứu lịch sử), F5.5 (Ghi chú vi phạm) |
-| | P0 → E2 | `Thong_Tin_Dieu_Phoi_Cong_Viec` | P2.0, P3.0, P4.0 → E2 | F2.10 (Đơn mới), F3.8 (Thông báo trả sớm), F4.3 (Danh sách giao nhận trong ngày) |
-| | P0 → E2 | `Ket_Qua_Tra_Cuu_Lich_Su` | P5.0 → E2 | F5.4 (Kết quả tra cứu thông tin khách & xe) |
-| **E3: ADMIN** | E3 → P0 | `Lenh_Duyet_Va_Dieu_Chinh_HT` | E3 → P1.0, P5.0 | F1.4 (Duyệt GPLX), F5.7 (Yêu cầu Blacklist), và các lệnh cấu hình (giá, xe, nhân viên) |
-| | P0 → E3 | `Thong_Tin_Cho_Xu_Ly_Va_Bao_Cao` | P1.0 → E3 | F1.3 (Hồ sơ GPLX chờ duyệt), báo cáo doanh thu, danh sách cần Blacklist |
-| **E4: CỔNG THANH TOÁN** | P0 → E4 | `Yeu_Cau_Giao_Dich_Online` | P2.0 → E4 | F2.14 (Yêu cầu Thanh toán/Hoàn tiền) |
-| | E4 → P0 | `Xac_Nhan_Ket_Qua_Giao_Dich` | E4 → P2.0 | F2.15 (Kết quả Thành công/Thất bại) |
+Dưới đây là mô tả chi tiết của 10 luồng dữ liệu đã được **tổng quát hóa** ở mức Ngữ cảnh (Level -1) và ma trận phân rã sang các luồng dữ liệu chi tiết ở mức Level 0 và Level 1:
+
+| Mã Luồng | Tên Luồng Tổng Quát | Hướng Đi | Mô tả Tóm tắt | Các Luồng Chi Tiết Bao Hàm (Level 0/1) |
+|---|---|---|---|---|
+| **FC.1** | `Hồ sơ đăng ký & Thông tin xác thực` | E1 → P0 | Khách hàng đăng ký tài khoản mới (gồm ảnh GPLX) và gửi thông tin đăng nhập hệ thống. | - `F1.1: Yêu cầu đăng ký tài khoản`<br>- `F1.2: Thông tin đăng nhập` |
+| **FC.2** | `Yêu cầu thuê xe & Phản hồi chuyến đi` | E1 → P0 | Khách hàng thực hiện tìm kiếm xe, đặt xe, hủy đơn, gia hạn, yêu cầu trả sớm và gửi đánh giá dịch vụ. | - `F2.1: Yêu cầu tìm kiếm xe`<br>- `F2.6: Yêu cầu đặt xe`<br>- `F2.7: Yêu cầu hủy đặt xe`<br>- `F3.1: Yêu cầu gia hạn`<br>- `F3.8: Yêu cầu trả xe sớm`<br>- `F4.14: Đánh giá chuyến đi` |
+| **FC.3** | `Chứng từ thanh toán dịch vụ` | E1 → P0 | Xác nhận việc khách hàng đã thực hiện thanh toán online (cho tiền đặt cọc hoặc tiền gia hạn). | - `F2.9: Thanh toán đặt cọc`<br>- `F3.2: Thanh toán gia hạn` |
+| **FC.4** | `Kết quả giao dịch & Thông tin phản hồi` | P0 → E1 | Kết quả đăng nhập, trạng thái duyệt GPLX, danh sách xe tìm được, thông báo khóa xe, nhắc nhở tự động, hóa đơn quyết toán. | - `F1.3: Kết quả đăng nhập`<br>- `F1.6: Thông báo kết quả GPLX`<br>- `F2.2: Kết quả tìm kiếm xe`<br>- `F2.8: Thông báo khóa xe tạm`<br>- `F2.13: Thông báo nhắc nhở tự động`<br>- `F2.14: Xác nhận đặt xe`<br>- `F3.6: Kết quả gia hạn`<br>- `F3.15: Kết quả trả sớm`<br>- `F4.10: Hóa đơn quyết toán` |
+| **FC.5** | `Hồ sơ giao nhận xe & Yêu cầu nghiệp vụ` | E2 → P0 | Nhân viên nộp biên bản Check-in/Check-out, xem việc cần làm hoặc tra cứu lịch sử phạt nguội, ghi chú vi phạm. | - `F4.1: Yêu cầu xem danh sách giao nhận`<br>- `F4.4: Biên bản Check-in`<br>- `F4.6: Biên bản Check-out`<br>- `F5.1: Yêu cầu tra cứu lịch sử`<br>- `F5.5: Ghi chú vi phạm nội bộ` |
+| **FC.6** | `Thông tin điều phối & Kết quả tra cứu` | P0 → E2 | Thông báo đơn cọc mới cần chuẩn bị xe, thông báo trả sớm để đón khách, danh sách công việc giao nhận, kết quả tra cứu vi phạm. | - `F2.12: Thông báo đơn mới`<br>- `F3.10: Thông báo trả sớm`<br>- `F4.3: Danh sách giao nhận trong ngày`<br>- `F5.4: Kết quả tra cứu` |
+| **FC.7** | `Lệnh duyệt & Quản trị hệ thống` | E3 → P0 | Admin duyệt GPLX, quản lý Blacklist, quản lý tài khoản nhân viên, cập nhật đội xe và thay đổi cấu hình hệ thống. | - `F1.5: Kết quả duyệt GPLX`<br>- `F5.7: Yêu cầu Blacklist`<br>- `F5.9: Quản lý nhân viên`<br>- `F6.1: Yêu cầu cập nhật thông tin xe máy`<br>- `F6.5: Yêu cầu cập nhật cấu hình hệ thống` |
+| **FC.8** | `Hồ sơ chờ duyệt & Thông tin báo cáo` | P0 → E3 | Gửi hồ sơ ảnh GPLX chờ duyệt, kết quả tra cứu lịch sử, thông báo cập nhật xe và cấu hình hệ thống cho Admin. | - `F1.4: Hồ sơ GPLX chờ duyệt`<br>- `F5.4: Kết quả tra cứu`<br>- `F6.4: Kết quả cập nhật xe`<br>- `F6.8: Kết quả cập nhật cấu hình` |
+| **FC.9** | `Yêu cầu giao dịch trực tuyến` | P0 → E4 | Chuyển yêu cầu giao dịch đặt cọc, hoàn cọc hủy đơn, thanh toán gia hạn, thanh toán phụ phí sang cổng thanh toán trực tuyến. | - `F2.16: Yêu cầu giao dịch trực tuyến`<br>- `F3.12: Yêu cầu giao dịch gia hạn trực tuyến`<br>- `F4.17: Yêu cầu giao dịch quyết toán trực tuyến` |
+| **FC.10** | `Kết quả giao dịch trực tuyến` | E4 → P0 | Cổng thanh toán phản hồi kết quả giao dịch thanh toán hoặc hoàn cọc thành công/thất bại về hệ thống. | - `F2.17: Kết quả giao dịch`<br>- `F3.13: Kết quả giao dịch gia hạn`<br>- `F4.18: Kết quả giao dịch quyết toán` |
 
 ---
 
 ## 2. SƠ ĐỒ DFD MỨC 0 (LEVEL 0 DFD)
 
-Sơ đồ DFD mức 0 phân rã tiến trình tổng thể thành **5 tiến trình con** kết nối với **4 tác nhân ngoài** và **4 kho dữ liệu**.
+Sơ đồ DFD mức 0 phân rã tiến trình tổng thể thành **6 tiến trình con** kết nối với **4 tác nhân ngoài** và **6 kho dữ liệu**.
 
 ```mermaid
 graph TB
@@ -93,6 +89,7 @@ graph TB
     P3(("3.0\nGia hạn &\nYêu cầu Trả xe sớm"))
     P4(("4.0\nNhận xe &\nQuyết toán phụ phí"))
     P5(("5.0\nTra cứu Lịch sử thuê\n& Quản lý Blacklist"))
+    P6(("6.0\nQuản lý Danh mục\n& Cấu hình Hệ thống"))
 
     %% ╔══════════════════════════════════════════════╗
     %% ║             DATA STORES                      ║
@@ -101,76 +98,104 @@ graph TB
     D2[("D2: Hop_Dong_Booking")]
     D3[("D3: Khach_Hang_GPLX")]
     D4[("D4: Lich_Su_Thue")]
+    D5[("D5: Cau_Hinh_He_Thong")]
+    D6[("D6: Nhan_Vien")]
 
     %% ╔══════════════════════════════════════════════╗
     %% ║    P1.0 — ĐĂNG KÝ & XÁC THỰC GPLX          ║
     %% ╚══════════════════════════════════════════════╝
-    E1 -->|"F1.1: Yeu_Cau_Dang_Ky_Tai_Khoan\n(HoTen, Email, SoDienThoai,\nLuaChonGPLX, AnhGPLX)"| P1
-    E1 -->|"F1.2: Thong_Tin_Dang_Nhap"| P1
-    P1 -->|"F1.3: Ho_So_GPLX_Cho_Duyet"| E3
-    E3 -->|"F1.4: Ket_Qua_Duyet_GPLX\n(Da_Duyet / Tu_Choi)"| P1
-    P1 -->|"F1.5: Thong_Bao_Ket_Qua_GPLX\n(NhomXeDuocThue)"| E1
-    P1 -->|"F1.6: Luu_Thong_Tin_KH"| D3
-    D3 -->|"F1.7: Doc_Thong_Tin_KH"| P1
+    E1 -->|"F1.1: Yêu cầu đăng ký tài khoản\n(Họ tên, Email, Số điện thoại,\nLựa chọn GPLX, Ảnh GPLX)"| P1
+    E1 -->|"F1.2: Thông tin đăng nhập"| P1
+    P1 -->|"F1.3: Kết quả đăng nhập"| E1
+    P1 -->|"F1.4: Hồ sơ GPLX chờ duyệt"| E3
+    E3 -->|"F1.5: Kết quả duyệt GPLX\n(Đã duyệt / Từ chối)"| P1
+    P1 -->|"F1.6: Thông báo kết quả GPLX\n(Nhóm xe được thuê)"| E1
+    P1 -->|"F1.7: Lưu thông tin khách hàng"| D3
+    D3 -->|"F1.8: Đọc thông tin khách hàng"| P1
 
     %% ╔══════════════════════════════════════════════╗
     %% ║    P2.0 — ĐẶT XE TRỰC TUYẾN & GIỮ CHỖ      ║
     %% ╚══════════════════════════════════════════════╝
-    E1 -->|"F2.1: Yeu_Cau_Tim_Kiem_Xe\n(LoaiXe, HangXe, PhanKhoi)"| P2
-    P2 -->|"F2.2: Ket_Qua_Tim_Kiem_Xe"| E1
-    D1 -->|"F2.3: Doc_Danh_Sach_Xe"| P2
-    D3 -->|"F2.4: Kiem_Tra_GPLX_Khach\n(TrangThaiGPLX, NhomXeDuocThue)"| P2
-    E1 -->|"F2.5: Yeu_Cau_Dat_Xe\n(MaXe, ThoiGian, DichVu)"| P2
-    P2 -->|"F2.6: Thong_Bao_Khoa_Xe_Tam\n(15 phút giữ chỗ)"| E1
-    E1 -->|"F2.7: Thanh_Toan_Dat_Coc"| P2
-    P2 -->|"F2.8: Luu_Don_Dat_Xe"| D2
-    P2 -->|"F2.9: Cap_Nhat_Trang_Thai_Xe\n(Dang_Thue)"| D1
-    P2 -->|"F2.10: Thong_Bao_Don_Moi\n(Thông tin chuẩn bị xe)"| E2
-    P2 -->|"F2.11: Thong_Bao_Nhac_Nho_Tu_Dong\n(Trước nhận 2h / Trước trả 2h\n/ Hết giờ hẹn)"| E1
-    P2 -->|"F2.12: Xac_Nhan_Dat_Xe\n(MaBooking, DonGia,\nGiamGia, TangGia)"| E1
-    D2 -->|"F2.13: Kiem_Tra_Lich_Xe_Trung\n(Booking cùng MaXe?)"| P2
-    P2 -->|"F2.14: Yeu_Cau_Thanh_Toan_Online\n(Dat_Coc / Gia_Han / Hoan_Tien)"| E4
-    E4 -->|"F2.15: Ket_Qua_Giao_Dich\n(Thanh_Cong / That_Bai)"| P2
+    E1 -->|"F2.1: Yêu cầu tìm kiếm xe\n(Loại xe, Hãng xe, Phân khối)"| P2
+    P2 -->|"F2.2: Kết quả tìm kiếm xe"| E1
+    D1 -->|"F2.3: Đọc danh sách xe"| P2
+    D5 -->|"F2.4: Đọc cấu hình hệ thống\n(Giá cơ bản, Giá động)"| P2
+    D3 -->|"F2.5: Kiểm tra GPLX khách\n(Trạng thái GPLX, Nhóm xe được thuê)"| P2
+    E1 -->|"F2.6: Yêu cầu đặt xe\n(Mã xe, Thời gian, Dịch vụ)"| P2
+    E1 -->|"F2.7: Yêu cầu hủy đặt xe\n(Mã booking)"| P2
+    P2 -->|"F2.8: Thông báo khóa xe tạm\n(15 phút giữ chỗ)"| E1
+    E1 -->|"F2.9: Thanh toán đặt cọc"| P2
+    P2 -->|"F2.10: Lưu đơn đặt xe\nF2.26: Cập nhật giao dịch hoàn tiền"| D2
+    P2 -->|"F2.11: Cập nhật trạng thái xe\n(Đang thuê)"| D1
+    P2 -->|"F2.12: Thông báo đơn mới\n(Thông tin chuẩn bị xe)"| E2
+    P2 -->|"F2.13: Thông báo nhắc nhở tự động\n(Trước nhận 2h / Trước trả 2h\n/ Hết giờ hẹn)"| E1
+    P2 -->|"F2.14: Xác nhận đặt xe\n(Mã booking, Đơn giá,\nGiảm giá, Tăng giá)"| E1
+    D2 -->|"F2.15: Kiểm tra lịch xe trùng\nF2.25: Đọc đơn đặt xe (để hủy)"| P2
+    P2 -->|"F2.16: Yêu cầu giao dịch trực tuyến\n(Đặt cọc / Hoàn tiền)"| E4
+    E4 -->|"F2.17: Kết quả giao dịch\n(Thành công / Thất bại)"| P2
 
     %% ╔══════════════════════════════════════════════╗
     %% ║   P3.0 — GIA HẠN & YÊU CẦU TRẢ XE SỚM      ║
     %% ╚══════════════════════════════════════════════╝
-    E1 -->|"F3.1: Yeu_Cau_Gia_Han\n(SoNgay/GioThem)"| P3
-    D2 -->|"F3.2: Doc_Booking_Gia_Han\n(SoLanGiaHan ≤ 3)"| P3
-    D2 -->|"F3.3: Kiem_Tra_Lich_Xe\n(Trùng lịch?)"| P3
-    P3 -->|"F3.4: Ket_Qua_Gia_Han\n(Thanh_Cong / Tu_Choi)"| E1
-    P3 -->|"F3.5: Cap_Nhat_Gia_Han\n(ThoiGianTra mới,\nSoLanGiaHan+1)"| D2
-    E1 -->|"F3.6: Yeu_Cau_Tra_Xe_Som\n(trước ≥ 1 tiếng)"| P3
-    P3 -->|"F3.7: Cap_Nhat_Tra_Som\n(CoTraSom=TRUE)"| D2
-    P3 -->|"F3.8: Thong_Bao_Tra_Som_NV"| E2
+    E1 -->|"F3.1: Yêu cầu gia hạn\n(Số ngày/giờ thêm)"| P3
+    E1 -->|"F3.2: Thanh toán gia hạn"| P3
+    D2 -->|"F3.3: Đọc booking gia hạn\nF3.5: Kiểm tra lịch xe\nF3.14: Đọc đơn đặt xe (để trả sớm)"| P3
+    D5 -->|"F3.4: Đọc cấu hình gia hạn\n(Số lần tối đa, giá gia hạn)"| P3
+    P3 -->|"F3.6: Kết quả gia hạn\nF3.15: Kết quả yêu cầu trả sớm"| E1
+    P3 -->|"F3.7: Cập nhật gia hạn\n(Thời gian trả mới,\nSố lần gia hạn+1)"| D2
+    E1 -->|"F3.8: Yêu cầu trả xe sớm\n(trước ≥ 1 tiếng)"| P3
+    P3 -->|"F3.9: Cập nhật trả sớm\n(Có trả sớm=TRUE)"| D2
+    P3 -->|"F3.10: Thông báo trả sớm"| E2
+    P3 -->|"F3.12: Yêu cầu giao dịch gia hạn trực tuyến"| E4
+    E4 -->|"F3.13: Kết quả giao dịch gia hạn"| P3
 
     %% ╔══════════════════════════════════════════════╗
     %% ║  P4.0 — NHẬN XE & QUYẾT TOÁN PHỤ PHÍ        ║
     %% ╚══════════════════════════════════════════════╝
-    E2 -->|"F4.1: Yeu_Cau_Xem_Danh_Sach_Giao_Nhan"| P4
-    D2 -->|"F4.2: Doc_Danh_Sach_Booking_Trong_Ngay"| P4
-    P4 -->|"F4.3: Danh_Sach_Giao_Nhan_Trong_Ngay"| E2
-    E2 -->|"F4.4: Bien_Ban_Check_In\n(ODO, Xăng, Ảnh ngoại quan,\nPhụ kiện giao)"| P4
-    P4 -->|"F4.5: Cap_Nhat_Check_In\n(TrangThai=Dang_Thue)"| D2
-    E2 -->|"F4.6: Bien_Ban_Check_Out\n(ODO, Xăng, Hư hại, Phí đền bù)"| P4
-    D2 -->|"F4.7: Doc_Booking_Quyet_Toan"| P4
-    P4 -->|"F4.9: Hoa_Don_Quyet_Toan\n(PhiPhat, DenBu, TongTT)"| E1
-    P4 -->|"F4.10: Cap_Nhat_Quyet_Toan\n(TrangThai=Hoan_Tat)"| D2
-    P4 -->|"F4.11: Giai_Phong_Xe\n(TrangThai=San_Sang)"| D1
-    P4 -->|"F4.12: Luu_Lich_Su_Thue"| D4
-    E1 -->|"F4.13: Danh_Gia_Chuyen_Di\n(Sao, NhanXet)"| P4
+    E2 -->|"F4.1: Yêu cầu xem danh sách giao nhận"| P4
+    D2 -->|"F4.2: Đọc danh sách booking trong ngày"| P4
+    P4 -->|"F4.3: Danh sách giao nhận trong ngày"| E2
+    E2 -->|"F4.4: Biên bản Check-in\n(ODO, Xăng, Ảnh ngoại quan,\nPhụ kiện giao)"| P4
+    P4 -->|"F4.5: Cập nhật Check-in\n(Trạng thái = Đang thuê)"| D2
+    E2 -->|"F4.6: Biên bản Check-out\n(ODO, Xăng, Hư hại, Phí đền bù)"| P4
+    D2 -->|"F4.7: Đọc booking quyết toán"| P4
+    D5 -->|"F4.8: Đọc bảng giá phạt và đền bù"| P4
+    P4 -->|"F4.10: Hóa đơn quyết toán\n(Phí phạt, Đền bù, Tổng thanh toán)"| E1
+    P4 -->|"F4.11: Cập nhật quyết toán\n(Trạng thái = Hoàn tất)"| D2
+    P4 -->|"F4.12: Giải phóng xe\n(Trạng thái = Sẵn sàng)"| D1
+    P4 -->|"F4.13: Lưu lịch sử thuê"| D4
+    E1 -->|"F4.14: Đánh giá chuyến đi\n(Sao, Nhận xét)"| P4
+    P4 -->|"F4.17: Yêu cầu giao dịch quyết toán trực tuyến"| E4
+    E4 -->|"F4.18: Kết quả giao dịch quyết toán"| P4
 
     %% ╔══════════════════════════════════════════════╗
     %% ║  P5.0 — TRA CỨU LỊCH SỬ THUÊ & BLACKLIST    ║
     %% ╚══════════════════════════════════════════════╝
-    E2 -->|"F5.1: Yeu_Cau_Tra_Cuu_Lich_Su\n(BienSoXe, KhoangThoiGian)"| P5
-    D4 -->|"F5.2: Doc_Lich_Su_Theo_Bien_So"| P5
-    D3 -->|"F5.3: Doc_Thong_Tin_KH\n(HoTen, CCCD, SoGPLX)"| P5
-    P5 -->|"F5.4: Ket_Qua_Tra_Cuu\n(ThongTinKhachHang, ThongTinThue)"| E2
-    E2 -->|"F5.5: Ghi_Chu_Vi_Pham_Noi_Bo"| P5
-    P5 -->|"F5.6: Cap_Nhat_Ghi_Chu_Lich_Su"| D4
-    E3 -->|"F5.7: Yeu_Cau_Blacklist\n(MaKH, LyDo)"| P5
-    P5 -->|"F5.8: Cap_Nhat_Blacklist"| D3
+    E2 -->|"F5.1: Yêu cầu tra cứu lịch sử\n(Biển số xe, Khoảng thời gian)"| P5
+    E3 -->|"F5.1: Yêu cầu tra cứu lịch sử\n(Biển số xe, Khoảng thời gian)"| P5
+    D4 -->|"F5.2: Đọc lịch sử theo biển số"| P5
+    D3 -->|"F5.3: Đọc thông tin khách hàng\n(Họ tên, CCCD, Số GPLX)"| P5
+    P5 -->|"F5.4: Kết quả tra cứu\n(Thông tin khách hàng, Thông tin thuê)"| E2
+    P5 -->|"F5.4: Kết quả tra cứu\n(Thông tin khách hàng, Thông tin thuê)"| E3
+    E2 -->|"F5.5: Ghi chú vi phạm nội bộ"| P5
+    P5 -->|"F5.6: Cập nhật ghi chú lịch sử"| D4
+    E3 -->|"F5.7: Yêu cầu Blacklist\n(Mã KH, Lý do)"| P5
+    P5 -->|"F5.8: Cập nhật Blacklist"| D3
+    E3 -->|"F5.9: Quản lý nhân viên"| P5
+    P5 -->|"F5.10: Cập nhật thông tin nhân viên"| D6
+    D6 -->|"F5.11: Đọc thông tin nhân viên"| P5
+
+    %% ╔══════════════════════════════════════════════╗
+    %% ║  P6.0 — QUẢN LÝ DANH MỤC & CẤU HÌNH [MỚI]   ║
+    %% ╚══════════════════════════════════════════════╝
+    E3 -->|"F6.1: Yêu cầu cập nhật thông tin xe máy"| P6
+    P6 -->|"F6.2: Lưu thông tin xe mới"| D1
+    D1 -->|"F6.3: Đọc danh sách xe quản trị"| P6
+    P6 -->|"F6.4: Kết quả cập nhật xe"| E3
+    E3 -->|"F6.5: Yêu cầu cập nhật cấu hình hệ thống"| P6
+    P6 -->|"F6.6: Lưu cấu hình hệ thống"| D5
+    D5 -->|"F6.7: Đọc cấu hình hệ thống quản trị"| P6
+    P6 -->|"F6.8: Kết quả cập nhật cấu hình"| E3
 
     %% ╔══════════════════════════════════════════════╗
     %% ║               STYLES                         ║
@@ -185,12 +210,14 @@ graph TB
     style P3 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P4 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P5 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
+    style P6 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
 
     style D1 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D2 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D3 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D4 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D5 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
+    style D6 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
 ```
 
 ---
@@ -199,13 +226,14 @@ graph TB
 
 ### 3.1. Ma trận Tiến trình ↔ Kho dữ liệu
 
-| Tiến trình | D1: Xe_May | D2: Hop_Dong_Booking | D3: Khach_Hang_GPLX | D4: Lich_Su_Thue |
-|:---:|:---:|:---:|:---:|:---:|
-| **P1.0** Đăng ký & Xác thực GPLX | — | — | **R/W** | — |
-| **P2.0** Đặt xe & Giữ chỗ | **R/W** | **R/W** | **R** | — |
-| **P3.0** Gia hạn & Trả xe sớm | — | **R/W** | — | — |
-| **P4.0** Nhận xe & Quyết toán | **W** | **R/W** | — | **W** |
-| **P5.0** Tra cứu LS thuê & Blacklist | — | — | **R/W** | **R/W** |
+| Tiến trình | D1: Xe_May | D2: Hop_Dong_Booking | D3: Khach_Hang_GPLX | D4: Lich_Su_Thue | D5: Cau_Hinh_He_Thong | D6: Nhan_Vien |
+|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **P1.0** Đăng ký & Xác thực GPLX | — | — | **R/W** | — | — | — |
+| **P2.0** Đặt xe & Giữ chỗ | **R/W** | **R/W** | **R** | — | **R** | — |
+| **P3.0** Gia hạn & Trả xe sớm | — | **R/W** | — | — | **R** | — |
+| **P4.0** Nhận xe & Quyết toán | **W** | **R/W** | — | **W** | **R** | — |
+| **P5.0** Tra cứu LS thuê & Blacklist | — | — | **R/W** | **R/W** | — | **R/W** |
+| **P6.0** Quản lý Danh mục & Cấu hình | **R/W** | — | — | — | **R/W** | — |
 
 > **R** = Đọc (Read) | **W** = Ghi (Write) | **R/W** = Đọc và Ghi
 
@@ -218,12 +246,13 @@ graph TB
 | **P3.0** Gia hạn & Trả xe sớm | **IN/OUT** | **OUT** | — | — |
 | **P4.0** Nhận xe & Quyết toán | **IN/OUT** | **IN/OUT** | — | — |
 | **P5.0** Tra cứu LS thuê & Blacklist | — | **IN/OUT** | **IN/OUT** | — |
+| **P6.0** Quản lý Danh mục & Cấu hình | — | — | **IN/OUT** | — |
 
 > **IN** = Luồng từ Actor vào Process | **OUT** = Luồng từ Process ra Actor
 
 ---
 
-## 4. MÔ TẢ CHI TIẾT 5 TIẾN TRÌNH (PROCESS SPECIFICATIONS)
+## 4. MÔ TẢ CHI TIẾT 6 TIẾN TRÌNH (PROCESS SPECIFICATIONS)
 
 ### P1.0 — Đăng ký & Xác thực GPLX
 
@@ -232,9 +261,9 @@ graph TB
 | **Mã tiến trình** | 1.0 |
 | **Tên** | Đăng ký & Xác thực GPLX |
 | **Mô tả** | Tiếp nhận đăng ký tài khoản khách hàng với 2 luồng: Có GPLX / Không GPLX. Quản lý quy trình duyệt ảnh GPLX bởi Admin. Phân loại quyền thuê xe. |
-| **Luồng vào** | F1.1 (Yêu cầu đăng ký), F1.2 (Đăng nhập), F1.4 (Kết quả duyệt GPLX từ Admin), F1.7 (Đọc KH từ D3) |
-| **Luồng ra** | F1.3 (Hồ sơ GPLX chờ duyệt cho Admin), F1.5 (Thông báo kết quả GPLX cho KH), F1.6 (Lưu KH vào D3) |
-| **Logic xử lý** | 1. Nhận thông tin đăng ký → Xác thực Email/SĐT duy nhất<br>2. **Nếu** LuaChonGPLX = `Co_GPLX` → Lưu ảnh GPLX → TrangThaiGPLX = `Cho_Duyet` → Gửi Admin duyệt<br>3. **Nếu** LuaChonGPLX = `Khong_GPLX` → TrangThaiGPLX = `Khong_Dang_Ky` → NhomXeDuocThue = `Nhom_50cc_Dien`<br>4. Khi Admin duyệt: TrangThaiGPLX = `Da_Duyet` → NhomXeDuocThue = `Nhom_Tren_50cc` (nếu HangGPLX ∈ {A1, A2})<br>5. Khi Admin từ chối: TrangThaiGPLX = `Tu_Choi` → NhomXeDuocThue = `Nhom_50cc_Dien` |
+| **Luồng vào** | `F1.1: Yêu cầu đăng ký tài khoản` (từ KH), `F1.2: Thông tin đăng nhập` (từ KH), `F1.5: Kết quả duyệt GPLX` (từ Admin), `F1.8: Đọc thông tin khách hàng` (từ D3) |
+| **Luồng ra** | `F1.3: Kết quả đăng nhập` (đến KH), `F1.4: Hồ sơ GPLX chờ duyệt` (đến Admin), `F1.6: Thông báo kết quả GPLX` (đến KH), `F1.7: Lưu thông tin khách hàng` (đến D3) |
+| **Logic xử lý** | 1. Nhận thông tin đăng ký → Xác thực Email/SĐT duy nhất trong D3.<br>2. **Nếu** `LuaChonGPLX` = `Co_GPLX` → Lưu ảnh GPLX → `TrangThaiGPLX` = `Cho_Duyet` → Gửi Admin duyệt (`F1.4`).<br>3. **Nếu** `LuaChonGPLX` = `Khong_GPLX` → `TrangThaiGPLX` = `Khong_Dang_Ky` → `NhomXeDuocThue` = `Nhom_50cc_Dien`.<br>4. Khi Admin duyệt: `TrangThaiGPLX` = `Da_Duyet` → `NhomXeDuocThue` = `Nhom_A1` (nếu HangGPLX = `A1`) hoặc `Nhom_A2_PKL` (nếu HangGPLX = `A2`). Lưu D3 và thông báo KH (`F1.6`).<br>5. Khi Admin từ chối: `TrangThaiGPLX` = `Tu_Choi` → `NhomXeDuocThue` = `Nhom_50cc_Dien`. Lưu D3 và thông báo KH kèm lý do (`F1.6`).<br>6. Khi nhận thông tin đăng nhập: Đối chiếu tài khoản và mật khẩu với D3. Nếu khớp -> trả về token đăng nhập thành công (`F1.3`). Nếu không khớp -> trả về thông báo lỗi (`F1.3`). |
 
 ---
 
@@ -244,10 +273,10 @@ graph TB
 |-----------|---------|
 | **Mã tiến trình** | 2.0 |
 | **Tên** | Đặt xe trực tuyến & Giữ chỗ |
-| **Mô tả** | Xử lý tìm kiếm xe, kiểm tra GPLX đã duyệt, **kiểm tra lịch xe không trùng**, tính giá động (Lễ/Tết 15%-30%), giảm giá dài ngày, khóa xe tạm 15 phút, **tự động duyệt đơn** sau khi cọc thành công, gửi thông báo nhắc nhở tự động. |
-| **Luồng vào** | F2.1 (Tìm kiếm), F2.3 (Đọc xe từ D1), F2.4 (Kiểm tra GPLX từ D3), F2.5 (Đặt xe), F2.7 (Thanh toán cọc), F2.13 (Kiểm tra lịch xe trùng từ D2), F2.15 (Kết quả giao dịch từ Cổng TT) |
-| **Luồng ra** | F2.2 (Kết quả tìm kiếm), F2.6 (Khóa xe tạm 15'), F2.8 (Lưu đơn vào D2 — tự động duyệt), F2.9 (Cập nhật xe D1), F2.10 (Thông báo NV chuẩn bị xe), F2.11 (Nhắc nhở tự động), F2.12 (Xác nhận đặt xe), F2.14 (Yêu cầu thanh toán đến Cổng TT) |
-| **Logic xử lý** | 1. Nhận yêu cầu tìm kiếm → Truy vấn D1 theo bộ lọc → Trả kết quả<br>2. Khi KH đặt xe: Kiểm tra TrangThaiGPLX từ D3<br>&nbsp;&nbsp;• **Nếu** NhomXe_Xe = `Nhom_Tren_50cc` **VÀ** NhomXeDuocThue_KH ≠ `Nhom_Tren_50cc` → **Từ chối**<br>&nbsp;&nbsp;• **Nếu** KH trong Blacklist (TrangThaiBlacklist = TRUE) → **Từ chối**<br>&nbsp;&nbsp;• **Nếu** hợp lệ → Kiểm tra lịch xe trùng (F2.13: truy vấn D2 xem có Booking khác cùng MaXe trùng khoảng thời gian?) → Nếu **trùng** → Từ chối. Nếu **không trùng** → Khóa xe tạm 15 phút → Chờ thanh toán cọc<br>3. Tính giá: DonGiaApDung = DonGiaNgay × (1 + PhanTramTangGia/100)<br>4. Giảm giá dài ngày: Thuê > 3 ngày giảm 5%, > 7 ngày giảm 10%<br>5. Gửi yêu cầu thanh toán đến Cổng TT (F2.14) → Nhận kết quả (F2.15)<br>&nbsp;&nbsp;• **Thanh_Cong:** Tạo MaBooking → Lưu D2 (TrangThaiBooking = `Cho_Nhan_Xe` — **tự động duyệt**) → Cập nhật D1 (TrangThaiXe = `Dang_Thue`) → Gửi Xác nhận cho KH (F2.12) → Thông báo NV chuẩn bị xe (F2.10)<br>&nbsp;&nbsp;• **That_Bai:** Giải phóng xe khỏi khóa tạm → Thông báo KH thanh toán thất bại<br>6. Lên lịch gửi Thong_Bao_Nhac_Nho_Tu_Dong: trước nhận 2h, trước trả 2h, hết giờ hẹn |
+| **Mô tả** | Xử lý tìm kiếm xe máy khả dụng, kiểm tra GPLX đã duyệt (A1/A2), kiểm tra lịch xe không trùng, tính giá động (Lễ/Tết 30%), giảm giá dài ngày, khóa xe tạm 15 phút, tự động duyệt đơn sau khi cọc thành công, xử lý hủy đơn hàng và hoàn cọc trực tuyến. |
+| **Luồng vào** | `F2.1: Yêu cầu tìm kiếm xe` (từ KH), `F2.3: Đọc danh sách xe` (từ D1), `F2.4: Đọc cấu hình hệ thống` (từ D5), `F2.5: Kiểm tra GPLX khách` (từ D3), `F2.6: Yêu cầu đặt xe` (từ KH), `F2.7: Yêu cầu hủy đặt xe` (từ KH), `F2.9: Thanh toán đặt cọc` (từ KH), `F2.15: Kiểm tra lịch xe trùng` (từ D2), `F2.17: Kết quả giao dịch` (từ Cổng TT), `F2.25: Đọc đơn đặt xe (để hủy)` (từ D2) |
+| **Luồng ra** | `F2.2: Kết quả tìm kiếm xe` (đến KH), `F2.8: Thông báo khóa xe tạm` (đến KH), `F2.10: Lưu đơn đặt xe` (đến D2), `F2.11: Cập nhật trạng thái xe` (đến D1), `F2.12: Thông báo đơn mới` (đến NV), `F2.13: Thông báo nhắc nhở tự động` (đến KH), `F2.14: Xác nhận đặt xe` (đến KH), `F2.16: Yêu cầu giao dịch trực tuyến` (đến Cổng TT), `F2.26: Cập nhật giao dịch hoàn tiền` (đến D2) |
+| **Logic xử lý** | 1. Nhận yêu cầu tìm kiếm xe → Đọc D1 truy vấn xe khả dụng (`TrangThaiXe = San_Sang`) → Trả kết quả.<br>2. Nhận yêu cầu đặt xe: Đọc GPLX khách từ D3 (`F2.5`):<br>&nbsp;&nbsp;• Nếu xe thuộc nhóm `Nhom_A2_PKL` yêu cầu GPLX hạng `A2`. Nếu không thỏa → Từ chối.<br>&nbsp;&nbsp;• Nếu xe thuộc nhóm `Nhom_A1` yêu cầu GPLX hạng `A1` hoặc `A2`. Nếu không thỏa → Từ chối.<br>&nbsp;&nbsp;• Nếu xe thuộc nhóm `Nhom_50cc_Dien` → Không yêu cầu GPLX.<br>&nbsp;&nbsp;• Nếu khách trong Blacklist (`TrangThaiBlacklist = TRUE`) → Từ chối.<br>&nbsp;&nbsp;• Kiểm tra lịch xe trùng trong D2 (`F2.15`) -> Nếu trùng -> Từ chối. Nếu trống -> Ghi nhận đơn tạm thời, khóa xe tạm 15 phút (`F2.8`) chờ thanh toán cọc.<br>3. Tính toán tiền thuê: Đọc bảng giá, cấu hình giảm giá dài ngày và giá động lễ tết/cuối tuần từ D5. Tính toán `TienCoc`. Gửi yêu cầu cọc đến Cổng TT (`F2.16`).<br>4. Nhận kết quả cọc (`F2.17`):<br>&nbsp;&nbsp;• **Thành công:** Lưu D2 (`TrangThaiBooking = CHO_NHAN_XE`), cập nhật D1 (`TrangThaiXe = Dang_Thue`), gửi xác nhận KH (`F2.14`), thông báo NV chuẩn bị xe (`F2.12`).<br>&nbsp;&nbsp;• **Thất bại/Quá 15 phút:** Hủy đơn tạm, giải phóng xe.<br>5. Xử lý yêu cầu hủy đơn từ khách (`F2.7`): Đọc booking từ D2 (`F2.25`), tính số giờ trước giờ nhận xe:<br>&nbsp;&nbsp;• Hủy trước > 24h: Hoàn cọc 100%.<br>&nbsp;&nbsp;• Hủy trước từ 12-24h: Hoàn cọc 50%, phạt 50%.<br>&nbsp;&nbsp;• Hủy trước < 12h: Phạt 100%.<br>&nbsp;&nbsp;• Thực hiện gửi yêu cầu hoàn tiền (`F2.16: Hoan_Tien`) sang E4. Cập nhật D2 (`TrangThaiBooking = DA_HUY`) và giải phóng xe D1 (`TrangThaiXe = San_Sang`). Nhận kết quả giao dịch hoàn tiền từ E4 (`F2.17`) và cập nhật vào D2 (`F2.26`). |
 
 ---
 
@@ -257,10 +286,10 @@ graph TB
 |-----------|---------|
 | **Mã tiến trình** | 3.0 |
 | **Tên** | Gia hạn & Yêu cầu Trả xe sớm |
-| **Mô tả** | Xử lý yêu cầu gia hạn (trước 2h, tối đa 3 lần, kiểm tra lịch trùng) và yêu cầu trả xe sớm (trước ≥ 1 tiếng). **Chỉ khách hàng** thao tác gia hạn qua ứng dụng — không hỗ trợ gia hạn thủ công để đảm bảo minh bạch. |
-| **Luồng vào** | F3.1 (Yêu cầu gia hạn từ KH), F3.2 (Đọc booking từ D2), F3.3 (Kiểm tra lịch xe từ D2), F3.6 (Yêu cầu trả sớm từ KH) |
-| **Luồng ra** | F3.4 (Kết quả gia hạn cho KH), F3.5 (Cập nhật gia hạn vào D2), F3.7 (Cập nhật trả sớm vào D2), F3.8 (Thông báo trả sớm cho NV) |
-| **Logic xử lý** | **Gia hạn (chỉ KH thao tác qua app):**<br>1. Kiểm tra yêu cầu gửi trước giờ trả ≥ 2 tiếng<br>2. Kiểm tra SoLanGiaHan < 3<br>3. Truy vấn D2: Có Booking khác cùng MaXe trùng khoảng thời gian?<br>&nbsp;&nbsp;• **TH1 (Xe trống):** Tính tiền gia hạn → KH thanh toán online → Hệ thống tự động cập nhật D2 (ThoiGianTra mới, SoLanGiaHan+1)<br>&nbsp;&nbsp;• **TH2 (Trùng lịch):** Từ chối → Gợi ý xe thay thế hoặc trả đúng hẹn<br>**Trả sớm:**<br>1. Kiểm tra yêu cầu gửi trước ≥ 1 tiếng<br>2. Cập nhật D2: CoTraSom = TRUE, TrangThaiBooking = `Yeu_Cau_Tra_Som`<br>3. Gửi thông báo cho NV tại điểm trả |
+| **Mô tả** | Xử lý yêu cầu gia hạn thời gian thuê (trước 2h, tối đa 3 lần, kiểm tra lịch trùng) và yêu cầu trả xe sớm (trước ≥ 1 tiếng). Hỗ trợ thanh toán tiền gia hạn online trực tuyến. |
+| **Luồng vào** | `F3.1: Yêu cầu gia hạn` (từ KH), `F3.2: Thanh toán gia hạn` (từ KH), `F3.3: Đọc booking gia hạn` (từ D2), `F3.4: Đọc cấu hình gia hạn` (từ D5), `F3.5: Kiểm tra lịch xe` (từ D2), `F3.8: Yêu cầu trả xe sớm` (từ KH), `F3.13: Kết quả giao dịch gia hạn` (từ Cổng TT), `F3.14: Đọc đơn đặt xe (để trả sớm)` (từ D2) |
+| **Luồng ra** | `F3.6: Kết quả gia hạn` (đến KH), `F3.7: Cập nhật gia hạn` (đến D2), `F3.9: Cập nhật trả sớm` (đến D2), `F3.10: Thông báo trả sớm` (đến NV), `F3.12: Yêu cầu giao dịch gia hạn trực tuyến` (đến Cổng TT), `F3.15: Kết quả yêu cầu trả sớm` (đến KH) |
+| **Logic xử lý** | **Gia hạn (chỉ KH thao tác qua App):**<br>1. Kiểm tra yêu cầu gửi trước giờ trả cũ ≥ 2 tiếng.<br>2. Kiểm tra `SoLanGiaHan` < 3 (đọc giới hạn tối đa từ D5). Nếu vượt -> Từ chối (`F3.6`).<br>3. Truy vấn D2 (`F3.5`) xem xe có bị trùng lịch đặt của người khác trong thời gian gia hạn không. Nếu trùng -> Từ chối, đề xuất đổi xe tại quầy.<br>4. Nếu hợp lệ -> Tính tiền gia hạn (đọc giá từ D5) -> KH thanh toán online (`F3.2`) -> Gửi yêu cầu giao dịch gia hạn trực tuyến (`F3.12`) đến Cổng TT -> Nhận kết quả giao dịch (`F3.13`). Nếu thành công -> Cập nhật D2 (`ThoiGianTra` mới, `SoLanGiaHan += 1`, `TongTienGiaHan += ChiPhiGiaHan`) -> Thông báo thành công (`F3.6`). Nếu thất bại -> Từ chối gia hạn.<br>**Trả xe sớm:**<br>1. Đọc đơn đặt xe từ D2 (`F3.14`) để kiểm tra trạng thái đơn phải là `DANG_THUE`. Nếu không thỏa mãn (ví dụ: đã quá giờ trả hoặc trễ giờ trả mà không gia hạn) -> Từ chối yêu cầu và gửi phản hồi lỗi cho khách hàng (`F3.15`).<br>2. Kiểm tra thời điểm gửi yêu cầu phải trước thời gian muốn trả thực tế (`ThoiGianMuonTra`) ít nhất 1 tiếng. Nếu không thỏa mãn -> Từ chối và phản hồi lỗi cho khách hàng (`F3.15`).<br>3. Nếu hợp lệ -> Cập nhật D2: `CoTraSom = TRUE`, `TrangThaiBooking = YEU_CAU_TRA_SOM`. Gửi thông báo đến NV (`F3.10`) chuẩn bị tiếp nhận và gửi kết quả xác nhận thành công cho khách hàng (`F3.15`). |
 
 ---
 
@@ -271,9 +300,9 @@ graph TB
 | **Mã tiến trình** | 4.0 |
 | **Tên** | Nhận xe & Quyết toán phụ phí |
 | **Mô tả** | Cung cấp danh sách công việc giao/nhận xe trong ngày cho nhân viên. Xử lý Check-in (bàn giao xe), Check-out (nhận lại xe), quyết toán phụ phí: đền bù hư hại, mất phụ kiện, phạt trễ hạn lũy tiến. |
-| **Luồng vào** | F4.1 (Yêu cầu xem DS giao nhận từ NV), F4.2 (Đọc DS booking trong ngày từ D2), F4.4 (Biên bản Check-in), F4.6 (Biên bản Check-out kèm phí đền bù), F4.7 (Booking quyết toán từ D2), F4.13 (Đánh giá chuyến đi) |
-| **Luồng ra** | F4.3 (Danh sách giao/nhận cho NV), F4.5 (Cập nhật Check-in vào D2), F4.9 (Hóa đơn cho KH), F4.10 (Cập nhật quyết toán D2), F4.11 (Giải phóng xe D1), F4.12 (Lưu lịch sử D4) |
-| **Logic xử lý** | **Xem danh sách công việc:**<br>1. NV mở Dashboard truy vấn công việc hôm nay.<br>2. Hệ thống đọc D2 lọc các Booking cần Giao/Nhận trả kết quả cho NV.<br>**Check-in:**<br>1. NV ghi nhận: ODONhan, MucXangNhan, chụp ảnh ngoại quan, giao phụ kiện<br>2. Cập nhật D2: TrangThaiBooking = `Dang_Thue`<br>**Check-out:**<br>1. NV kiểm tra: ODOTra, MucXangTra, vết hư hại mới, phụ kiện trả lại<br>2. NV trao đổi trực tiếp với khách, thống nhất và nhập mức phí đền bù (PhiDenBuHuHai, PhiMatPhuKien) vào biên bản.<br>3. Tính PhiPhatTreHan:<br>&nbsp;&nbsp;• Trễ ≤ 2h: 0đ (ân hạn)<br>&nbsp;&nbsp;• Trễ 2-6h: DonGiaPhat_Gio × số giờ trễ (Xe số/ga: 30K/h; Côn tay/PKL: 50K/h)<br>&nbsp;&nbsp;• Trễ 6-12h: DonGiaApDung / 2<br>&nbsp;&nbsp;• Trễ > 12h: DonGiaApDung × 1<br>4. TongThanhToan = TongTienThue - TienGiamGia + TienTangGia + TongTienGiaHan + PhiPhatTreHan + PhiDenBuHuHai + PhiMatPhuKien - TienCoc<br>5. Xuất hóa đơn cho KH → Cập nhật D2 (Hoan_Tat) → Cập nhật D1 (San_Sang) → Lưu D4 |
+| **Luồng vào** | `F4.1: Yêu cầu xem danh sách giao nhận` (từ NV), `F4.2: Đọc danh sách booking trong ngày` (từ D2), `F4.4: Biên bản Check-in` (từ NV), `F4.6: Biên bản Check-out` (từ NV), `F4.7: Đọc booking quyết toán` (từ D2), `F4.8: Đọc bảng giá phạt và đền bù` (từ D5), `F4.14: Đánh giá chuyến đi` (từ KH) |
+| **Luồng ra** | `F4.3: Danh sách giao nhận trong ngày` (đến NV), `F4.5: Cập nhật Check-in` (đến D2), `F4.10: Hóa đơn quyết toán` (đến KH), `F4.11: Cập nhật quyết toán` (đến D2), `F4.12: Giải phóng xe` (đến D1), `F4.13: Lưu lịch sử thuê` (đến D4) |
+| **Logic xử lý** | **Xem danh sách công việc:**<br>1. NV mở Dashboard truy vấn công việc hôm nay.<br>2. Hệ thống đọc D2 lọc các Booking cần Giao/Nhận trả kết quả cho NV.<br>**Check-in:**<br>1. NV ghi nhận: ODONhan, MucXangNhan, chụp ảnh ngoại quan, giao phụ kiện.<br>2. Cập nhật D2: TrangThaiBooking = `Dang_Thue`. Cập nhật số lượng phụ kiện đã giao vào Booking D2.<br>**Check-out:**<br>1. NV kiểm tra: ODOTra, MucXangTra, vết hư hại mới, phụ kiện trả lại.<br>2. NV trao đổi trực tiếp với khách, thống nhất và nhập mức phí đền bù (PhiDenBuHuHai, PhiMatPhuKien) vào biên bản.<br>3. Tính PhiPhatTreHan (đọc cấu hình từ D5):<br>&nbsp;&nbsp;• Trễ ≤ 2h: 0đ (ân hạn)<br>&nbsp;&nbsp;• Trễ từ trên 2 tiếng đến dưới 6 tiếng: Áp dụng phí phạt tính theo giờ: Xe số/ga: 30K/h; Côn tay/PKL: 50K/h. Tối đa không vượt quá DonGiaApDung / 2.<br>&nbsp;&nbsp;• Trễ từ 6 tiếng đến dưới 12 tiếng: Phí phạt bằng DonGiaApDung / 2.<br>&nbsp;&nbsp;• Trễ từ 12 tiếng trở lên: Tính tròn thành 1 ngày thuê mới (Phí phạt bằng DonGiaApDung).<br>4. TongThanhToan = TongTienThue - TienGiamGia + TienTangGia + TongTienGiaHan + PhiPhatTreHan + PhiDenBuHuHai + PhiMatPhuKien - TienCoc<br>5. Xuất hóa đơn cho KH (`F4.10`) → Cập nhật D2 (`Hoan_Tat`) → Cập nhật D1 (`San_Sang`, cập nhật ODO hiện tại = ODOTra) → Lưu D4 (`F4.13`). |
 
 ---
 
@@ -283,16 +312,29 @@ graph TB
 |-----------|---------|
 | **Mã tiến trình** | 5.0 |
 | **Tên** | Tra cứu Lịch sử thuê & Quản lý Blacklist |
-| **Mô tả** | Hỗ trợ Nhân viên/Admin tra cứu lịch sử thuê xe nội bộ theo biển số và khoảng thời gian (phục vụ xử lý phạt nguội offline, thống kê). Quản lý danh sách Blacklist khách hàng vi phạm nghiêm trọng. **Lưu ý:** Nghiệp vụ phạt nguội giao thông là quy trình dân sự bên ngoài — hệ thống chỉ hỗ trợ tra cứu thông tin, việc thương lượng/đóng phạt/khởi kiện diễn ra ngoài hệ thống. |
-| **Luồng vào** | F5.1 (Yêu cầu tra cứu từ NV/Admin), F5.2 (Lịch sử thuê từ D4), F5.3 (Thông tin KH từ D3), F5.5 (Ghi chú vi phạm nội bộ từ NV/Admin), F5.7 (Yêu cầu Blacklist từ NV/Admin) |
-| **Luồng ra** | F5.4 (Kết quả tra cứu cho NV/Admin), F5.6 (Cập nhật ghi chú vào D4), F5.8 (Cập nhật Blacklist vào D3) |
-| **Logic xử lý** | 1. NV/Admin nhập tiêu chí tra cứu: {BienSoXe, KhoangThoiGian_Tu, KhoangThoiGian_Den}<br>2. Truy vấn D4: Tìm bản ghi Lich_Su_Thue có BienSoXe VÀ khoảng thời gian giao nhau với [ThoiGianNhan, ThoiGianTra]<br>&nbsp;&nbsp;• **Nếu tìm thấy:** Truy D3 lấy thông tin KH → Hiển thị kết quả cho NV/Admin<br>&nbsp;&nbsp;• **Nếu không tìm thấy:** Hiển thị thông báo `Khong_Tim_Thay`<br>3. NV/Admin có thể ghi chú nội bộ (GhiChuNoiBo) và đánh dấu vi phạm (DanhDauViPham = TRUE) vào bản ghi D4<br>4. NV/Admin có quyền yêu cầu đưa khách hàng vào Blacklist → Cập nhật D3 (TrangThaiBlacklist = TRUE, LyDoBlacklist)<br>**Quy trình offline:** Chủ xe mang Hợp đồng thuê + CCCD khách đến cơ quan Công an để trình báo và chuyển trách nhiệm. Nếu khách không hợp tác, chủ xe chủ động nộp phạt rồi khởi kiện dân sự. |
+| **Mô tả** | Hỗ trợ Nhân viên/Admin tra cứu lịch sử thuê xe nội bộ theo biển số và khoảng thời gian (phục vụ xử lý phạt nguội offline, thống kê). Quản lý danh sách Blacklist khách hàng vi phạm nghiêm trọng. Quản lý tài khoản nhân viên. |
+| **Luồng vào** | `F5.1: Yêu cầu tra cứu lịch sử` (từ NV/Admin), `F5.2: Đọc lịch sử theo biển số` (từ D4), `F5.3: Đọc thông tin khách hàng` (từ D3), `F5.5: Ghi chú vi phạm nội bộ` (từ NV/Admin), `F5.7: Yêu cầu Blacklist` (từ Admin), `F5.9: Quản lý nhân viên` (từ Admin), `F5.11: Đọc thông tin nhân viên` (từ D6) |
+| **Luồng ra** | `F5.4: Kết quả tra cứu` (đến NV/Admin), `F5.6: Cập nhật ghi chú lịch sử` (đến D4), `F5.8: Cập nhật Blacklist` (đến D3), `F5.10: Cập nhật thông tin nhân viên` (đến D6) |
+| **Logic xử lý** | 1. NV/Admin nhập tiêu chí tra cứu: {BienSoXe, KhoangThoiGian_Tu, KhoangThoiGian_Den}<br>2. Truy vấn D4: Tìm bản ghi Lich_Su_Thue có BienSoXe VÀ khoảng thời gian giao nhau với [ThoiGianNhan, ThoiGianTra]<br>&nbsp;&nbsp;• **Nếu tìm thấy:** Truy D3 lấy thông tin KH → Hiển thị kết quả cho NV/Admin<br>&nbsp;&nbsp;• **Nếu không tìm thấy:** Hiển thị thông báo `Khong_Tim_Thay`<br>3. NV/Admin có thể ghi chú nội bộ (GhiChuNoiBo) và đánh dấu vi phạm (DanhDauViPham = TRUE) vào bản ghi D4<br>4. NV/Admin có quyền yêu cầu đưa khách hàng vào Blacklist → Cập nhật D3 (TrangThaiBlacklist = TRUE, LyDoBlacklist)<br>5. Quản lý nhân viên: Admin tạo mới/chỉnh sửa thông tin nhân viên (`F5.9`) -> cập nhật vào D6 (`F5.10`). |
+
+---
+
+### P6.0 — Quản lý Danh mục & Cấu hình Hệ thống [MỚI]
+
+| Thuộc tính | Chi tiết |
+|-----------|---------|
+| **Mã tiến trình** | 6.0 |
+| **Tên** | Quản lý Danh mục & Cấu hình Hệ thống |
+| **Mô tả** | Tiến trình chuyên dụng dành cho Quản trị viên nhằm kiểm soát và quản lý danh mục đội xe máy và thiết lập các tham số cấu hình định giá động/phạt trễ hạn/đền bù toàn cục của hệ thống. |
+| **Luồng vào** | `F6.1: Yêu cầu cập nhật thông tin xe máy` (từ Admin), `F6.3: Đọc danh sách xe quản trị` (từ D1), `F6.5: Yêu cầu cập nhật cấu hình hệ thống` (từ Admin), `F6.7: Đọc cấu hình hệ thống quản trị` (từ D5) |
+| **Luồng ra** | `F6.2: Lưu thông tin xe mới` (đến D1), `F6.4: Kết quả cập nhật xe` (đến Admin), `F6.6: Lưu cấu hình hệ thống` (đến D5), `F6.8: Kết quả cập nhật cấu hình` (đến Admin) |
+| **Logic xử lý** | **Quản lý danh mục xe:**<br>1. Admin gửi thông tin xe máy mới/sửa đổi (`F6.1`).<br>2. Hệ thống kiểm tra tính hợp lệ của biển số, số khung, số máy có bị trùng lặp trong D1 (`F6.3`) hay không.<br>3. Nếu hợp lệ, lưu trữ thông tin xe vào D1 (`F6.2`) và trả kết quả thành công (`F6.4`). Nếu lỗi, từ chối cập nhật và trả báo lỗi.<br>**Quản lý cấu hình hệ thống:**<br>1. Admin gửi yêu cầu thay đổi thiết lập cấu hình vận hành mới (`F6.5`).<br>2. Hệ thống thực hiện cập nhật ghi đè các tham số thiết lập (giá trị phạt, số lần gia hạn tối đa, giá phạt phụ kiện) vào kho D5 (`F6.6`) và trả kết quả xác nhận (`F6.8`) cho Admin. |
 
 ---
 
 ## 5. SƠ ĐỒ PHÂN RÃ MỨC 1 (LEVEL 1 DFD)
 
-Sơ đồ DFD Mức 1 phân rã chi tiết 5 tiến trình cốt lõi ở Mức 0 nhằm mô tả chi tiết luồng xử lý và các dòng dữ liệu nội bộ (internal flows) phát sinh giữa các tiến trình con.
+Sơ đồ DFD Mức 1 phân rã chi tiết 6 tiến trình cốt lõi ở Mức 0 nhằm mô tả chi tiết luồng xử lý và các dòng dữ liệu nội bộ (internal flows) phát sinh giữa các tiến trình con.
 
 ### 5.1. Tiến trình 1.0 — Đăng ký & Xác thực GPLX
 
@@ -314,18 +356,19 @@ graph TB
     P14(("1.4\nPhê duyệt\nGPLX"))
 
     %% === FLOWS ===
-    E1 -->|"F1.1: Yeu_Cau_Dang_Ky_Tai_Khoan"| P11
-    P11 -->|"F1.6: Luu_Thong_Tin_Khach_Hang"| D3
+    E1 -->|"F1.1: Yêu cầu đăng ký tài khoản"| P11
+    P11 -->|"F1.7: Lưu thông tin khách hàng"| D3
     
-    E1 -->|"F1.2: Thong_Tin_Dang_Nhap"| P12
-    D3 -->|"F1.7: Doc_Thong_Tin_Khach_Hang"| P12
+    E1 -->|"F1.2: Thông tin đăng nhập"| P12
+    D3 -->|"F1.8: Đọc thông tin khách hàng"| P12
+    P12 -->|"F1.3: Kết quả đăng nhập"| E1
     
-    D3 -->|"F1.7: Doc_Thong_Tin_Khach_Hang\n(Hồ sơ GPLX)"| P13
-    P13 -->|"F1.3: Ho_So_GPLX_Cho_Duyet"| E3
+    D3 -->|"F1.8: Đọc thông tin khách hàng\n(Hồ sơ GPLX)"| P13
+    P13 -->|"F1.4: Hồ sơ GPLX chờ duyệt"| E3
     
-    E3 -->|"F1.4: Ket_Qua_Duyet_GPLX"| P14
-    P14 -->|"F1.6: Luu_Thong_Tin_Khach_Hang\n(Cập nhật GPLX & Nhóm xe)"| D3
-    P14 -->|"F1.5: Thong_Bao_Ket_Qua_GPLX"| E1
+    E3 -->|"F1.5: Kết quả duyệt GPLX"| P14
+    P14 -->|"F1.7: Lưu thông tin khách hàng\n(Cập nhật GPLX & Nhóm xe)"| D3
+    P14 -->|"F1.6: Thông báo kết quả GPLX"| E1
 
     %% === STYLES ===
     style E1 fill:#4FC3F7,stroke:#0277BD,color:#000,stroke-width:2px
@@ -337,10 +380,10 @@ graph TB
     style D3 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
 ```
 
-*   **P1.1 (Tiếp nhận & Đăng ký tài khoản):** Tiếp nhận yêu cầu đăng ký (`F1.1`), kiểm tra SĐT/Email trùng lặp, mã hóa mật khẩu và khởi tạo tài khoản mới vào kho `D3` qua luồng `F1.6`.
-*   **P1.2 (Xác thực Đăng nhập):** Tiếp nhận thông tin đăng nhập của khách hàng (`F1.2`), truy vấn thông tin đối chiếu từ `D3` qua luồng `F1.7` để cấp quyền truy cập.
-*   **P1.3 (Tiếp nhận hồ sơ duyệt GPLX):** Định kỳ đọc từ `D3` (`F1.7`) các tài khoản có trạng thái GPLX là `Cho_Duyet` để gom hồ sơ chờ duyệt gửi đến Admin (`E3`) qua luồng `F1.3`.
-*   **P1.4 (Phê duyệt GPLX):** Tiếp nhận lệnh phê duyệt hoặc từ chối từ Admin (`F1.4`). Tiến trình cập nhật lại trạng thái GPLX và nhóm xe được phép thuê (`NhomXeDuocThue`) tương ứng vào kho `D3` (`F1.6`), đồng thời gửi thông báo kết quả kiểm duyệt (`F1.5`) cho khách hàng (`E1`).
+*   **P1.1 (Tiếp nhận & Đăng ký tài khoản):** Tiếp nhận yêu cầu đăng ký (`F1.1`), kiểm tra SĐT/Email trùng lặp, mã hóa mật khẩu và khởi tạo tài khoản mới vào kho `D3` qua luồng `F1.7`.
+*   **P1.2 (Xác thực Đăng nhập):** Tiếp nhận thông tin đăng nhập của khách hàng (`F1.2`), truy vấn thông tin đối chiếu từ `D3` qua luồng `F1.8` để xác thực tài khoản và mật khẩu, sau đó phản hồi kết quả đăng nhập (`F1.3`) thành công hay thất bại.
+*   **P1.3 (Tiếp nhận hồ sơ duyệt GPLX):** Định kỳ đọc từ `D3` (`F1.8`) các tài khoản có trạng thái GPLX là `Cho_Duyet` để gom hồ sơ chờ duyệt gửi đến Admin (`E3`) qua luồng `F1.4`.
+*   **P1.4 (Phê duyệt GPLX):** Tiếp nhận lệnh phê duyệt hoặc từ chối từ Admin (`F1.5`). Tiến trình cập nhật lại trạng thái GPLX và nhóm xe được phép thuê (`NhomXeDuocThue`) tương ứng vào kho `D3` (`F1.7`), đồng thời gửi thông báo kết quả kiểm duyệt (`F1.6`) cho khách hàng (`E1`).
 
 ---
 
@@ -359,42 +402,48 @@ graph TB
     D1[("D1: Xe_May")]
     D2[("D2: Hop_Dong_Booking")]
     D3[("D3: Khach_Hang_GPLX")]
+    D5[("D5: Cau_Hinh_He_Thong")]
 
     %% === SUB-PROCESSES ===
     P21(("2.1\nTìm kiếm &\nTra cứu xe"))
-    P22(("2.2\nKiểm tra\nđiều kiện thuê"))
+    P22(("2.2\nKiểm tra điều kiện\n& Tính toán giá"))
     P23(("2.3\nGiữ chỗ &\nKhóa xe tạm"))
-    P24(("2.4\nXử lý\nThanh toán cọc"))
-    P25(("2.5\nXác nhận đặt xe\n& Điều phối"))
+    P24(("2.4\nXử lý\nThanh toán & Hoàn cọc"))
+    P25(("2.5\nXác nhận đặt xe\n& Hủy/Hoàn tiền"))
     P26(("2.6\nTự động gửi\nnhắc nhở"))
 
     %% === FLOWS ===
-    E1 -->|"F2.1: Yeu_Cau_Tim_Kiem_Xe"| P21
-    D1 -->|"F2.3: Doc_Danh_Sach_Xe"| P21
-    P21 -->|"F2.2: Ket_Qua_Tim_Kiem_Xe"| E1
+    E1 -->|"F2.1: Yêu cầu tìm kiếm xe"| P21
+    D1 -->|"F2.3: Đọc danh sách xe"| P21
+    P21 -->|"F2.2: Kết quả tìm kiếm xe"| E1
 
-    E1 -->|"F2.5: Yeu_Cau_Dat_Xe"| P22
-    D3 -->|"F2.4: Kiem_Tra_GPLX_Khach"| P22
-    D2 -->|"F2.13: Kiem_Tra_Lich_Xe_Trung"| P22
-    P22 -->|"F2.2a: Thong_Tin_Booking_Hop_Le"| P23
+    E1 -->|"F2.6: Yêu cầu đặt xe"| P22
+    D3 -->|"F2.5: Kiểm tra GPLX khách"| P22
+    D2 -->|"F2.15: Kiểm tra lịch xe trùng"| P22
+    D5 -->|"F2.4: Đọc cấu hình hệ thống"| P22
+    P22 -->|"F2.18: Thông tin booking hợp lệ"| P23
 
-    P23 -->|"F2.8a: Tao_Booking_Tam"| D2
-    P23 -->|"F2.6: Thong_Bao_Khoa_Xe_Tam"| E1
-    P23 -->|"F2.3a: Yeu_Cau_Thanh_Toan_Tam"| P24
+    P23 -->|"F2.22: Tạo booking tạm"| D2
+    P23 -->|"F2.8: Thông báo khóa xe tạm"| E1
+    P23 -->|"F2.19: Yêu cầu thanh toán tạm"| P24
 
-    E1 -->|"F2.7: Thanh_Toan_Dat_Coc"| P24
-    P24 -->|"F2.14: Yeu_Cau_Thanh_Toan_Online"| E4
-    E4 -->|"F2.15: Ket_Qua_Giao_Dich"| P24
-    P24 -->|"F2.4a: Xac_Nhan_Thanh_Toan_Thanh_Cong"| P25
-    P24 -->|"F2.4b: Huy_Booking_Tam"| P23
+    E1 -->|"F2.9: Thanh toán đặt cọc"| P24
+    P24 -->|"F2.16: Yêu cầu giao dịch trực tuyến\n(Đặt cọc / Hoàn tiền)"| E4
+    E4 -->|"F2.17: Kết quả giao dịch"| P24
+    P24 -->|"F2.20: Xác nhận thanh toán thành công"| P25
+    P24 -->|"F2.21: Hủy booking tạm"| P23
 
-    P25 -->|"F2.8: Luu_Don_Dat_Xe"| D2
-    P25 -->|"F2.9: Cap_Nhat_Trang_Thai_Xe"| D1
-    P25 -->|"F2.12: Xac_Nhan_Dat_Xe"| E1
-    P25 -->|"F2.10: Thong_Bao_Don_Moi"| E2
+    E1 -->|"F2.7: Yêu cầu hủy đặt xe"| P25
+    D2 -->|"F2.25: Đọc đơn đặt xe (để hủy)"| P25
+    P25 -->|"F2.10: Lưu đơn đặt xe (Cập nhật Chờ nhận xe / Đã hủy)"| D2
+    P25 -->|"F2.11: Cập nhật trạng thái xe (Đang thuê / Sẵn sàng)"| D1
+    P25 -->|"F2.14: Xác nhận đặt xe / Xác nhận hủy"| E1
+    P25 -->|"F2.12: Thông báo đơn mới"| E2
+    P25 -->|"F2.24: Yêu cầu hoàn tiền cọc"| P24
+    P24 -->|"F2.26: Cập nhật giao dịch hoàn tiền"| D2
 
-    D2 -->|"F2.8b: Doc_Booking_Nhac_Nho"| P26
-    P26 -->|"F2.11: Thong_Bao_Nhac_Nho_Tu_Dong"| E1
+    D2 -->|"F2.23: Đọc booking nhắc nhở"| P26
+    P26 -->|"F2.13: Thông báo nhắc nhở tự động"| E1
 
     %% === STYLES ===
     style E1 fill:#4FC3F7,stroke:#0277BD,color:#000,stroke-width:2px
@@ -409,16 +458,15 @@ graph TB
     style D1 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D2 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D3 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
+    style D5 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
 ```
 
-*   **P2.1 (Tìm kiếm & Tra cứu xe):** Tiếp nhận bộ lọc tìm kiếm (`F2.1`), đối chiếu danh sách xe khả dụng trong kho `D1` (`F2.3`) và hiển thị cho khách hàng (`F2.2`).
-*   **P2.2 (Kiểm tra điều kiện thuê):** Khi nhận yêu cầu đặt xe (`F2.5`), kiểm tra xem GPLX của khách đã được duyệt và nhóm xe có tương thích không qua `D3` (`F2.4`). Đồng thời đọc danh sách booking trong `D2` (`F2.13`) để kiểm tra xung đột lịch. Nếu hợp lệ, truyền thông tin sang tiến trình giữ chỗ qua luồng nội bộ `F2.2a`.
-*   **P2.3 (Giữ chỗ & Khóa xe tạm):** Dựa trên luồng kích hoạt `F2.2a`, tiến trình ghi nhận một booking tạm thời (`TrangThaiBooking = Cho_Xac_Nhan`) vào kho `D2` (`F2.8a`), phát thông báo khóa giữ xe tạm thời 15 phút (`F2.6`) đến khách hàng và phát yêu cầu thanh toán cọc (`F2.3a`) gửi đến tiến trình 2.4.
-*   **P2.4 (Xử lý Thanh toán cọc):** Tiếp nhận chứng từ thanh toán (`F2.7`), gửi yêu cầu giao dịch (`F2.14`) sang cổng thanh toán trực tuyến `E4` và nhận lại kết quả giao dịch (`F2.15`).
-    *   *Giao dịch thành công:* Gửi tín hiệu xác nhận thanh toán (`F2.4a`) cho tiến trình 2.5.
-    *   *Giao dịch thất bại / Quá hạn 15 phút:* Gửi tín hiệu hủy giữ chỗ (`F2.4b`) để tiến trình 2.3 giải phóng xe.
-*   **P2.5 (Xác nhận đặt xe & Điều phối):** Khi nhận tín hiệu thanh toán thành công (`F2.4a`), tiến trình đổi trạng thái booking thành `Cho_Nhan_Xe` (tự động duyệt) trong `D2` (`F2.8`), cập nhật trạng thái xe thành `Dang_Thue` trong `D1` (`F2.9`), gửi xác nhận đặt xe (`F2.12`) đến khách hàng và gửi thông báo đơn mới (`F2.10`) đến nhân viên để chuẩn bị bàn giao xe.
-*   **P2.6 (Tự động gửi nhắc nhở):** Đọc thông tin các booking sắp đến hạn từ `D2` (`F2.8b`) để tự động lên lịch gửi các thông báo nhắc nhở (`F2.11`) đến khách hàng trước 2 giờ (lúc nhận/trả) hoặc khi quá hạn nhận xe.
+*   **P2.1 (Tìm kiếm & Tra cứu xe):** Tiếp nhận bộ lọc tìm kiếm (`F2.1`), đối chiếu danh sách xe máy khả dụng trong kho `D1` (`F2.3`) và hiển thị kết quả cho khách hàng (`F2.2`).
+*   **P2.2 (Kiểm tra điều kiện & Tính toán giá):** Khi nhận yêu cầu đặt xe (`F2.6`), kiểm tra GPLX của khách từ `D3` (`F2.5`) xem có phù hợp với nhóm xe yêu cầu (A1/A2/Xe dưới 50cc). Đọc cấu hình định giá từ `D5` (`F2.4`) để tính giá thuê và tiền cọc. Đọc `D2` (`F2.15`) để kiểm tra xung đột lịch. Nếu hợp lệ, truyền sang `P2.3` qua luồng nội bộ `F2.18`.
+*   **P2.3 (Giữ chỗ & Khóa xe tạm):** Dựa trên `F2.18`, ghi nhận booking tạm thời (`TrangThaiBooking = Cho_Xac_Nhan`) vào `D2` (`F2.22`), phát thông báo khóa giữ xe tạm thời 15 phút (`F2.8`) đến khách hàng và gửi yêu cầu thanh toán (`F2.19`) sang `P2.4`.
+*   **P2.4 (Xử lý Thanh toán & Hoàn cọc):** Tiếp nhận chứng từ thanh toán cọc (`F2.9`), gửi yêu cầu giao dịch (`F2.16`) sang cổng thanh toán `E4` và nhận lại kết quả (`F2.17`). Gửi tín hiệu thành công (`F2.20`) cho `P2.5`, hoặc tín hiệu hủy giữ chỗ (`F2.21`) cho `P2.3` nếu giao dịch thất bại/quá hạn. Tiếp nhận yêu cầu hoàn tiền (`F2.24`) từ `P2.5` để gửi lệnh hoàn tiền (`F2.16`) sang `E4`, nhận lại kết quả hoàn tiền (`F2.17`) và cập nhật chi tiết giao dịch hoàn tiền vào `D2` (`F2.26`).
+*   **P2.5 (Xác nhận đặt xe & Hủy/Hoàn tiền):** Khi nhận tín hiệu cọc thành công (`F2.20`), chuyển trạng thái booking thành `Cho_Nhan_Xe` (tự động duyệt) trong `D2` (`F2.10`), cập nhật trạng thái xe thành `Dang_Thue` trong `D1` (`F2.11`), gửi xác nhận đặt xe (`F2.14`) đến khách và gửi thông báo đơn mới (`F2.12`) đến nhân viên. Khi nhận yêu cầu hủy đặt xe (`F2.7`) từ khách hàng trước giờ nhận xe, tiến trình thực hiện đọc thông tin đơn đặt xe tương ứng từ `D2` (`F2.25`) để kiểm tra mốc thời gian và tính toán tiền phạt hủy đơn, sau đó cập nhật booking thành `Da_Huy` trong `D2` (`F2.10`), cập nhật xe thành `San_Sang` trong `D1` (`F2.11`), xác nhận hủy cho khách (`F2.14`), và gửi yêu cầu hoàn tiền (`F2.24`) sang `P2.4`.
+*   **P2.6 (Tự động gửi nhắc nhở):** Đọc thông tin các booking sắp đến hạn từ `D2` (`F2.23`) để gửi các thông báo nhắc nhở tự động (`F2.13`) đến khách hàng.
 
 ---
 
@@ -431,9 +479,11 @@ graph TB
     %% === ACTORS ===
     E1["👤 E1: KHÁCH HÀNG"]
     E2["🧑‍💼 E2: NHÂN VIÊN"]
+    E4["🏦 E4: CỔNG THANH TOÁN"]
 
     %% === DATA STORES ===
     D2[("D2: Hop_Dong_Booking")]
+    D5[("D5: Cau_Hinh_He_Thong")]
 
     %% === SUB-PROCESSES ===
     P31(("3.1\nKiểm tra khả năng\ngia hạn"))
@@ -441,33 +491,41 @@ graph TB
     P33(("3.3\nXử lý trả xe sớm"))
 
     %% === FLOWS ===
-    E1 -->|"F3.1: Yeu_Cau_Gia_Han"| P31
-    D2 -->|"F3.2: Doc_Booking_Gia_Han"| P31
-    D2 -->|"F3.3: Kiem_Tra_Lich_Xe"| P31
-    P31 -->|"F3.1a: Yeu_Cau_Cap_Nhat_Gia_Han"| P32
-    P31 -->|"F3.4: Ket_Qua_Gia_Han (Từ chối)"| E1
+    E1 -->|"F3.1: Yêu cầu gia hạn"| P31
+    D2 -->|"F3.3: Đọc booking gia hạn"| P31
+    D5 -->|"F3.4: Đọc cấu hình gia hạn"| P31
+    D2 -->|"F3.5: Kiểm tra lịch xe"| P31
+    P31 -->|"F3.11: Yêu cầu cập nhật gia hạn"| P32
+    P31 -->|"F3.6: Kết quả gia hạn (Từ chối)"| E1
 
-    P32 -->|"F3.5: Cap_Nhat_Gia_Han"| D2
-    P32 -->|"F3.4: Ket_Qua_Gia_Han (Thành công)"| E1
+    E1 -->|"F3.2: Thanh toán gia hạn"| P32
+    P32 -->|"F3.7: Cập nhật gia hạn"| D2
+    P32 -->|"F3.6: Kết quả gia hạn (Thành công)"| E1
+    P32 -->|"F3.12: Yêu cầu giao dịch gia hạn trực tuyến"| E4
+    E4 -->|"F3.13: Kết quả giao dịch gia hạn"| P32
 
-    E1 -->|"F3.6: Yeu_Cau_Tra_Xe_Som"| P33
-    P33 -->|"F3.7: Cap_Nhat_Tra_Som"| D2
-    P33 -->|"F3.8: Thong_Bao_Tra_Som_NV"| E2
+    E1 -->|"F3.8: Yêu cầu trả xe sớm"| P33
+    D2 -->|"F3.14: Đọc đơn đặt xe (để trả sớm)"| P33
+    P33 -->|"F3.9: Cập nhật trả sớm"| D2
+    P33 -->|"F3.10: Thông báo trả sớm"| E2
+    P33 -->|"F3.15: Kết quả yêu cầu trả sớm"| E1
 
     %% === STYLES ===
     style E1 fill:#4FC3F7,stroke:#0277BD,color:#000,stroke-width:2px
     style E2 fill:#81C784,stroke:#2E7D32,color:#000,stroke-width:2px
+    style E4 fill:#F48FB1,stroke:#880E4F,color:#000,stroke-width:2px
     style P31 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P32 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P33 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style D2 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
+    style D5 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
 ```
 
-*   **P3.1 (Kiểm tra khả năng gia hạn):** Tiếp nhận yêu cầu gia hạn (`F3.1`), đọc thông tin booking gốc từ `D2` (`F3.2`) để đối chiếu số lần gia hạn hiện tại (phải < 3 lần). Đồng thời đọc `D2` (`F3.3`) để kiểm tra xe có bị trùng lịch thuê của khách hàng khác trong khoảng thời gian gia hạn không.
-    *   *Không hợp lệ / Trùng lịch:* Gửi phản hồi từ chối gia hạn (`F3.4`) cho khách hàng.
-    *   *Hợp lệ:* Truyền thông tin phê duyệt (`F3.1a`) sang tiến trình 3.2.
-*   **P3.2 (Cập nhật gia hạn):** Nhận lệnh gia hạn hợp lệ `F3.1a`, tính tiền gia hạn phụ thu (khách thanh toán qua app), cập nhật lại thời gian trả xe mới (`ThoiGianTra`) và số lần gia hạn (`SoLanGiaHan += 1`) vào kho booking `D2` (`F3.5`), đồng thời gửi thông báo xác nhận thành công (`F3.4`) cho khách hàng.
-*   **P3.3 (Xử lý trả xe sớm):** Tiếp nhận yêu cầu trả xe sớm trước thời hạn ít nhất 1 giờ (`F3.6`). Tiến trình cập nhật cờ `CoTraSom = TRUE` và chuyển đổi trạng thái booking thành `Yeu_Cau_Tra_Som` trong `D2` (`F3.7`), đồng thời gửi thông báo điều phối trả xe sớm (`F3.8`) đến nhân viên tại quầy.
+*   **P3.1 (Kiểm tra khả năng gia hạn):** Tiếp nhận yêu cầu gia hạn (`F3.1`), đọc thông tin booking gốc từ `D2` (`F3.3`) để đối chiếu số lần gia hạn hiện tại (phải < 3 lần). Đọc cấu hình giới hạn gia hạn từ `D5` (`F3.4`). Đồng thời đọc `D2` (`F3.5`) để kiểm tra xe có bị trùng lịch thuê của khách hàng khác trong khoảng thời gian gia hạn không.
+    *   *Không hợp lệ / Trùng lịch:* Gửi phản hồi từ chối gia hạn (`F3.6`) cho khách hàng.
+    *   *Hợp lệ:* Truyền thông tin phê duyệt (`F3.11`) sang tiến trình 3.2.
+*   **P3.2 (Cập nhật gia hạn):** Nhận lệnh gia hạn hợp lệ `F3.11`, nhận thông tin thanh toán tiền gia hạn phụ thu (`F3.2`). Tiến trình gửi yêu cầu giao dịch gia hạn (`F3.12`) đến Cổng thanh toán `E4`, nhận kết quả giao dịch (`F3.13`), và nếu thành công, tiến hành cập nhật lại thời gian trả xe mới (`ThoiGianTra`), số lần gia hạn (`SoLanGiaHan += 1`) cùng tổng tiền gia hạn phụ thu vào kho booking `D2` (`F3.7`), đồng thời gửi thông báo xác nhận gia hạn thành công (`F3.6`) cho khách hàng.
+*   **P3.3 (Xử lý trả xe sớm):** Tiếp nhận yêu cầu trả xe sớm trước thời hạn ít nhất 1 giờ (`F3.8`). Tiến trình đọc đơn đặt xe tương ứng từ `D2` (`F3.14`) để kiểm tra trạng thái đơn phải là `DANG_THUE`. Nếu không thỏa mãn (ví dụ: đã quá giờ trả hoặc trễ giờ trả mà không gia hạn), hoặc nếu thời điểm gửi yêu cầu cách giờ trả mong muốn dưới 1 tiếng, gửi phản hồi lỗi cho khách hàng (`F3.15`). Nếu hợp lệ, cập nhật cờ `CoTraSom = TRUE` và chuyển đổi trạng thái booking thành `YEU_CAU_TRA_SOM` trong `D2` (`F3.9`), đồng thời gửi thông báo điều phối trả xe sớm (`F3.10`) đến nhân viên tại quầy và gửi kết quả xác nhận thành công (`F3.15`) cho khách hàng.
 
 ---
 
@@ -480,11 +538,13 @@ graph TB
     %% === ACTORS ===
     E1["👤 E1: KHÁCH HÀNG"]
     E2["🧑‍💼 E2: NHÂN VIÊN"]
+    E4["🏦 E4: CỔNG THANH TOÁN"]
 
     %% === DATA STORES ===
     D1[("D1: Xe_May")]
     D2[("D2: Hop_Dong_Booking")]
     D4[("D4: Lich_Su_Thue")]
+    D5[("D5: Cau_Hinh_He_Thong")]
 
     %% === SUB-PROCESSES ===
     P41(("4.1\nĐiều phối công việc\ngiao nhận"))
@@ -494,28 +554,32 @@ graph TB
     P45(("4.5\nTiếp nhận\nđánh giá"))
 
     %% === FLOWS ===
-    E2 -->|"F4.1: Yeu_Cau_Xem_Danh_Sach_Giao_Nhan"| P41
-    D2 -->|"F4.2: Doc_Danh_Sach_Booking_Trong_Ngay"| P41
-    P41 -->|"F4.3: Danh_Sach_Giao_Nhan_Trong_Ngay"| E2
+    E2 -->|"F4.1: Yêu cầu xem danh sách giao nhận"| P41
+    D2 -->|"F4.2: Đọc danh sách booking trong ngày"| P41
+    P41 -->|"F4.3: Danh sách giao nhận trong ngày"| E2
 
-    E2 -->|"F4.4: Bien_Ban_Check_In"| P42
-    P42 -->|"F4.5: Cap_Nhat_Check_In"| D2
+    E2 -->|"F4.4: Biên bản Check-in"| P42
+    P42 -->|"F4.5: Cập nhật Check-in"| D2
 
-    E2 -->|"F4.6: Bien_Ban_Check_Out"| P43
-    P43 -->|"F4.3a: Ban_Giao_Bien_Ban_Check_Out"| P44
+    E2 -->|"F4.6: Biên bản Check-out"| P43
+    P43 -->|"F4.16: Bàn giao biên bản Check-out"| P44
 
-    D2 -->|"F4.7: Doc_Booking_Quyet_Toan"| P44
-    P44 -->|"F4.9: Hoa_Don_Quyet_Toan"| E1
-    P44 -->|"F4.10: Cap_Nhat_Quyet_Toan"| D2
-    P44 -->|"F4.11: Giai_Phong_Xe"| D1
-    P44 -->|"F4.12: Luu_Lich_Su_Thue"| D4
+    D2 -->|"F4.7: Đọc booking quyết toán"| P44
+    D5 -->|"F4.8: Đọc bảng giá phạt và đền bù"| P44
+    P44 -->|"F4.10: Hóa đơn quyết toán"| E1
+    P44 -->|"F4.11: Cập nhật quyết toán"| D2
+    P44 -->|"F4.12: Giải phóng xe"| D1
+    P44 -->|"F4.13: Lưu lịch sử thuê"| D4
+    P44 -->|"F4.17: Yêu cầu giao dịch quyết toán trực tuyến"| E4
+    E4 -->|"F4.18: Kết quả giao dịch quyết toán"| P44
 
-    E1 -->|"F4.13: Danh_Gia_Chuyen_Di"| P45
-    P45 -->|"F4.5a: Ghi_Nhan_Danh_Gia"| D2
+    E1 -->|"F4.14: Đánh giá chuyến đi"| P45
+    P45 -->|"F4.15: Ghi nhận đánh giá"| D2
 
     %% === STYLES ===
     style E1 fill:#4FC3F7,stroke:#0277BD,color:#000,stroke-width:2px
     style E2 fill:#81C784,stroke:#2E7D32,color:#000,stroke-width:2px
+    style E4 fill:#F48FB1,stroke:#880E4F,color:#000,stroke-width:2px
     style P41 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P42 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P43 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
@@ -524,22 +588,23 @@ graph TB
     style D1 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D2 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D4 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
+    style D5 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
 ```
 
 *   **P4.1 (Điều phối công việc giao nhận):** Nhân viên gửi yêu cầu truy vấn danh sách công việc giao nhận trong ngày (`F4.1`). Tiến trình đọc dữ liệu đơn thuê từ `D2` (`F4.2`) có mốc thời gian trong ngày và trả về danh sách phân phối cụ thể (`F4.3`).
-*   **P4.2 (Thực hiện bàn giao xe - Check-in):** Khi tiến hành giao xe, nhân viên cửa hàng kiểm tra trực quan và điền biên bản bàn giao gồm chỉ số ODO giao, mức xăng giao, phụ kiện đi kèm và ảnh ngoại quan (`F4.4`). Tiến trình cập nhật thông tin Check-in và chuyển trạng thái booking sang `Dang_Thue` trong `D2` (`F4.5`).
-*   **P4.3 (Thực hiện nhận lại xe - Check-out):** Khi khách trả xe, nhân viên tiến hành nghiệm thu xe và điền biên bản nhận lại gồm chỉ số ODO trả, mức xăng trả, các vết trầy xước/hư hỏng mới, phụ kiện trả lại và mức phí đền bù hư hại thống nhất với khách (`F4.6`). Bản ghi Check-out này được chuyển giao nội bộ qua luồng `F4.3a`.
-*   **P4.4 (Tính toán & Quyết toán phụ phí):** Tiếp nhận dữ liệu biên bản trả xe `F4.3a`, đồng thời đọc chi tiết hợp đồng ban đầu từ `D2` (`F4.7`) để thực hiện:
-    *   Tính toán thời gian trễ hạn và áp dụng logic phạt muộn lũy tiến (trễ dưới 2h ân hạn, trễ 2-6h phạt theo giờ, trễ 6-12h phạt 1/2 ngày, trễ trên 12h phạt 1 ngày thuê).
+*   **P4.2 (Thực hiện bàn giao xe - Check-in):** Khi tiến hành giao xe, nhân viên cửa hàng kiểm tra trực quan và điền biên bản bàn giao gồm chỉ số ODO giao, mức xăng giao, phụ kiện đi kèm và ảnh ngoại quan (`F4.4`). Tiến trình cập nhật thông tin Check-in và chuyển trạng thái booking sang `DANG_THUE` trong `D2` (`F4.5`).
+*   **P4.3 (Thực hiện nhận lại xe - Check-out):** Khi khách trả xe, nhân viên tiến hành nghiệm thu xe và điền biên bản nhận lại gồm chỉ số ODO trả, mức xăng trả, các vết trầy xước/hư hỏng mới, phụ kiện trả lại và mức phí đền bù hư hại thống nhất với khách (`F4.6`). Bản ghi Check-out này được chuyển giao nội bộ sang tiến trình 4.4 qua luồng `F4.16`.
+*   **P4.4 (Tính toán & Quyết toán phụ phí):** Tiếp nhận dữ liệu biên bản trả xe `F4.16`, đọc chi tiết hợp đồng từ `D2` (`F4.7`) và đọc cấu hình bảng giá phạt/đền bù từ `D5` (`F4.8`) để thực hiện:
+    *   Tính toán thời gian trễ hạn và áp dụng logic phạt muộn lũy tiến (trễ dưới 2h ân hạn, trễ 2-6h phạt theo giờ nhưng tối đa không quá 1/2 ngày thuê xe, trễ 6-12h phạt 1/2 ngày, trễ trên 12h phạt 1 ngày thuê).
     *   Tính tổng chi phí quyết toán dựa trên công thức nghiệp vụ (Tiền thuê gốc + Tăng giá ngày lễ - Giảm giá thuê dài ngày + Tiền gia hạn + Phí phạt trễ hạn + Phí đền bù hư hại/mất phụ kiện - Tiền cọc).
-    *   Xuất hóa đơn quyết toán (`F4.9`) gửi cho khách hàng, cập nhật booking thành `Hoan_Tat` trong `D2` (`F4.10`), cập nhật trạng thái xe thành `San_Sang` và chỉ số ODO hiện tại trong `D1` (`F4.11`), đồng thời lưu bản ghi tổng hợp kết quả sang kho lịch sử thuê `D4` (`F4.12`).
-*   **P4.5 (Tiếp nhận đánh giá):** Nhận thông tin đánh giá chất lượng dịch vụ (`F4.13`) của khách hàng gửi sau chuyến đi để cập nhật ghi nhận (`F4.5a`) vào kho `D2`.
+    *   Nếu tổng quyết toán chênh lệch cần thu thêm hoặc hoàn cọc trực tuyến, tiến trình gửi yêu cầu giao dịch quyết toán (`F4.17`) sang Cổng thanh toán `E4`, nhận kết quả giao dịch quyết toán (`F4.18`), và sau khi giao dịch thành công, tiến hành xuất hóa đơn quyết toán (`F4.10`) gửi cho khách hàng, cập nhật booking thành `HOAN_TAT` trong `D2` (`F4.11`), cập nhật trạng thái xe thành `SAN_SANG` và chỉ số ODO hiện tại trong `D1` (`F4.12`), đồng thời lưu bản ghi tổng hợp kết quả sang kho lịch sử thuê `D4` (`F4.13`).
+*   **P4.5 (Tiếp nhận đánh giá):** Nhận thông tin đánh giá chất lượng dịch vụ (`F4.14`) của khách hàng gửi sau chuyến đi để cập nhật ghi nhận (`F4.15`) vào kho `D2`.
 
 ---
 
 ### 5.5. Tiến trình 5.0 — Tra cứu Lịch sử thuê & Quản lý Blacklist
 
-Sơ đồ phân rã mức 1 cho tiến trình 5.0 làm rõ quy trình tra cứu dữ liệu thuê xe phục vụ nghiệp vụ xử lý vi phạm giao thông (phạt nguội) và kiểm soát danh sách đen (Blacklist).
+Sơ đồ phân rã mức 1 cho tiến trình 5.0 làm rõ quy trình tra cứu dữ liệu thuê xe phục vụ nghiệp vụ xử lý vi phạm giao thông (phạt nguội), kiểm soát danh sách đen (Blacklist) và quản lý tài khoản nhân viên.
 
 ```mermaid
 graph TB
@@ -550,26 +615,32 @@ graph TB
     %% === DATA STORES ===
     D3[("D3: Khach_Hang_GPLX")]
     D4[("D4: Lich_Su_Thue")]
+    D6[("D6: Nhan_Vien")]
 
     %% === SUB-PROCESSES ===
     P51(("5.1\nTra cứu lịch sử\nthuê xe"))
     P52(("5.2\nGhi chú vi phạm\nnội bộ"))
     P53(("5.3\nCập nhật\nBlacklist"))
+    P54(("5.4\nQuản lý tài khoản\nnhân viên"))
 
     %% === FLOWS ===
-    E2 -->|"F5.1: Yeu_Cau_Tra_Cuu_Lich_Su"| P51
-    E3 -->|"F5.1: Yeu_Cau_Tra_Cuu_Lich_Su"| P51
-    D4 -->|"F5.2: Doc_Lich_Su_Theo_Bien_So"| P51
-    D3 -->|"F5.3: Doc_Thong_Tin_KH"| P51
-    P51 -->|"F5.4: Ket_Qua_Tra_Cuu"| E2
-    P51 -->|"F5.4: Ket_Qua_Tra_Cuu"| E3
+    E2 -->|"F5.1: Yêu cầu tra cứu lịch sử"| P51
+    E3 -->|"F5.1: Yêu cầu tra cứu lịch sử"| P51
+    D4 -->|"F5.2: Đọc lịch sử theo biển số"| P51
+    D3 -->|"F5.3: Đọc thông tin khách hàng"| P51
+    P51 -->|"F5.4: Kết quả tra cứu"| E2
+    P51 -->|"F5.4: Kết quả tra cứu"| E3
 
-    E2 -->|"F5.5: Ghi_Chu_Vi_Pham_Noi_Bo"| P52
-    E3 -->|"F5.5: Ghi_Chu_Vi_Pham_Noi_Bo"| P52
-    P52 -->|"F5.6: Cap_Nhat_Ghi_Chu_Lich_Su"| D4
+    E2 -->|"F5.5: Ghi chú vi phạm nội bộ"| P52
+    E3 -->|"F5.5: Ghi chú vi phạm nội bộ"| P52
+    P52 -->|"F5.6: Cập nhật ghi chú lịch sử"| D4
 
-    E3 -->|"F5.7: Yeu_Cau_Blacklist"| P53
-    P53 -->|"F5.8: Cap_Nhat_Blacklist"| D3
+    E3 -->|"F5.7: Yêu cầu Blacklist"| P53
+    P53 -->|"F5.8: Cập nhật Blacklist"| D3
+
+    E3 -->|"F5.9: Quản lý nhân viên"| P54
+    P54 -->|"F5.10: Cập nhật thông tin nhân viên"| D6
+    D6 -->|"F5.11: Đọc thông tin nhân viên"| P54
 
     %% === STYLES ===
     style E2 fill:#81C784,stroke:#2E7D32,color:#000,stroke-width:2px
@@ -577,17 +648,61 @@ graph TB
     style P51 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P52 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P53 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
+    style P54 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style D3 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D4 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
+    style D6 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
 ```
 
 *   **P5.1 (Tra cứu lịch sử thuê xe):** Nhân viên hoặc Admin gửi yêu cầu tra cứu (`F5.1`) bao gồm biển số xe và khoảng thời gian vi phạm giao thông. Tiến trình thực hiện truy vấn đối chiếu lịch sử thuê trong `D4` (`F5.2`), đồng thời đọc thông tin cá nhân khách hàng trong `D3` (`F5.3`) để xuất kết quả đối chiếu (`F5.4`) hỗ trợ nhân viên cửa hàng làm việc ngoại tuyến với cơ quan công an hoặc khách hàng.
 *   **P5.2 (Ghi chú vi phạm nội bộ):** Nhân viên hoặc Admin gửi thông tin ghi nhận lỗi vi phạm phạt nguội (`F5.5`) để lưu vết trực tiếp vào bản ghi lịch sử thuê tương ứng trong `D4` (`F5.6`) dưới dạng `DanhDauViPham = TRUE` và ghi chú nội bộ.
 *   **P5.3 (Cập nhật Blacklist):** Tiếp nhận yêu cầu đưa khách hàng vi phạm nghiêm trọng vào danh sách đen từ Admin (`F5.7`). Tiến trình cập nhật lại cờ `TrangThaiBlacklist = TRUE` cùng lý do chi tiết vào hồ sơ khách hàng trong kho `D3` (`F5.8`).
+*   **P5.4 (Quản lý tài khoản nhân viên):** Tiếp nhận yêu cầu quản lý nhân viên từ Admin (`F5.9`). Tiến trình cập nhật thông tin nhân viên mới/đã chỉnh sửa vào kho nhân viên `D6` (`F5.10`) và đọc dữ liệu nhân viên phục vụ hiển thị (`F5.11`).
+
+---
+
+### 5.6. Tiến trình 6.0 — Quản lý Danh mục & Cấu hình Hệ thống [MỚI]
+
+Sơ đồ phân rã mức 1 cho tiến trình 6.0 làm rõ quy trình quản lý thông tin xe máy và quản lý cấu hình hệ thống của Admin.
+
+```mermaid
+graph TB
+    %% === ACTORS ===
+    E3["👨‍💻 E3: ADMIN"]
+
+    %% === DATA STORES ===
+    D1[("D1: Xe_May")]
+    D5[("D5: Cau_Hinh_He_Thong")]
+
+    %% === SUB-PROCESSES ===
+    P61(("6.1\nQuản lý thông tin\nxe máy"))
+    P62(("6.2\nQuản lý cấu hình\nhệ thống"))
+
+    %% === FLOWS ===
+    E3 -->|"F6.1: Yêu cầu cập nhật thông tin xe máy"| P61
+    D1 -->|"F6.3: Đọc danh sách xe quản trị"| P61
+    P61 -->|"F6.2: Lưu thông tin xe mới"| D1
+    P61 -->|"F6.4: Kết quả cập nhật xe"| E3
+
+    E3 -->|"F6.5: Yêu cầu cập nhật cấu hình hệ thống"| P62
+    D5 -->|"F6.7: Đọc cấu hình hệ thống quản trị"| P62
+    P62 -->|"F6.6: Lưu cấu hình hệ thống"| D5
+    P62 -->|"F6.8: Kết quả cập nhật cấu hình"| E3
+
+    %% === STYLES ===
+    style E3 fill:#FFB74D,stroke:#E65100,color:#000,stroke-width:2px
+    style P61 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
+    style P62 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
+    style D1 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
+    style D5 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
+```
+
+*   **P6.1 (Quản lý thông tin xe máy):** Tiếp nhận yêu cầu cập nhật thông tin xe máy từ Admin (`F6.1`), đối chiếu danh sách xe hiện tại trong `D1` (`F6.3`) để kiểm tra tính hợp lệ (biển số/số khung không trùng), tiến hành lưu thông tin xe mới/đã chỉnh sửa vào `D1` (`F6.2`) và phản hồi kết quả cập nhật (`F6.4`) về cho Admin.
+*   **P6.2 (Quản lý cấu hình hệ thống):** Tiếp nhận yêu cầu điều chỉnh các tham số cấu hình hệ thống từ Admin (`F6.5`), đọc thông tin cấu hình hiện tại từ `D5` (`F6.7`) để ghi đè cấu hình mới vào `D5` (`F6.6`) và phản hồi kết quả xác nhận (`F6.8`) về cho Admin.
 
 ---
 
 > **Ghi chú tổng hợp:**
-> - Tất cả tên luồng dữ liệu (F1.1 → F5.8), kho dữ liệu (D1 → D5), và thuộc tính được sử dụng **đồng nhất 100%** với tài liệu [Từ điển dữ liệu](file:///Users/vqd2k6/Desktop/PTTKHT-UTH/Project-KTHP/docs/data-dictionary.md).
+> - Tất cả tên luồng dữ liệu (F1.1 → F6.8), kho dữ liệu (D1 → D6), và thuộc tính được sử dụng **đồng nhất 100%** với tài liệu [Từ điển dữ liệu](file:///Users/vqd2k6/Desktop/PTTKHT-UTH/Project-KTHP/docs/data-dictionary.md).
 > - Mã Mermaid.js sử dụng cú pháp `graph TB` (Top-Bottom), có thể nhúng trực tiếp vào báo cáo Markdown hoặc render qua Mermaid Live Editor.
 > - **Nghiệp vụ phạt nguội giao thông** là quy trình dân sự bên ngoài. Hệ thống chỉ hỗ trợ tra cứu lịch sử thuê (P5.0) để NV/Admin tự xử lý offline với cơ quan chức năng và khách hàng.

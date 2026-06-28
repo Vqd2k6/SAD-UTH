@@ -27,7 +27,7 @@ Hệ thống ra đời nhằm cung cấp giải pháp chuyển đổi số toàn
 *   **Quản trị viên / Chủ cửa hàng (Admin):** Quản lý danh mục xe máy, cấu hình giá thuê/phí phạt, quản lý tài khoản nhân viên, kiểm duyệt các đơn đặt xe và xem báo cáo tài chính.
 
 ### 2.2. Các phân hệ chính
-1.  **Quản lý Xe máy:** Phân loại theo loại xe (Xe số, Xe ga, Xe côn tay, Xe Pkl), phân khối (cc), tình trạng xe (Sẵn sàng, Đang thuê, Đang bảo dưỡng, Đang sửa chữa). Phân nhóm xe rõ ràng theo dung tích xi-lanh (nhóm 50cc & xe điện, và nhóm trên 50cc từ 50cc đến dưới 125cc).
+1.  **Quản lý Xe máy:** Phân loại theo loại xe (Xe số, Xe ga, Xe côn tay, Xe PKL, Xe điện), phân khối (cc), tình trạng xe (Sẵn sàng, Đang thuê, Đang bảo dưỡng, Đang sửa chữa). Phân nhóm xe rõ ràng theo dung tích xi-lanh và động cơ: Nhóm dưới 50cc & Xe điện (không yêu cầu GPLX), Nhóm từ 50cc - dưới 175cc (yêu cầu GPLX hạng A1 hoặc A2), và Nhóm từ 175cc trở lên / Xe phân khối lớn PKL (yêu cầu GPLX hạng A2).
 2.  **Quản lý Đặt xe (Booking):** Theo dõi toàn bộ vòng đời đơn đặt xe từ lúc khởi tạo -> đặt cọc -> bàn giao xe -> (gia hạn/trả xe sớm nếu có) -> trả xe & thanh quyết toán. Hỗ trợ hệ thống gửi thông báo tự động trước giờ nhận/trả xe và khi quá hạn.
 3.  **Quản lý Khách hàng & Xác thực:** Đăng ký, đăng nhập với hai tùy chọn (Có GPLX và Chưa có GPLX). Tải lên và duyệt hình ảnh GPLX (hạng A1/A2...) bởi Admin. Hỗ trợ phân quyền tài khoản khi chưa được duyệt GPLX.
 4.  **Cấu hình Giá & Phí phạt:** Thiết lập giá thuê theo ngày, cấu hình giảm giá cho thuê dài ngày, định giá động tự động tăng 15% - 30% vào Lễ/Tết hoặc cuối tuần. Cấu hình phí phạt trễ giờ lũy tiến (sau 2 tiếng ân hạn), bảng giá đền bù linh kiện hư hỏng.
@@ -42,15 +42,16 @@ Hệ thống ra đời nhằm cung cấp giải pháp chuyển đổi số toàn
     *   Lựa chọn đăng ký: **Có GPLX** hoặc **Chưa có GPLX**.
     *   Nếu chọn **Có GPLX**, khách hàng phải tải ảnh chụp GPLX lên và đợi Admin kiểm duyệt. Trong lúc chờ duyệt, tài khoản được xếp vào nhóm giống như khách hàng chưa có GPLX (chỉ thuê được xe dưới 50cc và xe điện).
 *   **Tìm kiếm & Lọc xe máy:**
-    *   Lọc theo hãng (Honda, Yamaha, Vespa...), loại xe (xe ga, xe số, xe côn), phân khối (50cc, 110cc, 125cc, 150cc...), và khoảng giá.
-    *   Hiển thị rõ ràng hai phân loại nhóm xe:
-        *   *Nhóm xe 50cc (và xe điện):* Dành cho học sinh, sinh viên hoặc khách hàng chưa có GPLX / GPLX chưa được Admin duyệt.
-        *   *Nhóm xe trên 50cc (Từ 50cc - dưới 125cc):* Yêu cầu khách hàng bắt buộc phải có GPLX hạng A1 còn hiệu lực đã được Admin duyệt thành công.
+    *   Lọc theo hãng (Honda, Yamaha, Vespa...), loại xe (xe ga, xe số, xe côn, xe PKL, xe điện), phân khối (50cc, 110cc, 125cc, 150cc, 175cc, 300cc...), và khoảng giá.
+    *   Hiển thị rõ ràng ba phân loại nhóm xe và điều kiện tương ứng:
+        *   *Nhóm xe dưới 50cc (và xe điện):* Dành cho học sinh, sinh viên hoặc khách hàng chưa có GPLX / GPLX chưa được Admin duyệt.
+        *   *Nhóm xe từ 50cc đến dưới 175cc:* Yêu cầu khách hàng bắt buộc phải có GPLX hạng A1 hoặc A2 còn hiệu lực đã được Admin duyệt thành công.
+        *   *Nhóm xe từ 175cc trở lên (Xe PKL):* Yêu cầu khách hàng bắt buộc phải có GPLX hạng A2 còn hiệu lực đã được Admin duyệt thành công.
 *   **Xem chi tiết xe:** Hình ảnh xe, biển số (ẩn một phần bảo mật), tình trạng mũ bảo hiểm đi kèm, mức tiêu thụ xăng, bảng giá thuê.
 *   **Đặt xe trực tuyến:**
     *   Chọn thời gian nhận/trả xe.
     *   Chọn thêm dịch vụ đi kèm (thuê thêm mũ bảo hiểm chất lượng cao, áo mưa, định vị GPS cầm tay).
-    *   Hệ thống kiểm tra trạng thái GPLX của khách hàng: Nếu đặt xe trên 50cc, khách hàng phải có GPLX A1 đã được duyệt.
+    *   Hệ thống kiểm tra trạng thái GPLX của khách hàng: Nếu đặt xe nhóm từ 50cc đến dưới 175cc, khách hàng phải có GPLX A1 hoặc A2 đã duyệt. Nếu đặt xe nhóm từ 175cc trở lên (Xe PKL), khách hàng phải có GPLX A2 đã duyệt.
 *   **Thanh toán đặt cọc:** Tích hợp thanh toán online (chuyển khoản ngân hàng hoặc ví điện tử) để giữ xe.
 *   **Gia hạn thuê xe (Rental Extension):** Yêu cầu gia hạn thời gian thuê trực tiếp trên app (Xem chi tiết tại mục Quy tắc nghiệp vụ).
 *   **Yêu cầu trả xe sớm:** Tính năng cho phép khách hàng chủ động yêu cầu kết thúc hành trình sớm hơn dự kiến ngay trên ứng dụng di động (yêu cầu gửi trước giờ muốn trả ít nhất 1 tiếng).
@@ -58,10 +59,10 @@ Hệ thống ra đời nhằm cung cấp giải pháp chuyển đổi số toàn
 
 ### 3.2. Chức năng dành cho Nhân viên (Staff)
 *   **Quản lý Đơn đặt xe (Booking Workflow):**
-    *   Tiếp nhận yêu cầu đặt xe, đối chiếu và xác nhận thông tin đăng ký GPLX của khách hàng (nếu thuê dòng xe >50cc).
+    *   Tiếp nhận yêu cầu đặt xe, đối chiếu và xác nhận thông tin đăng ký GPLX của khách hàng (nếu thuê dòng xe từ 50cc trở lên).
     *   Duyệt hoặc Từ chối đơn đặt xe (đối với đơn đã cọc thành công).
 *   **Quy trình Bàn giao xe (Check-in):** 
-    *   Đối chiếu GPLX gốc của khách hàng khi đến tiệm (đối với xe >50cc, yêu cầu GPLX A1 còn hiệu lực).
+    *   Đối chiếu GPLX gốc của khách hàng khi đến tiệm (yêu cầu GPLX A1/A2 còn hiệu lực cho xe từ 50cc - dưới 175cc; GPLX A2 còn hiệu lực cho xe từ 175cc trở lên).
     *   Kiểm tra xe cùng khách hàng: Ghi nhận số ODO ban đầu, tình trạng ngoại quan có xước/móp hay không (chụp ảnh lưu trữ).
     *   Bàn giao xe kèm phụ kiện (2 mũ bảo hiểm + 1 áo mưa).
     *   Xác nhận bàn giao xe và chuyển trạng thái đơn sang "Đang thuê (In Progress)".
@@ -106,11 +107,11 @@ Khách hàng đang thuê xe có thể gửi yêu cầu gia hạn thời gian thu
 Nếu khách hàng trả xe trễ so với thời gian cam kết trong hợp đồng mà không được duyệt gia hạn:
 *   **Thời gian ân hạn (Grace Period):** Khách hàng được phép trả xe trễ tối đa **2 tiếng** so với giờ hẹn trả trong hợp đồng mà không bị tính phí phạt trễ hạn.
 *   **Tính phí phạt khi vượt quá Thời gian ân hạn (Trễ > 2 tiếng):**
-    *   Trễ từ **trên 2 tiếng đến dưới 6 tiếng:** Áp dụng phí phạt tính theo giờ.
+    *   Trễ từ **trên 2 tiếng đến dưới 6 tiếng:** Áp dụng phí phạt tính theo giờ, nhưng tối đa không vượt quá mức phạt của mốc tiếp theo (1/2 ngày thuê xe).
         *   Xe số / Xe ga thường: 30,000 VND / giờ.
-        *   Xe côn tay / Xe phân khối lớn (>= 150cc): 50,000 VND / giờ.
-    *   Trễ **từ 6 tiếng đến dưới 12 tiếng:** Hệ thống tự động tính thêm mức phí phạt bằng **1/2 ngày thuê**.
-    *   Trễ **từ 12 tiếng trở lên:** Tính tròn thành **1 ngày thuê mới** (tương đương phí phạt bằng 1 ngày thuê xe).
+        *   Xe côn tay / Xe phân khối lớn (>= 175cc): 50,000 VND / giờ.
+    *   Trễ **từ 6 tiếng đến dưới 12 tiếng:** Phí phạt bằng **1/2 ngày thuê** của xe đang thuê.
+    *   Trễ **từ 12 tiếng trở lên:** Tính tròn thành **1 ngày thuê mới** (phí phạt bằng 1 ngày thuê xe).
 
 ### 4.3. Quy định Hủy đặt xe (Cancellation & Refund)
 Khách hàng đã đặt cọc xe trực tuyến nhưng muốn hủy đơn:
@@ -174,18 +175,20 @@ sequenceDiagram
 ### 5.2. Quy trình Bàn giao & Kiểm tra trả xe máy
 ```mermaid
 stateDiagram-v2
-    [*] --> ChoNhanXe : Đã duyệt đặt xe & cọc thành công
-    ChoNhanXe --> DangThue : Bàn giao xe (Chụp ảnh ngoại quan, ODO, giao mũ & áo mưa)
-    DangThue --> YeuCauGiaHan : Khách gửi yêu cầu gia hạn
-    YeuCauGiaHan --> DangThue : Gia hạn thành công (Cập nhật lịch trả)
-    YeuCauGiaHan --> QuaHanTra : Gia hạn thất bại & Quá giờ trả xe
-    DangThue --> YeuCauTraSom : Khách yêu cầu trả xe sớm (trước ít nhất 1 tiếng)
-    YeuCauTraSom --> ChoTraXe : Mang xe đến tiệm sớm
-    DangThue --> ChoTraXe : Khách mang xe đến tiệm đúng hẹn
-    QuaHanTra --> ChoTraXe : Khách mang xe đến tiệm trễ hẹn
-    ChoTraXe --> XyLyPhuPhi : Nhân viên kiểm tra (ODO, vết xước, mũ bảo hiểm & áo mưa)
-    XyLyPhuPhi --> HoanTat : Thanh toán phụ phí (nếu có) & Trả cọc
-    HoanTat --> [*] : Đóng đơn hàng (Xe trở lại trạng thái Sẵn sàng)
+    [*] --> CHO_XAC_NHAN : Khách chọn xe & tạo yêu cầu đặt
+    CHO_XAC_NHAN --> CHO_NHAN_XE : Thanh toán cọc thành công (Tự động duyệt)
+    CHO_XAC_NHAN --> DA_HUY : Hết hạn giữ chỗ 15 phút hoặc hủy thanh toán
+    CHO_NHAN_XE --> DA_HUY : Khách hủy đơn trước giờ nhận (Hoàn cọc theo chính sách)
+    CHO_NHAN_XE --> DANG_THUE : Bàn giao xe (Check-in: ODO, xăng, ảnh, giao phụ kiện)
+    DANG_THUE --> YEU_CAU_TRA_SOM : Khách yêu cầu trả xe sớm trên App (trước ≥ 1h)
+    DANG_THUE --> QUA_HAN : Trễ quá 2h ân hạn (chưa trả xe/không được gia hạn)
+    YEU_CAU_TRA_SOM --> CHO_TRA_XE : Mang xe đến quầy sớm
+    DANG_THUE --> CHO_TRA_XE : Mang xe đến quầy đúng hẹn
+    QUA_HAN --> CHO_TRA_XE : Mang xe đến quầy trễ hẹn
+    CHO_TRA_XE --> DANG_QUYET_TOAN : Nghiệm thu xe (Check-out: ODO, xăng, hư hỏng, phụ kiện)
+    DANG_QUYET_TOAN --> HOAN_TAT : Quyết toán phụ phí & Đóng đơn hàng (Xe chuyển SẴN SÀNG)
+    HOAN_TAT --> [*]
+    DA_HUY --> [*]
 ```
 
 ---
