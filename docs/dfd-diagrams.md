@@ -25,20 +25,20 @@ graph TB
     P0(("0\nHệ thống Quản lý\nvà Cho thuê\nXe máy Thông minh"))
 
     %% === KHÁCH HÀNG ↔ HỆ THỐNG ===
-    E1 -->|"FC.1: Hồ sơ đăng ký & Thông tin xác thực\nFC.2: Yêu cầu thuê xe & Phản hồi chuyến đi\nFC.3: Chứng từ thanh toán dịch vụ"| P0
-    P0 -->|"FC.4: Kết quả giao dịch & Thông tin phản hồi"| E1
+    E1 -->|"Thông tin đăng ký và xác thực\nYêu cầu dịch vụ thuê xe\nChứng từ thanh toán"| P0
+    P0 -->|"Thông báo và kết quả dịch vụ\nThông báo nhắc nhở tự động\nHóa đơn quyết toán cuối"| E1
 
     %% === NHÂN VIÊN ↔ HỆ THỐNG ===
-    E2 -->|"FC.5: Hồ sơ giao nhận xe & Yêu cầu nghiệp vụ"| P0
-    P0 -->|"FC.6: Thông tin điều phối & Kết quả tra cứu"| E2
+    E2 -->|"Hồ sơ giao nhận xe\nYêu cầu tra cứu nghiệp vụ"| P0
+    P0 -->|"Thông tin điều phối công việc\nKết quả tra cứu lịch sử"| E2
 
     %% === ADMIN ↔ HỆ THỐNG ===
-    E3 -->|"FC.7: Lệnh duyệt & Quản trị hệ thống"| P0
-    P0 -->|"FC.8: Hồ sơ chờ duyệt & Thông tin báo cáo"| E3
+    E3 -->|"Lệnh duyệt và điều chỉnh hệ thống"| P0
+    P0 -->|"Thông tin chờ xử lý và báo cáo"| E3
 
     %% === CỔNG THANH TOÁN ↔ HỆ THỐNG ===
-    P0 -->|"FC.9: Yêu cầu giao dịch trực tuyến"| E4
-    E4 -->|"FC.10: Kết quả giao dịch trực tuyến"| P0
+    P0 -->|"Yêu cầu giao dịch trực tuyến"| E4
+    E4 -->|"Xác nhận kết quả giao dịch"| P0
 
     %% === STYLES ===
     style E1 fill:#4FC3F7,stroke:#0277BD,color:#000,stroke-width:2px
@@ -50,20 +50,106 @@ graph TB
 
 ### Bảng tổng hợp luồng dữ liệu — Sơ đồ Ngữ cảnh (Context Diagram)
 
-Dưới đây là mô tả chi tiết của 10 luồng dữ liệu đã được **tổng quát hóa** ở mức Ngữ cảnh (Level -1) và ma trận phân rã sang các luồng dữ liệu chi tiết ở mức Level 0 và Level 1:
+Dưới đây là mô tả chi tiết của từng luồng dữ liệu gom nhóm ở mức Ngữ cảnh (Level -1), bao gồm các luồng dữ liệu con tương ứng ở mức Level 0 và Level 1:
 
-| Mã Luồng | Tên Luồng Tổng Quát | Hướng Đi | Mô tả Tóm tắt | Các Luồng Chi Tiết Bao Hàm (Level 0/1) |
-|---|---|---|---|---|
-| **FC.1** | `Hồ sơ đăng ký & Thông tin xác thực` | E1 → P0 | Khách hàng đăng ký tài khoản mới (gồm ảnh GPLX) và gửi thông tin đăng nhập hệ thống. | - `F1.1: Yêu cầu đăng ký tài khoản`<br>- `F1.2: Thông tin đăng nhập` |
-| **FC.2** | `Yêu cầu thuê xe & Phản hồi chuyến đi` | E1 → P0 | Khách hàng thực hiện tìm kiếm xe, đặt xe, hủy đơn, gia hạn, yêu cầu trả sớm và gửi đánh giá dịch vụ. | - `F2.1: Yêu cầu tìm kiếm xe`<br>- `F2.6: Yêu cầu đặt xe`<br>- `F2.7: Yêu cầu hủy đặt xe`<br>- `F3.1: Yêu cầu gia hạn`<br>- `F3.8: Yêu cầu trả xe sớm`<br>- `F4.14: Đánh giá chuyến đi` |
-| **FC.3** | `Chứng từ thanh toán dịch vụ` | E1 → P0 | Xác nhận việc khách hàng đã thực hiện thanh toán online (cho tiền đặt cọc hoặc tiền gia hạn). | - `F2.9: Thanh toán đặt cọc`<br>- `F3.2: Thanh toán gia hạn` |
-| **FC.4** | `Kết quả giao dịch & Thông tin phản hồi` | P0 → E1 | Kết quả đăng nhập, trạng thái duyệt GPLX, danh sách xe tìm được, thông báo khóa xe, nhắc nhở tự động, hóa đơn quyết toán. | - `F1.3: Kết quả đăng nhập`<br>- `F1.6: Thông báo kết quả GPLX`<br>- `F2.2: Kết quả tìm kiếm xe`<br>- `F2.8: Thông báo khóa xe tạm`<br>- `F2.13: Thông báo nhắc nhở tự động`<br>- `F2.14: Xác nhận đặt xe`<br>- `F3.6: Kết quả gia hạn`<br>- `F3.15: Kết quả trả sớm`<br>- `F4.10: Hóa đơn quyết toán` |
-| **FC.5** | `Hồ sơ giao nhận xe & Yêu cầu nghiệp vụ` | E2 → P0 | Nhân viên nộp biên bản Check-in/Check-out, xem việc cần làm hoặc tra cứu lịch sử phạt nguội, ghi chú vi phạm. | - `F4.1: Yêu cầu xem danh sách giao nhận`<br>- `F4.4: Biên bản Check-in`<br>- `F4.6: Biên bản Check-out`<br>- `F5.1: Yêu cầu tra cứu lịch sử`<br>- `F5.5: Ghi chú vi phạm nội bộ` |
-| **FC.6** | `Thông tin điều phối & Kết quả tra cứu` | P0 → E2 | Thông báo đơn cọc mới cần chuẩn bị xe, thông báo trả sớm để đón khách, danh sách công việc giao nhận, kết quả tra cứu vi phạm. | - `F2.12: Thông báo đơn mới`<br>- `F3.10: Thông báo trả sớm`<br>- `F4.3: Danh sách giao nhận trong ngày`<br>- `F5.4: Kết quả tra cứu` |
-| **FC.7** | `Lệnh duyệt & Quản trị hệ thống` | E3 → P0 | Admin duyệt GPLX, quản lý Blacklist, quản lý tài khoản nhân viên, cập nhật đội xe và thay đổi cấu hình hệ thống. | - `F1.5: Kết quả duyệt GPLX`<br>- `F5.7: Yêu cầu Blacklist`<br>- `F5.9: Quản lý nhân viên`<br>- `F6.1: Yêu cầu cập nhật thông tin xe máy`<br>- `F6.5: Yêu cầu cập nhật cấu hình hệ thống` |
-| **FC.8** | `Hồ sơ chờ duyệt & Thông tin báo cáo` | P0 → E3 | Gửi hồ sơ ảnh GPLX chờ duyệt, kết quả tra cứu lịch sử, thông báo cập nhật xe và cấu hình hệ thống cho Admin. | - `F1.4: Hồ sơ GPLX chờ duyệt`<br>- `F5.4: Kết quả tra cứu`<br>- `F6.4: Kết quả cập nhật xe`<br>- `F6.8: Kết quả cập nhật cấu hình` |
-| **FC.9** | `Yêu cầu giao dịch trực tuyến` | P0 → E4 | Chuyển yêu cầu giao dịch đặt cọc, hoàn cọc hủy đơn, thanh toán gia hạn, thanh toán phụ phí sang cổng thanh toán trực tuyến. | - `F2.16: Yêu cầu giao dịch trực tuyến`<br>- `F3.12: Yêu cầu giao dịch gia hạn trực tuyến`<br>- `F4.17: Yêu cầu giao dịch quyết toán trực tuyến` |
-| **FC.10** | `Kết quả giao dịch trực tuyến` | E4 → P0 | Cổng thanh toán phản hồi kết quả giao dịch thanh toán hoặc hoàn cọc thành công/thất bại về hệ thống. | - `F2.17: Kết quả giao dịch`<br>- `F3.13: Kết quả giao dịch gia hạn`<br>- `F4.18: Kết quả giao dịch quyết toán` |
+1. **Thông tin đăng ký và xác thực** (Khách hàng `E1` → Hệ thống `P0`):
+   - *Mô tả:* Chứa toàn bộ thông tin đăng ký tài khoản mới và thông tin xác thực đăng nhập của khách hàng.
+   - *Bao hàm:* 
+     - `F1.1: Yêu cầu đăng ký tài khoản` (HoTen, Email, SoDienThoai, LuaChonGPLX, AnhGPLXMatTruoc, AnhGPLXMatSau, HangGPLX, SoGPLX, NgayCapGPLX, NgayHetHanGPLX).
+     - `F1.2: Thông tin đăng nhập` (Email/SoDienThoai, MatKhau).
+
+2. **Yêu cầu dịch vụ thuê xe** (Khách hàng `E1` → Hệ thống `P0`):
+   - *Mô tả:* Các tương tác trực tiếp của khách hàng nhằm đặt xe, thay đổi hợp đồng hoặc gửi phản hồi.
+   - *Bao hàm:*
+     - `F2.1: Yêu cầu tìm kiếm xe` (LoaiXe, HangXe, PhanKhoi, KhoangGia_Min, KhoangGia_Max, ThoiGianNhan, ThoiGianTra).
+     - `F2.6: Yêu cầu đặt xe` (MaKhachHang, MaXe, ThoiGianNhan, ThoiGianTra, DichVuDiKem[]).
+     - `F2.7: Yêu cầu hủy đặt xe` (MaBooking).
+     - `F3.1: Yêu cầu gia hạn` (MaBooking, SoNgayGiaHanThem, ThoiGianTraMoi).
+     - `F3.8: Yêu cầu trả xe sớm` (MaBooking, ThoiGianMuonTra).
+     - `F4.14: Đánh giá chuyến đi` (MaBooking, DanhGiaSao, NoiDungDanhGia).
+
+3. **Chứng từ thanh toán** (Khách hàng `E1` → Hệ thống `P0`):
+   - *Mô tả:* Tài liệu/thông tin xác nhận việc khách hàng đã thực hiện thanh toán qua ứng dụng.
+   - *Bao hàm:*
+     - `F2.9: Thanh toán đặt cọc` (MaBooking, TienCoc, PhuongThucCoc).
+     - `F3.2: Thanh toán gia hạn` (MaBooking, SoTienGiaHan, PhuongThucCoc).
+
+4. **Thông báo và kết quả dịch vụ** (Hệ thống `P0` → Khách hàng `E1`):
+   - *Mô tả:* Kết quả trả về cho khách hàng từ các yêu cầu dịch vụ.
+   - *Bao hàm:*
+     - `F1.3: Kết quả đăng nhập` (Xác thực thành công / thông báo sai tài khoản mật khẩu).
+     - `F1.6: Thông báo kết quả GPLX` (TrangThaiGPLX, NhomXeDuocThue, LyDoTuChoiGPLX).
+     - `F2.2: Kết quả tìm kiếm xe` (Danh sách xe máy khả dụng).
+     - `F2.8: Thông báo khóa xe tạm` (MaXe, ThoiGianKhoaTam = 15 phút).
+     - `F2.14: Xác nhận đặt xe` (MaBooking, TrangThaiBooking, DonGiaApDung, TongTienThue, TienCoc).
+     - `F3.6: Kết quả gia hạn` (KetQua, TienGiaHanThem, GoiYXeThayTe).
+     - `F3.15: Kết quả yêu cầu trả sớm` (Thông báo đồng ý/từ chối yêu cầu trả sớm).
+
+5. **Thông báo nhắc nhở tự động** (Hệ thống `P0` → Khách hàng `E1`):
+   - *Mô tả:* Các thông báo đẩy tự động từ hệ thống để nhắc lịch trình.
+   - *Bao hàm:*
+     - `F2.13: Thông báo nhắc nhở tự động` (Nhắc nhận xe trước 2h, nhắc trả xe trước 2h, nhắc hết giờ hẹn trả xe).
+
+6. **Hóa đơn quyết toán cuối** (Hệ thống `P0` → Khách hàng `E1`):
+   - *Mô tả:* Hóa đơn chi tiết các khoản chi phí khi hoàn tất chuyến đi.
+   - *Bao hàm:*
+     - `F4.10: Hóa đơn quyết toán` (MaBooking, TongTienThue, TienGiamGia, TienTangGia, TongTienGiaHan, PhiPhatTreHan, PhiDenBuHuHai, PhiMatPhuKien, TienCoc, TongThanhToan).
+
+7. **Hồ sơ giao nhận xe** (Nhân viên `E2` → Hệ thống `P0`):
+   - *Mô tả:* Biên bản do nhân viên lập tại quầy khi giao xe hoặc nhận lại xe từ khách.
+   - *Bao hàm:*
+     - `F4.4: Biên bản Check-in` (MaBooking, ODONhan, MucXangNhan, AnhNgoaiQuanNhan[], Phụ kiện giao).
+     - `F4.6: Biên bản Check-out` (MaBooking, ODOTra, MucXangTra, AnhNgoaiQuanTra[], Phụ kiện trả, Phí đền bù hư hại, Phí mất phụ kiện).
+
+8. **Yêu cầu tra cứu nghiệp vụ** (Nhân viên `E2` → Hệ thống `P0`):
+   - *Mô tả:* Các yêu cầu truy vấn dữ liệu từ nhân viên để phục vụ vận hành hàng ngày và rà soát lỗi vi phạm.
+   - *Bao hàm:*
+     - `F4.1: Yêu cầu xem danh sách giao nhận` (NgayTruyVan, MaNhanVien).
+     - `F5.1: Yêu cầu tra cứu lịch sử` (BienSoXe, KhoangThoiGian).
+     - `F5.5: Ghi chú vi phạm nội bộ` (MaLichSu, GhiChuNoiBo, DanhDauViPham = TRUE).
+
+9. **Thông tin điều phối công việc** (Hệ thống `P0` → Nhân viên `E2`):
+   - *Mô tả:* Các thông báo từ hệ thống giúp nhân viên nắm được đầu việc cần thực hiện.
+   - *Bao hàm:*
+     - `F2.12: Thông báo đơn mới` (Thông tin đơn xe đã cọc thành công để chuẩn bị xe).
+     - `F3.10: Thông báo trả sớm` (Thông tin khách hàng muốn trả xe sớm trước thời hạn).
+     - `F4.3: Danh sách giao nhận trong ngày` (Danh sách các đơn bàn giao và nghiệm thu trong ca làm việc).
+
+10. **Kết quả tra cứu lịch sử** (Hệ thống `P0` → Nhân viên `E2`):
+    - *Mô tả:* Dữ liệu lịch sử thuê xe và thông tin khách hàng tương ứng được trả về sau khi tra cứu.
+    - *Bao hàm:*
+      - `F5.4: Kết quả tra cứu` (Thông tin khách hàng & thông tin chuyến đi đã thực hiện).
+
+11. **Lệnh duyệt và điều chỉnh hệ thống** (Quản trị viên `E3` → Hệ thống `P0`):
+    - *Mô tả:* Các lệnh thay đổi cấu hình, duyệt hồ sơ hoặc cập nhật danh mục từ Admin.
+    - *Bao hàm:*
+      - `F1.5: Kết quả duyệt GPLX` (Duyệt hoặc từ chối ảnh GPLX khách hàng).
+      - `F5.7: Yêu cầu Blacklist` (Đưa khách hàng vi phạm nghiêm trọng vào danh sách đen).
+      - `F5.9: Quản lý nhân viên` (Tạo mới, khóa, phân quyền nhân viên trong `D6`).
+      - `F6.1: Yêu cầu cập nhật thông tin xe máy` (Thêm, sửa, xóa thông tin xe trong `D1`).
+      - `F6.5: Yêu cầu cập nhật cấu hình hệ thống` (Thiết lập giá ngày, bảng đền bù, phí phạt trễ hạn trong `D5`).
+
+12. **Thông tin chờ xử lý và báo cáo** (Hệ thống `P0` → Quản trị viên `E3`):
+    - *Mô tả:* Dữ liệu báo cáo tài chính và hồ sơ chờ duyệt được gửi tới Admin.
+    - *Bao hàm:*
+      - `F1.4: Hồ sơ GPLX chờ duyệt` (Hình ảnh và thông tin GPLX của khách đang chờ duyệt).
+      - `F5.4: Kết quả tra cứu` (Đối với tài khoản Admin tra cứu).
+      - `F6.4: Kết quả cập nhật xe` (Phản hồi cập nhật danh mục xe máy).
+      - `F6.8: Kết quả cập nhật cấu hình` (Phản hồi cập nhật cấu hình vận hành).
+
+13. **Yêu cầu giao dịch trực tuyến** (Hệ thống `P0` → Cổng thanh toán `E4`):
+    - *Mô tả:* Yêu cầu xử lý thanh toán cọc/gia hạn hoặc hoàn trả tiền cọc gửi sang ngân hàng/ví điện tử.
+    - *Bao hàm:*
+      - `F2.16: Yêu cầu giao dịch trực tuyến` (SoTien, MaBooking, LoaiGiaoDich ∈ {Dat_Coc, Hoan_Tien}).
+      - `F3.12: Yêu cầu giao dịch gia hạn trực tuyến` (SoTien, MaBooking).
+      - `F4.17: Yêu cầu giao dịch quyết toán trực tuyến` (SoTien, MaBooking).
+
+14. **Xác nhận kết quả giao dịch** (Cổng thanh toán `E4` → Hệ thống `P0`):
+    - *Mô tả:* Tín hiệu xác nhận giao dịch đã được thực hiện thành công hay thất bại.
+    - *Bao hàm:*
+      - `F2.17: Kết quả giao dịch` (MaBooking, SoTien, TrangThaiGD ∈ {Thanh_Cong, That_Bai}).
+      - `F3.13: Kết quả giao dịch gia hạn` (MaBooking, SoTien, TrangThaiGD ∈ {Thanh_Cong, That_Bai}).
+      - `F4.18: Kết quả giao dịch quyết toán` (MaBooking, SoTien, TrangThaiGD ∈ {Thanh_Cong, That_Bai}).
 
 ---
 
