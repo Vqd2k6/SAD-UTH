@@ -125,9 +125,9 @@ Dưới đây là mô tả chi tiết của từng luồng dữ liệu gom nhóm
     - *Bao hàm:*
       - `F1.5: Kết quả duyệt GPLX` (Duyệt hoặc từ chối ảnh GPLX khách hàng).
       - `F5.7: Yêu cầu Blacklist` (Đưa khách hàng vi phạm nghiêm trọng vào danh sách đen).
-      - `F5.9: Quản lý nhân viên` (Tạo mới, khóa, phân quyền nhân viên trong `D6`).
       - `F6.1: Yêu cầu cập nhật thông tin xe máy` (Thêm, sửa, xóa thông tin xe trong `D1`).
       - `F6.5: Yêu cầu cập nhật cấu hình hệ thống` (Thiết lập giá ngày, bảng đền bù, phí phạt trễ hạn trong `D5`).
+      - `F6.9: Yêu cầu quản lý nhân viên` (Tạo mới, khóa, phân quyền nhân viên trong `D6`).
 
 12. **Thông tin chờ xử lý và báo cáo** (Hệ thống `P0` → Quản trị viên `E3`):
     - *Mô tả:* Dữ liệu báo cáo tài chính và hồ sơ chờ duyệt được gửi tới Admin.
@@ -136,6 +136,7 @@ Dưới đây là mô tả chi tiết của từng luồng dữ liệu gom nhóm
       - `F5.4: Kết quả tra cứu` (Đối với tài khoản Admin tra cứu).
       - `F6.4: Kết quả cập nhật xe` (Phản hồi cập nhật danh mục xe máy).
       - `F6.8: Kết quả cập nhật cấu hình` (Phản hồi cập nhật cấu hình vận hành).
+      - `F6.12: Kết quả quản lý nhân viên` (Phản hồi kết quả cập nhật danh sách nhân viên).
 
 13. **Yêu cầu giao dịch trực tuyến** (Hệ thống `P0` → Cổng thanh toán `E4`):
     - *Mô tả:* Yêu cầu xử lý thanh toán cọc/gia hạn hoặc hoàn trả tiền cọc gửi sang ngân hàng/ví điện tử.
@@ -267,12 +268,8 @@ graph TB
     P5 -->|"F5.6: Cập nhật ghi chú lịch sử"| D4
     E3 -->|"F5.7: Yêu cầu Blacklist\n(Mã KH, Lý do)"| P5
     P5 -->|"F5.8: Cập nhật Blacklist"| D3
-    E3 -->|"F5.9: Quản lý nhân viên"| P5
-    P5 -->|"F5.10: Cập nhật thông tin nhân viên"| D6
-    D6 -->|"F5.11: Đọc thông tin nhân viên"| P5
-
     %% ╔══════════════════════════════════════════════╗
-    %% ║  P6.0 — QUẢN LÝ DANH MỤC & CẤU HÌNH [MỚI]   ║
+    %% ║  P6.0 — QUẢN LÝ DANH MỤC, NHÂN VIÊN & CẤU HÌNH║
     %% ╚══════════════════════════════════════════════╝
     E3 -->|"F6.1: Yêu cầu cập nhật thông tin xe máy"| P6
     P6 -->|"F6.2: Lưu thông tin xe mới"| D1
@@ -282,6 +279,10 @@ graph TB
     P6 -->|"F6.6: Lưu cấu hình hệ thống"| D5
     D5 -->|"F6.7: Đọc cấu hình hệ thống quản trị"| P6
     P6 -->|"F6.8: Kết quả cập nhật cấu hình"| E3
+    E3 -->|"F6.9: Yêu cầu quản lý nhân viên"| P6
+    P6 -->|"F6.10: Cập nhật thông tin nhân viên"| D6
+    D6 -->|"F6.11: Đọc thông tin nhân viên"| P6
+    P6 -->|"F6.12: Kết quả quản lý nhân viên"| E3
 
     %% ╔══════════════════════════════════════════════╗
     %% ║               STYLES                         ║
@@ -398,23 +399,23 @@ graph TB
 |-----------|---------|
 | **Mã tiến trình** | 5.0 |
 | **Tên** | Tra cứu Lịch sử thuê & Quản lý Blacklist |
-| **Mô tả** | Hỗ trợ Nhân viên/Admin tra cứu lịch sử thuê xe nội bộ theo biển số và khoảng thời gian (phục vụ xử lý phạt nguội offline, thống kê). Quản lý danh sách Blacklist khách hàng vi phạm nghiêm trọng. Quản lý tài khoản nhân viên. |
-| **Luồng vào** | `F5.1: Yêu cầu tra cứu lịch sử` (từ NV/Admin), `F5.2: Đọc lịch sử theo biển số` (từ D4), `F5.3: Đọc thông tin khách hàng` (từ D3), `F5.5: Ghi chú vi phạm nội bộ` (từ NV/Admin), `F5.7: Yêu cầu Blacklist` (từ Admin), `F5.9: Quản lý nhân viên` (từ Admin), `F5.11: Đọc thông tin nhân viên` (từ D6) |
-| **Luồng ra** | `F5.4: Kết quả tra cứu` (đến NV/Admin), `F5.6: Cập nhật ghi chú lịch sử` (đến D4), `F5.8: Cập nhật Blacklist` (đến D3), `F5.10: Cập nhật thông tin nhân viên` (đến D6) |
-| **Logic xử lý** | 1. NV/Admin nhập tiêu chí tra cứu: {BienSoXe, KhoangThoiGian_Tu, KhoangThoiGian_Den}<br>2. Truy vấn D4: Tìm bản ghi Lich_Su_Thue có BienSoXe VÀ khoảng thời gian giao nhau với [ThoiGianNhan, ThoiGianTra]<br>&nbsp;&nbsp;• **Nếu tìm thấy:** Truy D3 lấy thông tin KH → Hiển thị kết quả cho NV/Admin<br>&nbsp;&nbsp;• **Nếu không tìm thấy:** Hiển thị thông báo `Khong_Tim_Thay`<br>3. NV/Admin có thể ghi chú nội bộ (GhiChuNoiBo) và đánh dấu vi phạm (DanhDauViPham = TRUE) vào bản ghi D4<br>4. NV/Admin có quyền yêu cầu đưa khách hàng vào Blacklist → Cập nhật D3 (TrangThaiBlacklist = TRUE, LyDoBlacklist)<br>5. Quản lý nhân viên: Admin tạo mới/chỉnh sửa thông tin nhân viên (`F5.9`) -> cập nhật vào D6 (`F5.10`). |
+| **Mô tả** | Hỗ trợ Nhân viên/Admin tra cứu lịch sử thuê xe nội bộ theo biển số và khoảng thời gian (phục vụ xử lý phạt nguội offline, thống kê). Quản lý danh sách Blacklist khách hàng vi phạm nghiêm trọng. |
+| **Luồng vào** | `F5.1: Yêu cầu tra cứu lịch sử` (từ NV/Admin), `F5.2: Đọc lịch sử theo biển số` (từ D4), `F5.3: Đọc thông tin khách hàng` (từ D3), `F5.5: Ghi chú vi phạm nội bộ` (từ NV/Admin), `F5.7: Yêu cầu Blacklist` (từ Admin) |
+| **Luồng ra** | `F5.4: Kết quả tra cứu` (đến NV/Admin), `F5.6: Cập nhật ghi chú lịch sử` (đến D4), `F5.8: Cập nhật Blacklist` (đến D3) |
+| **Logic xử lý** | 1. NV/Admin nhập tiêu chí tra cứu: {BienSoXe, KhoangThoiGian_Tu, KhoangThoiGian_Den}<br>2. Truy vấn D4: Tìm bản ghi Lich_Su_Thue có BienSoXe VÀ khoảng thời gian giao nhau với [ThoiGianNhan, ThoiGianTra]<br>&nbsp;&nbsp;• **Nếu tìm thấy:** Truy D3 lấy thông tin KH → Hiển thị kết quả cho NV/Admin<br>&nbsp;&nbsp;• **Nếu không tìm thấy:** Hiển thị thông báo `Khong_Tim_Thay`<br>3. NV/Admin có thể ghi chú nội bộ (GhiChuNoiBo) và đánh dấu vi phạm (DanhDauViPham = TRUE) vào bản ghi D4<br>4. NV/Admin có quyền yêu cầu đưa khách hàng vào Blacklist → Cập nhật D3 (TrangThaiBlacklist = TRUE, LyDoBlacklist) |
 
 ---
 
-### P6.0 — Quản lý Danh mục & Cấu hình Hệ thống [MỚI]
+### P6.0 — Quản lý Danh mục, Nhân viên & Cấu hình Hệ thống [MỚI]
 
 | Thuộc tính | Chi tiết |
 |-----------|---------|
 | **Mã tiến trình** | 6.0 |
-| **Tên** | Quản lý Danh mục & Cấu hình Hệ thống |
-| **Mô tả** | Tiến trình chuyên dụng dành cho Quản trị viên nhằm kiểm soát và quản lý danh mục đội xe máy và thiết lập các tham số cấu hình định giá động/phạt trễ hạn/đền bù toàn cục của hệ thống. |
-| **Luồng vào** | `F6.1: Yêu cầu cập nhật thông tin xe máy` (từ Admin), `F6.3: Đọc danh sách xe quản trị` (từ D1), `F6.5: Yêu cầu cập nhật cấu hình hệ thống` (từ Admin), `F6.7: Đọc cấu hình hệ thống quản trị` (từ D5) |
-| **Luồng ra** | `F6.2: Lưu thông tin xe mới` (đến D1), `F6.4: Kết quả cập nhật xe` (đến Admin), `F6.6: Lưu cấu hình hệ thống` (đến D5), `F6.8: Kết quả cập nhật cấu hình` (đến Admin) |
-| **Logic xử lý** | **Quản lý danh mục xe:**<br>1. Admin gửi thông tin xe máy mới/sửa đổi (`F6.1`).<br>2. Hệ thống kiểm tra tính hợp lệ của biển số, số khung, số máy có bị trùng lặp trong D1 (`F6.3`) hay không.<br>3. Nếu hợp lệ, lưu trữ thông tin xe vào D1 (`F6.2`) và trả kết quả thành công (`F6.4`). Nếu lỗi, từ chối cập nhật và trả báo lỗi.<br>**Quản lý cấu hình hệ thống:**<br>1. Admin gửi yêu cầu thay đổi thiết lập cấu hình vận hành mới (`F6.5`).<br>2. Hệ thống thực hiện cập nhật ghi đè các tham số thiết lập (giá trị phạt, số lần gia hạn tối đa, giá phạt phụ kiện) vào kho D5 (`F6.6`) và trả kết quả xác nhận (`F6.8`) cho Admin. |
+| **Tên** | Quản lý Danh mục, Nhân viên & Cấu hình Hệ thống |
+| **Mô tả** | Tiến trình chuyên dụng dành cho Quản trị viên nhằm kiểm soát và quản lý danh mục đội xe máy, tài khoản nhân viên vận hành và thiết lập các tham số cấu hình định giá động/phạt trễ hạn/đền bù toàn cục của hệ thống. |
+| **Luồng vào** | `F6.1: Yêu cầu cập nhật thông tin xe máy` (từ Admin), `F6.3: Đọc danh sách xe quản trị` (từ D1), `F6.5: Yêu cầu cập nhật cấu hình hệ thống` (từ Admin), `F6.7: Đọc cấu hình hệ thống quản trị` (từ D5), `F6.9: Yêu cầu quản lý nhân viên` (từ Admin), `F6.11: Đọc thông tin nhân viên` (từ D6) |
+| **Luồng ra** | `F6.2: Lưu thông tin xe mới` (đến D1), `F6.4: Kết quả cập nhật xe` (đến Admin), `F6.6: Lưu cấu hình hệ thống` (đến D5), `F6.8: Kết quả cập nhật cấu hình` (đến Admin), `F6.10: Cập nhật thông tin nhân viên` (đến D6), `F6.12: Kết quả quản lý nhân viên` (đến Admin) |
+| **Logic xử lý** | **Quản lý danh mục xe:**<br>1. Admin gửi thông tin xe máy mới/sửa đổi (`F6.1`).<br>2. Hệ thống kiểm tra tính hợp lệ của biển số, số khung, số máy có bị trùng lặp trong D1 (`F6.3`) hay không.<br>3. Nếu hợp lệ, lưu trữ thông tin xe vào D1 (`F6.2`) và trả kết quả thành công (`F6.4`). Nếu lỗi, từ chối cập nhật và trả báo lỗi.<br>**Quản lý nhân viên:**<br>1. Admin gửi thông tin nhân viên mới/chỉnh sửa hoặc yêu cầu khóa tài khoản (`F6.9`).<br>2. Hệ thống kiểm tra tính hợp lệ của tài khoản trong D6 (`F6.11`).<br>3. Nếu hợp lệ, lưu hoặc cập nhật thông tin vào D6 (`F6.10`) và gửi kết quả xác nhận (`F6.12`) cho Admin.<br>**Quản lý cấu hình hệ thống:**<br>1. Admin gửi yêu cầu thay đổi thiết lập cấu hình vận hành mới (`F6.5`).<br>2. Hệ thống thực hiện cập nhật ghi đè các tham số thiết lập (giá trị phạt, số lần gia hạn tối đa, giá phạt phụ kiện) vào kho D5 (`F6.6`) và trả kết quả xác nhận (`F6.8`) cho Admin. |
 
 ---
 
@@ -690,7 +691,7 @@ graph TB
 
 ### 5.5. Tiến trình 5.0 — Tra cứu Lịch sử thuê & Quản lý Blacklist
 
-Sơ đồ phân rã mức 1 cho tiến trình 5.0 làm rõ quy trình tra cứu dữ liệu thuê xe phục vụ nghiệp vụ xử lý vi phạm giao thông (phạt nguội), kiểm soát danh sách đen (Blacklist) và quản lý tài khoản nhân viên.
+Sơ đồ phân rã mức 1 cho tiến trình 5.0 làm rõ quy trình tra cứu dữ liệu thuê xe phục vụ nghiệp vụ xử lý vi phạm giao thông (phạt nguội) và kiểm soát danh sách đen (Blacklist).
 
 ```mermaid
 graph TB
@@ -701,13 +702,11 @@ graph TB
     %% === DATA STORES ===
     D3[("D3: Khach_Hang_GPLX")]
     D4[("D4: Lich_Su_Thue")]
-    D6[("D6: Nhan_Vien")]
 
     %% === SUB-PROCESSES ===
     P51(("5.1\nTra cứu lịch sử\nthuê xe"))
     P52(("5.2\nGhi chú vi phạm\nnội bộ"))
     P53(("5.3\nCập nhật\nBlacklist"))
-    P54(("5.4\nQuản lý tài khoản\nnhân viên"))
 
     %% === FLOWS ===
     E2 -->|"F5.1: Yêu cầu tra cứu lịch sử"| P51
@@ -724,32 +723,25 @@ graph TB
     E3 -->|"F5.7: Yêu cầu Blacklist"| P53
     P53 -->|"F5.8: Cập nhật Blacklist"| D3
 
-    E3 -->|"F5.9: Quản lý nhân viên"| P54
-    P54 -->|"F5.10: Cập nhật thông tin nhân viên"| D6
-    D6 -->|"F5.11: Đọc thông tin nhân viên"| P54
-
     %% === STYLES ===
     style E2 fill:#81C784,stroke:#2E7D32,color:#000,stroke-width:2px
     style E3 fill:#FFB74D,stroke:#E65100,color:#000,stroke-width:2px
     style P51 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P52 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P53 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
-    style P54 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style D3 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D4 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
-    style D6 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
 ```
 
 *   **P5.1 (Tra cứu lịch sử thuê xe):** Nhân viên hoặc Admin gửi yêu cầu tra cứu (`F5.1`) bao gồm biển số xe và khoảng thời gian vi phạm giao thông. Tiến trình thực hiện truy vấn đối chiếu lịch sử thuê trong `D4` (`F5.2`), đồng thời đọc thông tin cá nhân khách hàng trong `D3` (`F5.3`) để xuất kết quả đối chiếu (`F5.4`) hỗ trợ nhân viên cửa hàng làm việc ngoại tuyến với cơ quan công an hoặc khách hàng.
-*   **P5.2 (Ghi chú vi phạm nội bộ):** Nhân viên hoặc Admin gửi thông tin ghi nhận lỗi vi phạm phạt nguội (`F5.5`) để lưu vết trực tiếp vào bản ghi lịch sử thuê tương ứng trong `D4` (`F5.6`) dưới dạng `DanhDauViPham = TRUE` và ghi chú nội bộ.
+*   **P5.2 (Ghi chú vi phạm nội bộ):** Nhân viên hoặc Admin gửi thông tin ghi nhận lỗi vi phạm phạt nguội (`F5.5`) để lưu vết trực tiếp vào bản ghi lịch sử thuê tương ứng trong `D4` (`F5.6`) dưới dạng `DanhDauViPham = TRUE` VÀ ghi chú nội bộ.
 *   **P5.3 (Cập nhật Blacklist):** Tiếp nhận yêu cầu đưa khách hàng vi phạm nghiêm trọng vào danh sách đen từ Admin (`F5.7`). Tiến trình cập nhật lại cờ `TrangThaiBlacklist = TRUE` cùng lý do chi tiết vào hồ sơ khách hàng trong kho `D3` (`F5.8`).
-*   **P5.4 (Quản lý tài khoản nhân viên):** Tiếp nhận yêu cầu quản lý nhân viên từ Admin (`F5.9`). Tiến trình cập nhật thông tin nhân viên mới/đã chỉnh sửa vào kho nhân viên `D6` (`F5.10`) và đọc dữ liệu nhân viên phục vụ hiển thị (`F5.11`).
 
 ---
 
-### 5.6. Tiến trình 6.0 — Quản lý Danh mục & Cấu hình Hệ thống [MỚI]
+### 5.6. Tiến trình 6.0 — Quản lý Danh mục, Nhân viên & Cấu hình Hệ thống [MỚI]
 
-Sơ đồ phân rã mức 1 cho tiến trình 6.0 làm rõ quy trình quản lý thông tin xe máy và quản lý cấu hình hệ thống của Admin.
+Sơ đồ phân rã mức 1 cho tiến trình 6.0 làm rõ quy trình quản lý thông tin xe máy, quản lý tài khoản nhân viên và quản lý cấu hình hệ thống của Admin.
 
 ```mermaid
 graph TB
@@ -759,10 +751,12 @@ graph TB
     %% === DATA STORES ===
     D1[("D1: Xe_May")]
     D5[("D5: Cau_Hinh_He_Thong")]
+    D6[("D6: Nhan_Vien")]
 
     %% === SUB-PROCESSES ===
     P61(("6.1\nQuản lý thông tin\nxe máy"))
-    P62(("6.2\nQuản lý cấu hình\nhệ thống"))
+    P62(("6.2\nQuản lý tài khoản\nnhân viên"))
+    P63(("6.3\nQuản lý cấu hình\nhệ thống"))
 
     %% === FLOWS ===
     E3 -->|"F6.1: Yêu cầu cập nhật thông tin xe máy"| P61
@@ -770,25 +764,33 @@ graph TB
     P61 -->|"F6.2: Lưu thông tin xe mới"| D1
     P61 -->|"F6.4: Kết quả cập nhật xe"| E3
 
-    E3 -->|"F6.5: Yêu cầu cập nhật cấu hình hệ thống"| P62
-    D5 -->|"F6.7: Đọc cấu hình hệ thống quản trị"| P62
-    P62 -->|"F6.6: Lưu cấu hình hệ thống"| D5
-    P62 -->|"F6.8: Kết quả cập nhật cấu hình"| E3
+    E3 -->|"F6.9: Yêu cầu quản lý nhân viên"| P62
+    D6 -->|"F6.11: Đọc thông tin nhân viên"| P62
+    P62 -->|"F6.10: Cập nhật thông tin nhân viên"| D6
+    P62 -->|"F6.12: Kết quả quản lý nhân viên"| E3
+
+    E3 -->|"F6.5: Yêu cầu cập nhật cấu hình hệ thống"| P63
+    D5 -->|"F6.7: Đọc cấu hình hệ thống quản trị"| P63
+    P63 -->|"F6.6: Lưu cấu hình hệ thống"| D5
+    P63 -->|"F6.8: Kết quả cập nhật cấu hình"| E3
 
     %% === STYLES ===
     style E3 fill:#FFB74D,stroke:#E65100,color:#000,stroke-width:2px
     style P61 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style P62 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
+    style P63 fill:#CE93D8,stroke:#6A1B9A,color:#000,stroke-width:2px
     style D1 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
     style D5 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
+    style D6 fill:#FFF9C4,stroke:#F9A825,color:#000,stroke-width:2px
 ```
 
 *   **P6.1 (Quản lý thông tin xe máy):** Tiếp nhận yêu cầu cập nhật thông tin xe máy từ Admin (`F6.1`), đối chiếu danh sách xe hiện tại trong `D1` (`F6.3`) để kiểm tra tính hợp lệ (biển số/số khung không trùng), tiến hành lưu thông tin xe mới/đã chỉnh sửa vào `D1` (`F6.2`) và phản hồi kết quả cập nhật (`F6.4`) về cho Admin.
-*   **P6.2 (Quản lý cấu hình hệ thống):** Tiếp nhận yêu cầu điều chỉnh các tham số cấu hình hệ thống từ Admin (`F6.5`), đọc thông tin cấu hình hiện tại từ `D5` (`F6.7`) để ghi đè cấu hình mới vào `D5` (`F6.6`) và phản hồi kết quả xác nhận (`F6.8`) về cho Admin.
+*   **P6.2 (Quản lý tài khoản nhân viên):** Tiếp nhận yêu cầu quản lý nhân viên từ Admin (`F6.9`). Tiến trình kiểm tra thông tin nhân viên hiện tại trong `D6` (`F6.11`), thực hiện lưu mới hoặc chỉnh sửa/khóa tài khoản nhân viên vào `D6` (`F6.10`), và gửi thông báo kết quả (`F6.12`) cho Admin.
+*   **P6.3 (Quản lý cấu hình hệ thống):** Tiếp nhận yêu cầu điều chỉnh các tham số cấu hình hệ thống từ Admin (`F6.5`), đọc thông tin cấu hình hiện tại từ `D5` (`F6.7`) để ghi đè cấu hình mới vào `D5` (`F6.6`) và phản hồi kết quả xác nhận (`F6.8`) về cho Admin.
 
 ---
 
 > **Ghi chú tổng hợp:**
-> - Tất cả tên luồng dữ liệu (F1.1 → F6.8), kho dữ liệu (D1 → D6), và thuộc tính được sử dụng **đồng nhất 100%** với tài liệu [Từ điển dữ liệu](file:///Users/vqd2k6/Desktop/PTTKHT-UTH/Project-KTHP/docs/data-dictionary.md).
+> - Tất cả tên luồng dữ liệu (F1.1 → F6.12), kho dữ liệu (D1 → D6), và thuộc tính được sử dụng **đồng nhất 100%** với tài liệu [Từ điển dữ liệu](file:///Users/vqd2k6/Desktop/PTTKHT-UTH/Project-KTHP/docs/data-dictionary.md).
 > - Mã Mermaid.js sử dụng cú pháp `graph TB` (Top-Bottom), có thể nhúng trực tiếp vào báo cáo Markdown hoặc render qua Mermaid Live Editor.
 > - **Nghiệp vụ phạt nguội giao thông** là quy trình dân sự bên ngoài. Hệ thống chỉ hỗ trợ tra cứu lịch sử thuê (P5.0) để NV/Admin tự xử lý offline với cơ quan chức năng và khách hàng.

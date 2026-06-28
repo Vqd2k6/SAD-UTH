@@ -292,13 +292,10 @@
 | F5.6 | `Cập nhật ghi chú lịch sử` | P5.0 | D4 (Lich_Su_Thue) | Lưu vết cờ vi phạm DanhDauViPham = TRUE và ghi chú nội bộ vào bản ghi lịch sử trong D4. |
 | F5.7 | `Yêu cầu Blacklist` | E3 (Admin) | P5.0 | Admin yêu cầu đưa khách hàng vi phạm nghiêm trọng vào danh sách đen. |
 | F5.8 | `Cập nhật Blacklist` | P5.0 | D3 (Khach_Hang_GPLX) | Cập nhật cờ TrangThaiBlacklist = TRUE kèm lý do chi tiết vào hồ sơ khách hàng ở kho D3. |
-| F5.9 | `Quản lý nhân viên` | E3 (Admin) | P5.0 | Admin thực hiện các lệnh tạo mới, khóa tài khoản nhân viên. |
-| F5.10 | `Cập nhật thông tin nhân viên` | P5.0 | D6 (Nhan_Vien) | Thực hiện ghi mới hoặc cập nhật thông tin tài khoản nhân viên vào kho D6. |
-| F5.11 | `Đọc thông tin nhân viên` | D6 (Nhan_Vien) | P5.0 | Truy vấn danh sách tài khoản nhân viên để hiển thị trên màn hình quản trị của Admin. |
 
 ---
 
-### 3.6. Luồng dữ liệu liên quan đến Tiến trình 6.0 — Quản lý Danh mục & Cấu hình Hệ thống [MỚI]
+### 3.6. Luồng dữ liệu liên quan đến Tiến trình 6.0 — Quản lý Danh mục, Nhân viên & Cấu hình Hệ thống [MỚI]
 
 | Mã | Tên luồng | Nguồn (Source) | Đích (Destination) | Mô tả chi tiết chức năng |
 |----|-----------|---------------|--------------------|--------------------------|
@@ -310,6 +307,10 @@
 | F6.6 | `Lưu cấu hình hệ thống` | P6.0 | D5 (Cau_Hinh_He_Thong) | Ghi đè cấu hình vận hành mới vào kho lưu trữ cấu hình hệ thống D5. |
 | F6.7 | `Đọc cấu hình hệ thống quản trị` | D5 (Cau_Hinh_He_Thong) | P6.0 | Đọc thông số cấu hình hiện tại từ D5 phục vụ đối chiếu và hiển thị cho Admin. |
 | F6.8 | `Kết quả cập nhật cấu hình` | P6.0 | E3 (Admin) | Phản hồi xác nhận đã áp dụng thành công thiết lập cấu hình hệ thống mới. |
+| F6.9 | `Yêu cầu quản lý nhân viên` | E3 (Admin) | P6.0 | Admin gửi lệnh thêm mới, sửa đổi thông tin hoặc khóa tài khoản nhân viên. |
+| F6.10 | `Cập nhật thông tin nhân viên` | P6.0 | D6 (Nhan_Vien) | Thực hiện ghi mới hoặc cập nhật thông tin chỉnh sửa tài khoản nhân viên vào kho D6. |
+| F6.11 | `Đọc thông tin nhân viên` | D6 (Nhan_Vien) | P6.0 | Truy vấn danh sách và thông tin tài khoản nhân viên từ kho D6 để kiểm tra trùng lặp hoặc hiển thị. |
+| F6.12 | `Kết quả quản lý nhân viên` | P6.0 | E3 (Admin) | Phản hồi thông báo cập nhật tài khoản nhân viên thành công hoặc thất bại cho Admin. |
 
 ---
 
@@ -362,7 +363,7 @@
 | **D3** Khach_Hang_GPLX | F1.7 (Lưu thông tin khách hàng), F5.8 (Cập nhật Blacklist) | F1.8 (Đọc thông tin khách hàng), F2.5 (Kiểm tra GPLX khách), F5.3 (Đọc thông tin khách hàng) | ✅ Hợp lệ |
 | **D4** Lich_Su_Thue | F4.13 (Lưu lịch sử thuê), F5.6 (Cập nhật ghi chú lịch sử) | F5.2 (Đọc lịch sử theo biển số) | ✅ Hợp lệ |
 | **D5** Cau_Hinh_He_Thong | F6.6 (Lưu cấu hình hệ thống) | F2.4 (Đọc cấu hình hệ thống), F3.4 (Đọc cấu hình gia hạn), F4.8 (Đọc bảng giá phạt và đền bù), F6.7 (Đọc cấu hình hệ thống quản trị) | ✅ Hợp lệ |
-| **D6** Nhan_Vien | F5.10 (Cập nhật thông tin nhân viên) | F5.11 (Đọc thông tin nhân viên) | ✅ Hợp lệ |
+| **D6** Nhan_Vien | F6.10 (Cập nhật thông tin nhân viên) | F6.11 (Đọc thông tin nhân viên) | ✅ Hợp lệ |
 
 ### 5.2. Kiểm tra luồng không hợp lệ
 
