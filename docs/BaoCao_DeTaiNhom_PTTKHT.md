@@ -1392,11 +1392,11 @@ Bảng quyết định dưới đây thể hiện quy tắc phân hạng nhóm x
 
 ```mermaid
 graph LR
-    A["Kiểm duyệt GPLX từ Admin"] -->|Từ chối APPROVED = False| B["TrangThaiGPLX = TU_CHOI<br>NhomXeDuocThue = Nhom_50cc_Dien"]
-    A -->|Chấp thuận APPROVED = True| C{"Xét hạng bằng lái"}
-    C -->|HangGPLX = A2| D["TrangThaiGPLX = DA_DUYET<br>NhomXeDuocThue = Nhom_A2_PKL"]
-    C -->|HangGPLX = A1| E["TrangThaiGPLX = DA_DUYET<br>NhomXeDuocThue = Nhom_A1"]
-    C -->|Không có bằng lái / Khác| F["TrangThaiGPLX = DA_DUYET<br>NhomXeDuocThue = Nhom_50cc_Dien"]
+    A["Kiểm duyệt GPLX từ Admin"] -->|"Từ chối (APPROVED = False)"| B["TrangThaiGPLX = TU_CHOI, NhomXeDuocThue = Nhom_50cc_Dien"]
+    A -->|"Chấp thuận (APPROVED = True)"| C{"Xét hạng bằng lái"}
+    C -->|HangGPLX = A2| D["TrangThaiGPLX = DA_DUYET, NhomXeDuocThue = Nhom_A2_PKL"]
+    C -->|HangGPLX = A1| E["TrangThaiGPLX = DA_DUYET, NhomXeDuocThue = Nhom_A1"]
+    C -->|"Không có bằng lái hoặc hạng khác"| F["TrangThaiGPLX = DA_DUYET, NhomXeDuocThue = Nhom_50cc_Dien"]
 ```
 
 ---
@@ -1544,8 +1544,8 @@ END
 graph TD
     A["Yêu cầu Đặt xe"] -->|Nằm trong Blacklist| B["Từ chối đặt xe: Lỗi Blacklist"]
     A -->|Không trong Blacklist| C{"Kiểm tra bằng lái & Nhóm xe"}
-    C -->|Dòng PKL & Khách chỉ có A1/50cc| D["Từ chối đặt xe: Thiếu GPLX A2"]
-    C -->|Dòng A1 & Khách chỉ có 50cc| E["Từ chối đặt xe: Thiếu GPLX A1"]
+    C -->|"Dòng PKL & Khách chỉ có bằng A1 hoặc không có bằng"| D["Từ chối đặt xe: Thiếu GPLX A2"]
+    C -->|"Dòng A1 & Khách không có bằng lái"| E["Từ chối đặt xe: Thiếu GPLX A1"]
     C -->|Khớp bằng lái hợp lệ| F{"Kiểm tra lịch xe máy D2"}
     F -->|Đã bị đặt trùng lịch| G["Từ chối đặt xe: Xe bận"]
     F -->|Lịch trống khả dụng| H["Chấp thuận đặt xe: Khóa xe 15 phút"]
@@ -1554,9 +1554,9 @@ graph TD
 #### Cây quyết định chính sách hoàn cọc khi hủy đơn:
 ```mermaid
 graph LR
-    A["Hủy đặt xe"] -->|Thời gian hủy >= 24 tiếng trước giờ nhận| B["Hoàn cọc 100%<br>Phạt hủy 0%"]
-    A -->|Thời gian hủy từ 12 đến dưới 24 tiếng| C["Hoàn cọc 50%<br>Phạt hủy 50%"]
-    A -->|Thời gian hủy dưới 12 tiếng| D["Hoàn cọc 0% (Mất cọc)<br>Phạt hủy 100%"]
+    A["Hủy đặt xe"] -->|"Thời gian hủy từ 24 tiếng trở lên trước giờ nhận"| B["Hoàn cọc 100%, Phạt hủy 0%"]
+    A -->|"Thời gian hủy từ 12 đến dưới 24 tiếng trước giờ nhận"| C["Hoàn cọc 50%, Phạt hủy 50%"]
+    A -->|"Thời gian hủy dưới 12 tiếng trước giờ nhận"| D["Hoàn cọc 0% (Mất cọc), Phạt hủy 100%"]
 ```
 
 ---
@@ -1671,16 +1671,26 @@ END
 
 ### 3.3. Decision Tree (Cây quyết định)
 
+#### Cây quyết định xét duyệt gia hạn:
 ```mermaid
 graph TD
-    A["Yêu cầu Gia hạn"] -->|Thời điểm yêu cầu trễ: cách giờ trả cũ < 2h| B["Từ chối gia hạn: Trễ hạn yêu cầu"]
-    A -->|Thời điểm hợp lệ >= 2h| C{"Kiểm tra số lần gia hạn"}
-    C -->|Đã gia hạn >= 3 lần| D["Từ chối gia hạn: Đạt giới hạn tối đa"]
-    C -->|Gia hạn dưới 3 lần| E{"Kiểm tra lịch trùng trong D2"}
+    A["Yêu cầu Gia hạn"] -->|"Thời điểm yêu cầu trễ: dưới 2 tiếng trước giờ trả"| B["Từ chối gia hạn: Trễ hạn yêu cầu"]
+    A -->|"Thời điểm hợp lệ: từ 2 tiếng trở lên"| C{"Kiểm tra số lần gia hạn"}
+    C -->|"Đã gia hạn từ 3 lần trở lên"| D["Từ chối gia hạn: Đạt giới hạn tối đa"]
+    C -->|"Gia hạn dưới 3 lần"| E{"Kiểm tra lịch trùng trong D2"}
     E -->|Trùng lịch đặt tiếp theo| F["Từ chối gia hạn: Xe đã có người đặt"]
     E -->|Không trùng lịch| G{"Thanh toán phí gia hạn"}
     G -->|Giao dịch thất bại| H["Từ chối gia hạn: Thanh toán lỗi"]
-    G -->|Giao dịch thành công| I["Phê duyệt gia hạn:<br>Cập nhật ThoiGianTra mới & tăng SoLanGiaHan"]
+    G -->|Giao dịch thành công| I["Phê duyệt gia hạn: Cập nhật thời gian trả mới và tăng số lần gia hạn"]
+```
+
+#### Cây quyết định báo trả xe sớm:
+```mermaid
+graph TD
+    A["Yêu cầu Trả xe sớm"] -->|"Trạng thái đơn hàng khác Đang thuê"| B["Từ chối: Đơn xe không ở trạng thái đang thuê"]
+    A -->|"Trạng thái đơn hàng là Đang thuê"| C{"Kiểm tra thời gian báo trước"}
+    C -->|"Báo trước dưới 1 tiếng trước giờ muốn trả"| D["Từ chối: Phải báo trước tối thiểu 1 tiếng"]
+    C -->|"Báo trước từ 1 tiếng trở lên"| E["Chấp nhận: Cập nhật CoTraSom = True và TrangThaiBooking = YEU_CAU_TRA_SOM"]
 ```
 
 ---
@@ -1806,12 +1816,12 @@ END
 
 ```mermaid
 graph TD
-    A["Quyết toán Trễ giờ"] -->|Trễ <= 2 tiếng| B["PhiPhatTreHan = 0 VNĐ (Ân hạn)"]
-    A -->|Trễ từ trên 2h đến dưới 6h| C{"Phân loại dòng xe"}
-    C -->|Xe số / Xe ga| D["Phạt 30K / giờ<br>(Tối đa = 50% đơn giá ngày)"]
-    C -->|Xe côn tay / PKL| E["Phạt 50K / giờ<br>(Tối đa = 50% đơn giá ngày)"]
-    A -->|Trễ từ trên 6h đến dưới 12h| F["Phạt mặc định = 50% đơn giá ngày"]
-    A -->|Trễ trên 12 tiếng| G["Tính tròn thành 1 ngày thuê mới (100% đơn giá ngày)"]
+    A["Quyết toán Trễ giờ"] -->|"Trễ dưới hoặc bằng 2 tiếng"| B["PhiPhatTreHan = 0 VNĐ (Ân hạn)"]
+    A -->|"Trễ từ trên 2 tiếng đến dưới 6 tiếng"| C{"Phân loại dòng xe"}
+    C -->|Xe số hoặc Xe ga| D["Phạt 30K / giờ, Tối đa = 50% đơn giá ngày"]
+    C -->|Xe côn tay hoặc PKL| E["Phạt 50K / giờ, Tối đa = 50% đơn giá ngày"]
+    A -->|"Trễ từ trên 6 tiếng đến dưới 12 tiếng"| F["Phạt mặc định = 50% đơn giá ngày"]
+    A -->|"Trễ trên 12 tiếng"| G["Tính tròn thành 1 ngày thuê mới (100% đơn giá ngày)"]
 ```
 
 ---
@@ -1883,11 +1893,11 @@ END
 
 ```mermaid
 graph TD
-    A["Đánh giá hồ sơ Khách hàng"] -->|Gây hư hỏng nặng cố ý/Phá hoại phương tiện| B["Cập nhật TrangThaiBlacklist = TRUE"]
-    A -->|Có lỗi vi phạm phạt nguội hoặc nợ phụ phí| C{"Thái độ hợp tác của khách"}
-    C -->|Từ chối nộp phạt / Trốn tránh liên hệ| D["Cập nhật TrangThaiBlacklist = TRUE"]
-    C -->|Đồng ý nộp phạt / Đang xử lý| E["Trạng thái: Cảnh cáo nội bộ - Cho phép thuê"]
-    A -->|Không có vi phạm nghiêm trọng| F["Trạng thái: Hoạt động bình thường"]
+    A["Đánh giá hồ sơ Khách hàng"] -->|"Gây hư hỏng nặng cố ý hoặc phá hoại phương tiện"| B["Cập nhật TrangThaiBlacklist = True"]
+    A -->|"Có lỗi vi phạm phạt nguội hoặc nợ phụ phí"| C{"Thái độ hợp tác của khách"}
+    C -->|"Từ chối nộp phạt hoặc trốn tránh liên hệ"| D["Cập nhật TrangThaiBlacklist = True"]
+    C -->|"Đồng ý nộp phạt hoặc đang xử lý"| E["Trạng thái: Cảnh cáo nội bộ - Cho phép thuê"]
+    A -->|"Không có vi phạm nghiêm trọng"| F["Trạng thái: Hoạt động bình thường"]
 ```
 
 ---
@@ -1995,15 +2005,15 @@ END
 
 ```mermaid
 graph TD
-    A["Tiếp nhận lệnh Quản trị Admin"] -->|Lệnh Quản lý xe máy| B{"Kiểm tra Trạng thái xe"}
+    A["Tiếp nhận lệnh Quản trị Admin"] -->|"Lệnh Quản lý xe máy"| B{"Kiểm tra Trạng thái xe"}
     B -->|Xe đang có hợp đồng thuê hoạt động| C["Từ chối xóa phương tiện"]
-    B -->|Xe rảnh / Biển số hợp lệ| D["Cập nhật danh mục D1 thành công"]
+    B -->|"Xe rảnh hoặc Biển số hợp lệ"| D["Cập nhật danh mục D1 thành công"]
     
-    A -->|Lệnh thiết lập Cấu hình hệ thống| E{"Kiểm tra tham số cấu hình"}
-    E -->|Tỉ lệ cọc ngoài 10%-50% hoặc Gia hạn > 5 lần| F["Từ chối cập nhật: Sai tham số ràng buộc"]
+    A -->|"Lệnh thiết lập Cấu hình hệ thống"| E{"Kiểm tra tham số cấu hình"}
+    E -->|"Tỉ lệ cọc ngoài khoảng 10% đến 50% hoặc Gia hạn trên 5 lần"| F["Từ chối cập nhật: Sai tham số ràng buộc"]
     E -->|Tham số hợp lệ| G["Ghi đè cấu hình mới vào D5"]
     
-    A -->|Lệnh Quản lý nhân viên| H{"Kiểm tra email trùng trong D6"}
+    A -->|"Lệnh Quản lý nhân viên"| H{"Kiểm tra email trùng trong D6"}
     H -->|Đã tồn tại Email trùng lắp| I["Từ chối thêm nhân sự mới"]
     H -->|Email hợp lệ độc nhất| J["Lưu/Cập nhật nhân viên vào D6"]
 ```
