@@ -390,18 +390,18 @@ Từ việc phân tích các điểm nghẽn của các nền tảng đi trướ
 
 | Kho dữ liệu | Luồng GHI vào (Write) | Luồng ĐỌC ra (Read) | Kết quả |
 |-------------|----------------------|---------------------|---------|
-| **D1** Xe_May | F2.11 (Cập nhật trạng thái xe), F4.12 (Giải phóng xe), F6.2 (Lưu thông tin xe mới) | F2.3 (Đọc danh sách xe), F6.3 (Đọc danh sách xe quản trị) | ✅ Hợp lệ |
-| **D2** Hop_Dong_Booking | F2.10 (Lưu đơn đặt xe), F3.7 (Cập nhật gia hạn), F3.9 (Cập nhật trả sớm), F4.5 (Cập nhật Check-in), F4.11 (Cập nhật quyết toán), F4.15 (Ghi nhận đánh giá), F2.22 (Tạo booking tạm), F2.26 (Cập nhật giao dịch hoàn tiền) | F2.15 (Kiểm tra lịch xe trùng), F3.3 (Đọc booking gia hạn), F3.5 (Kiểm tra lịch xe), F4.2 (Đọc danh sách booking trong ngày), F4.7 (Đọc booking quyết toán), F2.23 (Đọc booking nhắc nhở), F2.25 (Đọc đơn đặt xe (để hủy)), F3.14 (Đọc đơn đặt xe (để trả sớm)) | ✅ Hợp lệ |
-| **D3** Khach_Hang_GPLX | F1.7 (Lưu thông tin khách hàng), F5.8 (Cập nhật Blacklist) | F1.8 (Đọc thông tin khách hàng), F2.5 (Kiểm tra GPLX khách), F5.3 (Đọc thông tin khách hàng) | ✅ Hợp lệ |
-| **D4** Lich_Su_Thue | F4.13 (Lưu lịch sử thuê), F5.6 (Cập nhật ghi chú lịch sử) | F5.2 (Đọc lịch sử theo biển số) | ✅ Hợp lệ |
-| **D5** Cau_Hinh_He_Thong | F6.6 (Lưu cấu hình hệ thống) | F2.4 (Đọc cấu hình hệ thống), F3.4 (Đọc cấu hình gia hạn), F4.8 (Đọc bảng giá phạt và đền bù), F6.7 (Đọc cấu hình hệ thống quản trị) | ✅ Hợp lệ |
-| **D6** Nhan_Vien | F6.10 (Cập nhật thông tin nhân viên) | F6.11 (Đọc thông tin nhân viên) | ✅ Hợp lệ |
+| **D1** Xe_May | F2.11 (Cập nhật trạng thái xe), F4.12 (Giải phóng xe), F6.2 (Lưu thông tin xe mới) | F2.3 (Đọc danh sách xe), F6.3 (Đọc danh sách xe quản trị) |  Hợp lệ |
+| **D2** Hop_Dong_Booking | F2.10 (Lưu đơn đặt xe), F3.7 (Cập nhật gia hạn), F3.9 (Cập nhật trả sớm), F4.5 (Cập nhật Check-in), F4.11 (Cập nhật quyết toán), F4.15 (Ghi nhận đánh giá), F2.22 (Tạo booking tạm), F2.26 (Cập nhật giao dịch hoàn tiền) | F2.15 (Kiểm tra lịch xe trùng), F3.3 (Đọc booking gia hạn), F3.5 (Kiểm tra lịch xe), F4.2 (Đọc danh sách booking trong ngày), F4.7 (Đọc booking quyết toán), F2.23 (Đọc booking nhắc nhở), F2.25 (Đọc đơn đặt xe (để hủy)), F3.14 (Đọc đơn đặt xe (để trả sớm)) |  Hợp lệ |
+| **D3** Khach_Hang_GPLX | F1.7 (Lưu thông tin khách hàng), F5.8 (Cập nhật Blacklist) | F1.8 (Đọc thông tin khách hàng), F2.5 (Kiểm tra GPLX khách), F5.3 (Đọc thông tin khách hàng) |  Hợp lệ |
+| **D4** Lich_Su_Thue | F4.13 (Lưu lịch sử thuê), F5.6 (Cập nhật ghi chú lịch sử) | F5.2 (Đọc lịch sử theo biển số) |  Hợp lệ |
+| **D5** Cau_Hinh_He_Thong | F6.6 (Lưu cấu hình hệ thống) | F2.4 (Đọc cấu hình hệ thống), F3.4 (Đọc cấu hình gia hạn), F4.8 (Đọc bảng giá phạt và đền bù), F6.7 (Đọc cấu hình hệ thống quản trị) |  Hợp lệ |
+| **D6** Nhan_Vien | F6.10 (Cập nhật thông tin nhân viên) | F6.11 (Đọc thông tin nhân viên) |  Hợp lệ |
 
 #### 2.5.2. Kiểm tra luồng không hợp lệ
-- ✅ Không có luồng dữ liệu trực tiếp giữa 2 Actor (E↔E) mà không qua Tiến trình.
-- ✅ Không có luồng dữ liệu trực tiếp giữa 2 Kho dữ liệu (D↔D) mà không qua Tiến trình.
-- ✅ Không có luồng dữ liệu trực tiếp giữa Actor và Kho dữ liệu mà không qua Tiến trình.
-- ✅ Mọi Tiến trình đều có ít nhất 1 luồng vào và 1 luồng ra.
+-  Không có luồng dữ liệu trực tiếp giữa 2 Actor (E↔E) mà không qua Tiến trình.
+-  Không có luồng dữ liệu trực tiếp giữa 2 Kho dữ liệu (D↔D) mà không qua Tiến trình.
+-  Không có luồng dữ liệu trực tiếp giữa Actor và Kho dữ liệu mà không qua Tiến trình.
+-  Mọi Tiến trình đều có ít nhất 1 luồng vào và 1 luồng ra.
 
 ---
 
@@ -410,7 +410,7 @@ Từ việc phân tích các điểm nghẽn của các nền tảng đi trướ
 ### 3.1. TIẾN TRÌNH 1.0 — ĐĂNG KÝ & XÁC THỰC GPLX
 
 #### 3.1.1. Structured English (Ngôn ngữ cấu trúc)
-```text
+<pre style="background-color: transparent; color: black; border: none; font-family: monospace; white-space: pre-wrap; margin: 10px 0; font-size: 14px;">
 PROCESS 1.0: Đăng ký & Xác thực GPLX
 BEGIN
     RECEIVE F1.1: Yêu cầu đăng ký tài khoản (HoTen, Email, SoDienThoai, HangGPLX, AnhGPLXMatTruoc, AnhGPLXMatSau)
@@ -464,7 +464,7 @@ BEGIN
         SEND F1.6: Thông báo kết quả GPLX (TrangThaiGPLX = REJECTED, LyDoTuChoi) to Khách hàng E1
     ENDIF
 END
-```
+</pre>
 
 #### 3.1.2. Decision Table (Bảng quyết định)
 | Điều kiện (Conditions) | Q1 | Q2 | Q3 | Q4 |
@@ -493,7 +493,7 @@ graph LR
 ### 3.2. TIẾN TRÌNH 2.0 — ĐẶT XE TRỰC TUYẾN & GIỮ CHỖ
 
 #### 3.2.1. Structured English (Ngôn ngữ cấu trúc)
-```text
+<pre style="background-color: transparent; color: black; border: none; font-family: monospace; white-space: pre-wrap; margin: 10px 0; font-size: 14px;">
 PROCESS 2.0: Đặt xe trực tuyến & Giữ chỗ
 BEGIN
     // Xử lý Tìm kiếm xe máy khả dụng
@@ -600,7 +600,7 @@ BEGIN
         SEND Thông báo xác nhận hủy và kết quả hoàn tiền to Khách hàng E1
     ENDIF
 END
-```
+</pre>
 
 #### 3.2.2. Decision Table (Bảng quyết định)
 ##### Bảng A: Xét duyệt hợp lệ yêu cầu đặt xe
@@ -650,7 +650,7 @@ graph LR
 ### 3.3. TIẾN TRÌNH 3.0 — GIA HẠN & YÊU CẦU TRẢ XE SỚM
 
 #### 3.3.1. Structured English (Ngôn ngữ cấu trúc)
-```text
+<pre style="background-color: transparent; color: black; border: none; font-family: monospace; white-space: pre-wrap; margin: 10px 0; font-size: 14px;">
 PROCESS 3.0: Gia hạn & Yêu cầu Trả xe sớm
 BEGIN
     // Xử lý Gia hạn thuê xe máy trực tuyến
@@ -729,7 +729,7 @@ BEGIN
         SEND F3.15: Kết quả yêu cầu trả sớm (Thành công: Yêu cầu đã được ghi nhận) to Khách hàng E1
     ENDIF
 END
-```
+</pre>
 
 #### 3.3.2. Decision Table (Bảng quyết định)
 ##### Bảng A: Xét duyệt yêu cầu gia hạn thuê xe máy
@@ -771,7 +771,7 @@ graph TD
 ### 3.4. TIẾN TRÌNH 4.0 — NHẬN XE & QUYẾT TOÁN PHỤ PHÍ
 
 #### 3.4.1. Structured English (Ngôn ngữ cấu trúc)
-```text
+<pre style="background-color: transparent; color: black; border: none; font-family: monospace; white-space: pre-wrap; margin: 10px 0; font-size: 14px;">
 PROCESS 4.0: Nhận xe & Quyết toán phụ phí
 BEGIN
     // 1. NGHIỆP VỤ CHECK-IN (BÀN GIAO PHƯƠNG TIỆN)
@@ -865,7 +865,7 @@ BEGIN
         SEND F4.13: Lưu lịch sử thuê thành công to D4
     ENDIF
 END
-```
+</pre>
 
 #### 3.4.2. Decision Table (Bảng quyết định)
 ##### Quy định tính phí phạt trả trễ hạn phương tiện (PhiPhatTreHan)
@@ -896,7 +896,7 @@ graph TD
 ### 3.5. TIẾN TRÌNH 5.0 — TRA CỨU LỊCH SỬ THUÊ & QUẢN LÝ BLACKLIST
 
 #### 3.5.1. Structured English (Ngôn ngữ cấu trúc)
-```text
+<pre style="background-color: transparent; color: black; border: none; font-family: monospace; white-space: pre-wrap; margin: 10px 0; font-size: 14px;">
 PROCESS 5.0: Tra cứu Lịch sử thuê & Quản lý Blacklist
 BEGIN
     // Xử lý tra cứu lịch sử vi phạm giao thông (Phạt nguội)
@@ -940,7 +940,7 @@ BEGIN
         SEND Thông báo tài khoản bị hạn chế do vi phạm to Khách hàng E1 (qua hệ thống)
     ENDIF
 END
-```
+</pre>
 
 #### 3.5.2. Decision Table (Bảng quyết định)
 ##### Quy định xử lý phân loại trạng thái Blacklist khách hàng
@@ -969,7 +969,7 @@ graph TD
 ### 3.6. TIẾN TRÌNH 6.0 — QUẢN LÝ DANH MỤC, NHÂN VIÊN & CẤU HÌNH HỆ THỐNG
 
 #### 3.6.1. Structured English (Ngôn ngữ cấu trúc)
-```text
+<pre style="background-color: transparent; color: black; border: none; font-family: monospace; white-space: pre-wrap; margin: 10px 0; font-size: 14px;">
 PROCESS 6.0: Quản lý Danh mục, Nhân viên & Cấu hình Hệ thống
 BEGIN
     // 1. QUẢN LÝ DANH MỤC XE MÁY (P6.1)
@@ -1048,7 +1048,7 @@ BEGIN
         SEND F6.8: Kết quả cập nhật cấu hình (Thành công) to Admin E3
     ENDIF
 END
-```
+</pre>
 
 #### 3.6.2. Decision Table (Bảng quyết định)
 ##### Quy định phê duyệt cập nhật cấu hình hệ thống và tài khoản nhân sự
