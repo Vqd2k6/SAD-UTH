@@ -9,18 +9,15 @@
 |----------|-----------|-------|
 | **E1** | Khách hàng (Customer) | Người có nhu cầu thuê xe máy. Tìm xe, đặt xe, thanh toán, yêu cầu gia hạn, trả xe sớm, đánh giá dịch vụ. |
 | **E2** | Nhân viên cửa hàng (Staff) | Bàn giao xe, kiểm tra tình trạng xe khi trả, ghi nhận sự cố, lập hóa đơn phụ phí, tra cứu lịch sử thuê xe để xử lý phạt nguội ngoài hệ thống. Nhận thông báo đơn mới từ hệ thống để chuẩn bị xe. |
-| **E3** | Quản trị viên (Admin) | Quản lý danh mục xe, cấu hình giá thuê/phí phạt (Dynamic Pricing), duyệt GPLX, quản lý tài khoản nhân viên, xem báo cáo doanh thu, quản lý Blacklist. |
+| **E3** | Quản trị viên (Admin) | Tra cứu, hậu kiểm hồ sơ khách hàng và ảnh GPLX (đọc thông tin, không phê duyệt), quản lý danh mục xe máy, cấu hình giá thuê/phí phạt (Dynamic Pricing), quản lý tài khoản nhân viên, xem báo cáo doanh thu, quản lý Blacklist. |
 | **E4** | Cổng thanh toán (Payment Gateway) | Hệ thống thanh toán trực tuyến bên ngoài (chuyển khoản ngân hàng, ví điện tử) xử lý giao dịch đặt cọc, thanh toán gia hạn và hoàn tiền hủy đơn. |
-
-
+| **E5** | Hệ thống thời gian (Cron Job) | Tự động kích hoạt các tiến trình định kỳ theo lịch trình: Gửi thông báo nhắc nhở trước giờ nhận/trả xe, hủy đơn và giải phóng xe khi quá 15 phút không thanh toán cọc. |
 
 ---
 
 ## 2. CÁC KHO DỮ LIỆU (DATA STORES)
 
 ### D1 — Xe_May (Motorcycle Inventory)
-
-> Lưu trữ thông tin toàn bộ xe máy trong cửa hàng. Phân loại rõ ràng theo nhóm dung tích.
 
 | Thuộc tính | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |------------|--------------|-----------|-------|
@@ -35,7 +32,7 @@
 | `NhomXe` | ENUM | NOT NULL | {`Nhom_50cc_Dien`, `Nhom_A1`, `Nhom_A2_PKL`}. **Tự động phân loại**: PhanKhoi < 50 hoặc LoaiXe = `Xe_Dien` → `Nhom_50cc_Dien`; 50 ≤ PhanKhoi < 175 → `Nhom_A1`; PhanKhoi ≥ 175 → `Nhom_A2_PKL` |
 | `DoiXe` | INT | NOT NULL | Năm sản xuất. VD: `2023` |
 | `HinhAnhXe` | TEXT | NULL | Danh sách URL hình ảnh xe (JSON array) |
-| `TrangThaiXe` | ENUM | NOT NULL, DEFAULT `San_Sang` | {`San_Sang`, `Dang_Thue`, `Dang_Bao_Duong`, `Dang_Sua_Chua`} |
+| `TrangThaiXe` | ENUM | NOT NULL, DEFAULT `San_Sang` | {`San_Sang`, `Dang_Thue`, `KHOA_TAM_15M`, `Dang_Bao_Duong`, `Dang_Sua_Chua`} |
 | `MucTieuThuXang` | DECIMAL(4,1) | NULL | Lít/100km. VD: `1.7` |
 | `SoMuBaoHiem` | INT | NOT NULL, DEFAULT `2` | Số mũ bảo hiểm đi kèm mặc định |
 | `CoAoMua` | BOOLEAN | NOT NULL, DEFAULT `TRUE` | Có kèm áo mưa mặc định hay không |
@@ -48,8 +45,6 @@
 
 ### D2 — Hop_Dong_Booking (Booking Contract)
 
-> Lưu trữ toàn bộ vòng đời đơn đặt xe, bao gồm trạng thái gia hạn (tối đa 3 lần), trả xe sớm, và thông tin bàn giao phụ kiện mũ bảo hiểm/áo mưa.
-
 | Thuộc tính | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |------------|--------------|-----------|-------|
 | `MaBooking` | VARCHAR(15) | **PK**, NOT NULL, UNIQUE | Mã đơn đặt xe. VD: `BK-20260622001` |
@@ -61,7 +56,7 @@
 | `ThoiGianTraThucTe` | DATETIME | NULL | Thời gian khách trả xe thực tế |
 | `SoNgayThue` | INT | NOT NULL | Tổng số ngày thuê (bao gồm gia hạn) |
 | `SoNgayThueGoc` | INT | NOT NULL | Số ngày thuê ban đầu |
-| `TrangThaiBooking` | ENUM | NOT NULL, DEFAULT `Cho_Xac_Nhan` | {`Cho_Xac_Nhan`, `Cho_Nhan_Xe`, `Dang_Thue`, `Yeu_Cau_Tra_Som`, `Qua_Han`, `Cho_Tra_Xe`, `Dang_Quyet_Toan`, `Hoan_Tat`, `Da_Huy`}. **Lưu ý:** Hệ thống **tự động duyệt** đơn sau khi cọc thành công + kiểm tra lịch xe không trùng. Không có bước Staff duyệt thủ công. |
+| `TrangThaiBooking` | ENUM | NOT NULL, DEFAULT `Cho_Thanh_Toan_Coc` | {`Cho_Thanh_Toan_Coc`, `Cho_Nhan_Xe`, `Dang_Thue`, `Yeu_Cau_Tra_Som`, `Qua_Han`, `Cho_Tra_Xe`, `Dang_Quyet_Toan`, `Hoan_Tat`, `Da_Huy`}. **Lưu ý:** Hệ thống **tự động duyệt** đơn sau khi cọc thành công + kiểm tra lịch xe không trùng. |
 | `DonGiaApDung` | DECIMAL(12,0) | NOT NULL | Đơn giá ngày áp dụng (đã tính Dynamic Pricing) |
 | `TongTienThue` | DECIMAL(15,0) | NOT NULL | Tổng tiền thuê gốc (chưa phụ phí/giảm giá) |
 | `PhanTramGiamGia` | DECIMAL(4,1) | DEFAULT `0` | % giảm giá thuê dài ngày. VD: `5.0`, `10.0` |
@@ -96,11 +91,12 @@
 | `NgayTao` | DATETIME | NOT NULL | Ngày tạo đơn |
 | `NgayCapNhat` | DATETIME | NOT NULL | Lần cập nhật cuối |
 
+> **Ghi chú về Khử chuẩn (Denormalization):**
+> Trong bảng `Hop_Dong_Booking`, trường `SoNgayThue` được thiết kế dưới dạng Derived Attribute (thuộc tính tính toán từ `ThoiGianNhan` và `ThoiGianTra`). Việc lưu trữ dư thừa dữ liệu này (Redundancy) là chủ đích thiết kế (Khử chuẩn) để tối ưu tốc độ đọc (Read-heavy) trong các câu truy vấn báo cáo và tính toán logic trên Dashboard, thay vì phải chạy phép tính `DATEDIFF` real-time mỗi lần truy vấn. Tương tự, mảng hình ảnh URL `AnhNgoaiQuanNhan` và `AnhNgoaiQuanTra` lưu dạng JSON TEXT để tối ưu hóa thiết kế hướng Document, tránh việc phình to database bằng các bảng liên kết 1-N không cần thiết.
+
 ---
 
 ### D3 — Khach_Hang_GPLX (Customer & Driving License)
-
-> Lưu trữ thông tin khách hàng kèm trạng thái xác thực GPLX. Hỗ trợ 2 luồng đăng ký: Có GPLX / Không có GPLX.
 
 | Thuộc tính | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |------------|--------------|-----------|-------|
@@ -118,9 +114,8 @@
 | `NgayHetHanGPLX` | DATE | NULL | Ngày hết hạn GPLX |
 | `AnhGPLXMatTruoc` | TEXT | NULL | URL ảnh mặt trước GPLX |
 | `AnhGPLXMatSau` | TEXT | NULL | URL ảnh mặt sau GPLX |
-| `TrangThaiGPLX` | ENUM | NOT NULL, DEFAULT `Khong_Dang_Ky` | {`Khong_Dang_Ky`, `Cho_Duyet`, `Da_Duyet`, `Tu_Choi`}. `Khong_Dang_Ky` khi chọn "Không có GPLX"; `Cho_Duyet` khi tải ảnh lên chờ Admin; `Da_Duyet` khi Admin xác nhận hợp lệ; `Tu_Choi` khi Admin từ chối |
-| `LyDoTuChoiGPLX` | TEXT | NULL | Lý do Admin từ chối GPLX |
-| `NhomXeDuocThue` | ENUM | NOT NULL, DEFAULT `Nhom_50cc_Dien` | {`Nhom_50cc_Dien`, `Nhom_A1`, `Nhom_A2_PKL`}. Phụ thuộc vào TrangThaiGPLX và HangGPLX |
+| `TrangThaiGPLX` | ENUM | NOT NULL, DEFAULT `Khong_Dang_Ky` | {`Khong_Dang_Ky`, `Da_Upload`}. `Khong_Dang_Ky`: Khách không khai báo GPLX → chỉ thuê nhóm 50cc/Điện; `Da_Upload`: Khách đã tải ảnh GPLX lên. |
+| `NhomXeDuocThue` | ENUM | NOT NULL, DEFAULT `Nhom_50cc_Dien` | {`Nhom_50cc_Dien`, `Nhom_A1`, `Nhom_A2_PKL`}. Phụ thuộc vào HangGPLX |
 | `TrangThaiBlacklist` | BOOLEAN | NOT NULL, DEFAULT `FALSE` | Nằm trong danh sách đen hay không |
 | `LyDoBlacklist` | TEXT | NULL | Lý do đưa vào Blacklist |
 | `NgayTao` | DATETIME | NOT NULL | Ngày đăng ký tài khoản |
@@ -129,8 +124,6 @@
 ---
 
 ### D4 — Lich_Su_Thue (Rental History & Internal Tracking)
-
-> Lưu vết toàn bộ lịch sử thuê xe phục vụ tra cứu nội bộ (tra biển số + thời gian khi nhận thông báo phạt nguội từ bên ngoài), thống kê doanh thu và quản lý Blacklist.
 
 | Thuộc tính | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |------------|--------------|-----------|-------|
@@ -142,15 +135,13 @@
 | `ThoiGianNhan` | DATETIME | NOT NULL | Thời gian nhận xe thực tế |
 | `ThoiGianTra` | DATETIME | NOT NULL | Thời gian trả xe thực tế |
 | `TongTienThanhToan` | DECIMAL(15,0) | NOT NULL | Tổng tiền đã thanh toán |
-| `GhiChuNoiBo` | TEXT | NULL | Ghi chú nội bộ của NV/Admin (VD: ghi nhận phạt nguội, kết quả thương lượng với khách, tình trạng xử lý bên ngoài) |
+| `GhiChuNoiBo` | TEXT | NULL | Ghi chú nội bộ của NV/Admin |
 | `DanhDauViPham` | BOOLEAN | NOT NULL, DEFAULT `FALSE` | NV/Admin tự đánh dấu bản ghi có liên quan đến vi phạm giao thông (phạt nguội) sau khi tra cứu thủ công |
 | `NgayTao` | DATETIME | NOT NULL | Ngày tạo bản ghi |
 
 ---
 
 ### D5 — Cau_Hinh_He_Thong (System Configuration)
-
-> Lưu cấu hình vận hành như bảng đền bù mũ/áo mưa, giá trị phạt giờ, định mức phạt trễ hạn, định mức gia hạn tối đa...
 
 | Thuộc tính | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |------------|--------------|-----------|-------|
@@ -167,8 +158,6 @@
 ---
 
 ### D6 — Nhan_Vien (Staff Account)
-
-> Lưu trữ thông tin tài khoản nhân viên do Admin quản lý.
 
 | Thuộc tính | Kiểu dữ liệu | Ràng buộc | Mô tả |
 |------------|--------------|-----------|-------|
@@ -192,11 +181,12 @@
 | F1.1 | `Yêu cầu đăng ký tài khoản` | E1 (Khách hàng) | P1.0 | Gửi thông tin đăng ký tài khoản gồm: Họ tên, Email, SĐT, lựa chọn GPLX và ảnh chụp 2 mặt GPLX. |
 | F1.2 | `Thông tin đăng nhập` | E1 (Khách hàng) | P1.0 | Gửi Email/Số điện thoại và Mật khẩu để yêu cầu đăng nhập hệ thống. |
 | F1.3 | `Kết quả đăng nhập` | P1.0 | E1 (Khách hàng) | Trả về token đăng nhập khi xác thực thành công hoặc thông báo lỗi nếu sai mật khẩu. |
-| F1.4 | `Hồ sơ GPLX chờ duyệt` | P1.0 | E3 (Admin) | Gửi thông tin ảnh chụp GPLX của khách hàng đến Admin để duyệt thủ công. |
-| F1.5 | `Kết quả duyệt GPLX` | E3 (Admin) | P1.0 | Admin gửi kết quả duyệt GPLX (Duyệt/Từ chối kèm lý do). |
-| F1.6 | `Thông báo kết quả GPLX` | P1.0 | E1 (Khách hàng) | Hệ thống thông báo kết quả duyệt GPLX và phân hạng nhóm xe khách hàng được phép thuê. |
-| F1.7 | `Lưu thông tin khách hàng` | P1.0 | D3 (Khach_Hang_GPLX) | Ghi mới tài khoản hoặc cập nhật trạng thái GPLX và nhóm xe được phép thuê vào kho D3. |
+| F1.6 | `Thông báo tài khoản sẵn sàng` | P1.0 | E1 (Khách hàng) | Hệ thống thông báo tài khoản đã được tạo thành công. |
+| F1.7 | `Lưu thông tin khách hàng` | P1.0 | D3 (Khach_Hang_GPLX) | Ghi mới tài khoản hoặc cập nhật trạng thái GPLX vào kho D3. |
 | F1.8 | `Đọc thông tin khách hàng` | D3 (Khach_Hang_GPLX) | P1.0 | Truy vấn thông tin tài khoản phục vụ xác thực đăng nhập hoặc đối chiếu điều kiện thuê xe. |
+| F1.9 | `Yêu cầu đăng nhập quản trị` | E2 (Nhân viên) / E3 (Admin) | P1.0 | Gửi Email/SĐT và mật khẩu đăng nhập hệ thống dành cho nhân viên hoặc admin. |
+| F1.10 | `Kết quả đăng nhập quản trị` | P1.0 | E2 (Nhân viên) / E3 (Admin) | Trả về token đăng nhập thành công kèm thông tin vai trò (Role). |
+| F1.11 | `Đọc thông tin nhân viên xác thực` | D6 (Nhan_Vien) | P1.0 | Truy vấn thông tin tài khoản nhân viên từ D6 phục vụ đối chiếu thông tin xác thực đăng nhập. |
 
 ---
 
@@ -204,32 +194,22 @@
 
 | Mã | Tên luồng | Nguồn (Source) | Đích (Destination) | Mô tả chi tiết chức năng |
 |----|-----------|---------------|--------------------|--------------------------|
-| F2.1 | `Yêu cầu tìm kiếm xe` | E1 (Khách hàng) | P2.0 | Gửi bộ lọc tìm xe (loại xe, hãng xe, phân khối, khoảng giá, thời gian nhận/trả). |
+| F2.1 | `Yêu cầu tìm kiếm xe` | E1 (Khách hàng) | P2.0 | Gửi bộ lọc tìm xe. |
 | F2.2 | `Kết quả tìm kiếm xe` | P2.0 | E1 (Khách hàng) | Trả về danh sách xe máy khả dụng phù hợp với bộ lọc tìm kiếm. |
 | F2.3 | `Đọc danh sách xe` | D1 (Xe_May) | P2.0 | Truy vấn thông tin xe máy từ kho D1 phục vụ tìm kiếm và kiểm tra tình trạng xe. |
-| F2.4 | `Đọc cấu hình hệ thống` | D5 (Cau_Hinh_He_Thong) | P2.0 | Đọc các tham số giá ngày, tỷ lệ tăng giá động phục vụ tính toán chi phí thuê xe. |
+| F2.4 | `Đọc cấu hình hệ thống` | D5 (Cau_Hinh_He_Thong) | P2.0 | Đọc các tham số giá ngày phục vụ tính toán chi phí. |
 | F2.5 | `Kiểm tra GPLX khách` | D3 (Khach_Hang_GPLX) | P2.0 | Đọc thông tin GPLX và cờ Blacklist để xác thực khách có đủ điều kiện đặt xe hay không. |
 | F2.6 | `Yêu cầu đặt xe` | E1 (Khách hàng) | P2.0 | Gửi yêu cầu đặt xe cụ thể kèm dịch vụ đi kèm trong khoảng thời gian xác định. |
-| F2.7 | `Yêu cầu hủy đặt xe` | E1 (Khách hàng) | P2.0 | Gửi yêu cầu hủy đơn hàng đã cọc trước giờ nhận xe để nhận lại tiền cọc (sau phạt). |
+| F2.7 | `Yêu cầu hủy đặt xe` | E1 (Khách hàng) | P2.0 | Gửi yêu cầu hủy đơn hàng đã cọc trước giờ nhận xe. |
 | F2.8 | `Thông báo khóa xe tạm` | P2.0 | E1 (Khách hàng) | Xác nhận xe đã được khóa giữ chỗ tạm thời 15 phút, yêu cầu khách tiến hành thanh toán. |
 | F2.9 | `Thanh toán đặt cọc` | E1 (Khách hàng) | P2.0 | Khách hàng thực hiện thanh toán tiền đặt cọc (30% giá trị đơn hàng). |
-| F2.10 | `Lưu đơn đặt xe` | P2.0 | D2 (Hop_Dong_Booking) | Ghi mới đơn đặt xe hoặc cập nhật trạng thái đơn (Chờ nhận xe/Đã hủy) vào kho D2. |
-| F2.11 | `Cập nhật trạng thái xe` | P2.0 | D1 (Xe_May) | Cập nhật trạng thái xe máy trong kho D1 (sang "Đang thuê" khi cọc thành công). |
+| F2.10 | `Lưu đơn đặt xe` | P2.0 | D2 (Hop_Dong_Booking) | Ghi mới đơn đặt xe hoặc cập nhật trạng thái đơn vào kho D2. |
+| F2.11 | `Cập nhật trạng thái xe` | P2.0 | D1 (Xe_May) | Cập nhật trạng thái xe máy trong kho D1. |
 | F2.12 | `Thông báo đơn mới` | P2.0 | E2 (Nhân viên) | Thông báo chi tiết đơn đặt xe đã cọc thành công để nhân viên chuẩn bị xe giao khách. |
-| F2.13 | `Thông báo nhắc nhở tự động` | P2.0 | E1 (Khách hàng) | Thông báo nhắc lịch nhận xe trước 2h, nhắc trả xe trước 2h, nhắc trễ giờ nhận xe. |
-| F2.14 | `Xác nhận đặt xe` | P2.0 | E1 (Khách hàng) | Gửi xác nhận đặt xe thành công kèm mã booking và hóa đơn đặt cọc cho khách hàng. |
+| F2.14 | `Xác nhận đặt xe` | P2.0 | E1 (Khách hàng) | Gửi xác nhận đặt xe thành công. |
 | F2.15 | `Kiểm tra lịch xe trùng` | D2 (Hop_Dong_Booking) | P2.0 | Truy vấn lịch sử booking trong D2 để kiểm tra xe có bị trùng lịch trong khoảng thời gian đặt không. |
 | F2.16 | `Yêu cầu giao dịch trực tuyến` | P2.0 | E4 (Cổng thanh toán) | Gửi lệnh thanh toán cọc hoặc yêu cầu hoàn cọc sang cổng thanh toán trực tuyến E4. |
-| F2.17 | `Kết quả giao dịch` | E4 (Cổng thanh toán) | P2.0 | Cổng thanh toán phản hồi kết quả giao dịch (Thành công/Thất bại) về hệ thống. |
-| F2.18 | `Thông tin booking hợp lệ` | P2.2 (Kiểm tra điều kiện) | P2.3 (Giữ chỗ & Khóa xe tạm) | Truyền dữ liệu đơn hàng đã đủ điều kiện thuê sang tiến trình khóa xe giữ chỗ (Luồng nội bộ). |
-| F2.19 | `Yêu cầu thanh toán tạm` | P2.3 (Giữ chỗ & Khóa xe tạm) | P2.4 (Xử lý Thanh toán & Hoàn cọc) | Gửi thông tin số tiền cọc cần đóng sang tiến trình thanh toán (Luồng nội bộ). |
-| F2.20 | `Xác nhận thanh toán thành công` | P2.4 (Xử lý Thanh toán & Hoàn cọc) | P2.5 (Xác nhận đặt xe & Hủy/Hoàn tiền) | Chuyển tín hiệu giao dịch cọc thành công sang tiến trình duyệt đơn và phân phối (Luồng nội bộ). |
-| F2.21 | `Hủy booking tạm` | P2.4 (Xử lý Thanh toán & Hoàn cọc) | P2.3 (Giữ chỗ & Khóa xe tạm) | Gửi lệnh giải phóng xe khi khách không hoàn tất cọc quá 15 phút (Luồng nội bộ). |
-| F2.22 | `Tạo booking tạm` | P2.3 (Giữ chỗ & Khóa xe tạm) | D2 (Hop_Dong_Booking) | Ghi nhận trạng thái booking tạm thời (Chờ xác nhận) vào kho D2 để giữ xe (Luồng nội bộ). |
-| F2.23 | `Đọc booking nhắc nhở` | D2 (Hop_Dong_Booking) | P2.6 (Tự động nhắc nhở) | Quét kho D2 để lọc ra các đơn hàng đến mốc thời gian cần gửi nhắc nhở (Luồng nội bộ). |
-| F2.24 | `Yêu cầu hoàn tiền cọc` | P2.5 (Xác nhận đặt xe & Hủy/Hoàn tiền) | P2.4 (Xử lý Thanh toán & Hoàn cọc) | Gửi yêu cầu hoàn trả tiền cọc (sau khi trừ phạt hủy đơn) sang tiến trình thanh toán (Luồng nội bộ). |
-| F2.25 | `Đọc đơn đặt xe (để hủy)` | D2 (Hop_Dong_Booking) | P2.5 (Xác nhận đặt xe & Hủy/Hoàn tiền) | Đọc thông tin chi tiết đơn booking từ D2 để kiểm tra mốc thời gian và tính toán tiền phạt hủy đơn (Luồng nội bộ). |
-| F2.26 | `Cập nhật giao dịch hoàn tiền` | P2.4 (Xử lý Thanh toán & Hoàn cọc) | D2 (Hop_Dong_Booking) | Cập nhật thông tin giao dịch hoàn tiền thành công/thất bại từ cổng thanh toán vào đơn đặt xe ở D2 (Luồng nội bộ). |
+| F2.17 | `Kết quả giao dịch` | E4 (Cổng thanh toán) | P2.0 | Cổng thanh toán phản hồi kết quả giao dịch về hệ thống. |
 
 ---
 
@@ -240,18 +220,13 @@
 | F3.1 | `Yêu cầu gia hạn` | E1 (Khách hàng) | P3.0 | Gửi yêu cầu xin thuê thêm giờ/ngày trực tiếp trên ứng dụng của khách hàng. |
 | F3.2 | `Thanh toán gia hạn` | E1 (Khách hàng) | P3.0 | Khách hàng thực hiện thanh toán online phần tiền phụ thu gia hạn. |
 | F3.3 | `Đọc booking gia hạn` | D2 (Hop_Dong_Booking) | P3.0 | Đọc thông tin đơn booking hiện tại trong D2 để kiểm tra số lần gia hạn (<3 lần). |
-| F3.4 | `Đọc cấu hình gia hạn` | D5 (Cau_Hinh_He_Thong) | P3.0 | Đọc cấu hình gia hạn từ kho D5 để lấy đơn giá phụ thu và quy định giới hạn. |
+| F3.4 | `Đọc cấu hình gia hạn` | D5 (Cau_Hinh_He_Thong) | P3.0 | Đọc cấu hình gia hạn từ kho D5 để lấy đơn giá phụ thu. |
 | F3.5 | `Kiểm tra lịch xe` | D2 (Hop_Dong_Booking) | P3.0 | Kiểm tra xem xe có bị khách hàng khác đặt trước trong khoảng thời gian gia hạn không. |
-| F3.6 | `Kết quả gia hạn` | P3.0 | E1 (Khách hàng) | Thông báo kết quả gia hạn thành công hoặc bị từ chối kèm gợi ý xe khác. |
+| F3.6 | `Kết quả gia hạn` | P3.0 | E1 (Khách hàng) | Thông báo kết quả gia hạn thành công hoặc bị từ chối. |
 | F3.7 | `Cập nhật gia hạn` | P3.0 | D2 (Hop_Dong_Booking) | Cập nhật thời gian trả xe mới, tăng số lần gia hạn và cộng tiền gia hạn vào D2. |
-| F3.8 | `Yêu cầu trả xe sớm` | E1 (Khách hàng) | P3.0 | Gửi thông báo muốn mang trả xe sớm trước thời hạn ít nhất 1 giờ. |
+| F3.8 | `Yêu cầu trả xe sớm` | E1 (Khách hàng) | P3.0 | Gửi thông báo muốn mang trả xe sớm. |
 | F3.9 | `Cập nhật trả sớm` | P3.0 | D2 (Hop_Dong_Booking) | Ghi nhận cờ trả sớm CoTraSom = TRUE và cập nhật trạng thái Yêu cầu trả sớm vào D2. |
-| F3.10 | `Thông báo trả sớm` | P3.0 | E2 (Nhân viên) | Thông báo cho nhân viên tại quầy chuẩn bị tiếp nhận xe khách trả sớm. |
-| F3.11 | `Yêu cầu cập nhật gia hạn` | P3.1 (Kiểm tra khả năng gia hạn) | P3.2 (Cập nhật gia hạn) | Gửi tín hiệu đã kiểm tra đủ điều kiện gia hạn sang tiến trình cập nhật và thanh toán (Luồng nội bộ). |
-| F3.12 | `Yêu cầu giao dịch gia hạn trực tuyến` | P3.2 (Cập nhật gia hạn) | E4 (Cổng thanh toán) | Gửi thông tin thanh toán tiền phụ thu gia hạn sang cổng thanh toán trực tuyến E4. |
-| F3.13 | `Kết quả giao dịch gia hạn` | E4 (Cổng thanh toán) | P3.2 (Cập nhật gia hạn) | Cổng thanh toán phản hồi kết quả giao dịch thanh toán gia hạn (Thành công/Thất bại) về tiến trình. |
-| F3.14 | `Đọc đơn đặt xe (để trả sớm)` | D2 (Hop_Dong_Booking) | P3.3 (Xử lý trả xe sớm) | Đọc thông tin booking hiện tại từ D2 để kiểm tra điều kiện trả xe sớm (như trạng thái xe phải là Đang thuê). |
-| F3.15 | `Kết quả yêu cầu trả sớm` | P3.3 (Xử lý trả xe sớm) | E1 (Khách hàng) | Trả về thông báo đồng ý tiếp nhận trả xe sớm hoặc từ chối yêu cầu kèm lý do cho khách hàng. |
+| F3.10 | `Thông báo trả sớm` | P3.0 | E2 (Nhân viên) | Thông báo cho nhân viên tại quầy chuẩn bị tiếp nhận xe. |
 
 ---
 
@@ -261,22 +236,20 @@
 |----|-----------|---------------|--------------------|--------------------------|
 | F4.1 | `Yêu cầu xem danh sách giao nhận` | E2 (Nhân viên) | P4.0 | Nhân viên yêu cầu xem danh sách xe cần giao (Check-in) hoặc nhận (Check-out) hôm nay. |
 | F4.2 | `Đọc danh sách booking trong ngày` | D2 (Hop_Dong_Booking) | P4.0 | Lọc các booking có mốc thời gian nhận/trả xe trong ngày từ kho D2. |
-| F4.3 | `Danh sách giao nhận trong ngày` | P4.0 | E2 (Nhân viên) | Hiển thị danh sách công việc giao nhận xe máy trong ngày trên ca làm việc của NV. |
-| F4.4 | `Biên bản Check-in` | E2 (Nhân viên) | P4.0 | NV nhập biên bản giao xe (ODO giao, mức xăng giao, ảnh chụp xe, số mũ/áo mưa bàn giao). |
+| F4.3 | `Danh sách giao nhận trong ngày` | P4.0 | E2 (Nhân viên) | Hiển thị danh sách công việc giao nhận xe máy trong ngày. |
+| F4.4 | `Biên bản Check-in` | E2 (Nhân viên) | P4.0 | NV nhập biên bản giao xe. |
 | F4.5 | `Cập nhật Check-in` | P4.0 | D2 (Hop_Dong_Booking) | Ghi nhận thông tin bàn giao xe và chuyển trạng thái booking sang "Đang thuê" trong D2. |
-| F4.6 | `Biên bản Check-out` | E2 (Nhân viên) | P4.0 | NV nhập biên bản thu hồi xe (ODO trả, xăng trả, ảnh hư hại, số mũ/áo mưa trả, phí đền bù hư hại/mất). |
+| F4.6 | `Biên bản Check-out` | E2 (Nhân viên) | P4.0 | NV nhập biên bản thu hồi xe. |
 | F4.7 | `Đọc booking quyết toán` | D2 (Hop_Dong_Booking) | P4.0 | Truy vấn thông tin đơn thuê gốc từ D2 phục vụ đối chiếu và quyết toán tiền. |
-| F4.8 | `Đọc bảng giá phạt và đền bù` | D5 (Cau_Hinh_He_Thong) | P4.0 | Lấy cấu hình phạt mất phụ kiện, phạt trễ giờ từ D5 để tính toán chi phí phạt. |
-| F4.9 | `Tính phí phạt trễ hạn` | P4.0 | (Nội bộ) | Logic tính toán chi phí phạt trễ hạn dựa trên số giờ trễ thực tế. |
+| F4.8 | `Đọc bảng giá phạt và đền bù` | D5 (Cau_Hinh_He_Thong) | P4.0 | Lấy cấu hình phạt từ D5 để tính toán chi phí. |
 | F4.10 | `Hóa đơn quyết toán` | P4.0 | E1 (Khách hàng) | Xuất hóa đơn quyết toán chi tiết các khoản chi phí và phụ thu gửi cho khách hàng. |
-| F4.11 | `Cập nhật quyết toán` | P4.0 | D2 (Hop_Dong_Booking) | Ghi nhận trạng thái Hoàn tất, cập nhật ODO trả và tổng thanh toán thực tế vào D2. |
-| F4.12 | `Giải phóng xe` | P4.0 | D1 (Xe_May) | Chuyển trạng thái xe máy trong D1 về "Sẵn sàng" và cập nhật chỉ số ODO hiện tại của xe. |
+| F4.11 | `Cập nhật quyết toán` | P4.0 | D2 (Hop_Dong_Booking) | Ghi nhận trạng thái Hoàn tất và tổng thanh toán thực tế vào D2. |
+| F4.12 | `Giải phóng xe` | P4.0 | D1 (Xe_May) | Chuyển trạng thái xe máy trong D1 về "Sẵn sàng". |
 | F4.13 | `Lưu lịch sử thuê` | P4.0 | D4 (Lich_Su_Thue) | Sao chép và lưu vết toàn bộ dữ liệu đơn thuê đã hoàn tất sang kho lịch sử D4. |
-| F4.14 | `Đánh giá chuyến đi` | E1 (Khách hàng) | P4.0 | Khách hàng gửi điểm số và nhận xét đánh giá dịch vụ sau chuyến đi. |
-| F4.15 | `Ghi nhận đánh giá` | P4.5 (Tiếp nhận đánh giá) | D2 (Hop_Dong_Booking) | Lưu thông tin phản hồi của khách hàng vào đơn booking tương ứng trong kho D2 (Luồng nội bộ). |
-| F4.16 | `Bàn giao biên bản Check-out` | P4.3 (Thực hiện nhận lại xe) | P4.4 (Tính toán & Quyết toán phụ phí) | Chuyển dữ liệu Check-out nghiệm thu sang tiến trình quyết toán để tính hóa đơn (Luồng nội bộ). |
-| F4.17 | `Yêu cầu giao dịch quyết toán trực tuyến` | P4.4 (Tính toán & Quyết toán phụ phí) | E4 (Cổng thanh toán) | Gửi yêu cầu thanh toán khoản phụ phí chênh lệch hoặc yêu cầu hoàn tiền thừa sang cổng thanh toán trực tuyến E4. |
-| F4.18 | `Kết quả giao dịch quyết toán` | E4 (Cổng thanh toán) | P4.4 (Tính toán & Quyết toán phụ phí) | Cổng thanh toán phản hồi kết quả giao dịch thanh toán/hoàn tiền quyết toán (Thành công/Thất bại) về tiến trình. |
+| F4.14 | `Đánh giá chuyến đi` | E1 (Khách hàng) | P4.0 | Khách hàng gửi điểm số và nhận xét đánh giá dịch vụ. |
+| F4.15 | `Ghi nhận đánh giá` | P4.0 | D2 (Hop_Dong_Booking) | Lưu thông tin phản hồi của khách hàng vào đơn booking tương ứng trong kho D2. |
+| F4.17 | `Lệnh hoàn tiền/thu thêm` | P4.0 | E4 (Cổng thanh toán) | Gửi API yêu cầu cổng thanh toán thu thêm phụ phí (nếu nợ) hoặc hoàn lại tiền cọc dư cho khách (Auto API). |
+| F4.18 | `Kết quả quyết toán` | E4 (Cổng thanh toán) | P4.0 | Cổng thanh toán phản hồi kết quả giao dịch về hệ thống để đóng đơn hàng. |
 
 ---
 
@@ -284,10 +257,10 @@
 
 | Mã | Tên luồng | Nguồn (Source) | Đích (Destination) | Mô tả chi tiết chức năng |
 |----|-----------|---------------|--------------------|--------------------------|
-| F5.1 | `Yêu cầu tra cứu lịch sử` | E2 (Nhân viên) / E3 (Admin) | P5.0 | Nhập Biển số xe và khoảng thời gian để tra cứu phục vụ xử lý phạt nguội. |
+| F5.1 | `Yêu cầu tra cứu lịch sử` | E2 (Nhân viên) / E3 (Admin) | P5.0 | Nhập Biển số xe và khoảng thời gian để tra cứu. |
 | F5.2 | `Đọc lịch sử theo biển số` | D4 (Lich_Su_Thue) | P5.0 | Truy vết danh sách chuyến đi của biển số xe tương ứng trong khoảng thời gian từ kho D4. |
 | F5.3 | `Đọc thông tin khách hàng` | D3 (Khach_Hang_GPLX) | P5.0 | Đọc thông tin cá nhân và số GPLX của khách thuê xe tương ứng từ kho D3. |
-| F5.4 | `Kết quả tra cứu` | P5.0 | E2 (Nhân viên) / E3 (Admin) | Hiển thị kết quả tra cứu thông tin khách hàng vi phạm cho NV/Admin làm việc ngoại tuyến. |
+| F5.4 | `Kết quả tra cứu` | P5.0 | E2 (Nhân viên) / E3 (Admin) | Hiển thị kết quả tra cứu thông tin khách hàng. |
 | F5.5 | `Ghi chú vi phạm nội bộ` | E2 (Nhân viên) / E3 (Admin) | P5.0 | NV/Admin gửi ghi chú tiến trình xử lý phạt nguội và cờ đánh dấu vi phạm. |
 | F5.6 | `Cập nhật ghi chú lịch sử` | P5.0 | D4 (Lich_Su_Thue) | Lưu vết cờ vi phạm DanhDauViPham = TRUE và ghi chú nội bộ vào bản ghi lịch sử trong D4. |
 | F5.7 | `Yêu cầu Blacklist` | E3 (Admin) | P5.0 | Admin yêu cầu đưa khách hàng vi phạm nghiêm trọng vào danh sách đen. |
@@ -330,9 +303,9 @@
 
 | Tên phần tử | Miền giá trị | Quy tắc nghiệp vụ |
 |-------------|-------------|-------------------|
-| `TrangThaiBooking` | {`Cho_Xac_Nhan`, `Cho_Nhan_Xe`, `Dang_Thue`, `Yeu_Cau_Tra_Som`, `Qua_Han`, `Cho_Tra_Xe`, `Dang_Quyet_Toan`, `Hoan_Tat`, `Da_Huy`} | Luồng vòng đời: Cho_Xac_Nhan → **Cho_Nhan_Xe** *(tự động duyệt sau cọc + check lịch xe)* → Dang_Thue → (Yeu_Cau_Tra_Som / Qua_Han) → Cho_Tra_Xe → Dang_Quyet_Toan → Hoan_Tat |
-| `TrangThaiXe` | {`San_Sang`, `Dang_Thue`, `Dang_Bao_Duong`, `Dang_Sua_Chua`} | Xe chỉ cho thuê khi `San_Sang` |
-| `TrangThaiGPLX` | {`Khong_Dang_Ky`, `Cho_Duyet`, `Da_Duyet`, `Tu_Choi`} | Chỉ `Da_Duyet` mới được thuê xe nhóm tương ứng |
+| `TrangThaiBooking` | {`Cho_Thanh_Toan_Coc`, `Cho_Nhan_Xe`, `Dang_Thue`, `Yeu_Cau_Tra_Som`, `Qua_Han`, `Cho_Tra_Xe`, `Dang_Quyet_Toan`, `Hoan_Tat`, `Da_Huy`} | Luồng vòng đời: **Cho_Thanh_Toan_Coc** *(tạo đơn tạm, khóa xe 15 phút)* → **Cho_Nhan_Xe** *(tự động duyệt sau cọc thành công)* → Dang_Thue → (Yeu_Cau_Tra_Som / Qua_Han) → Cho_Tra_Xe → Dang_Quyet_Toan → Hoan_Tat |
+| `TrangThaiXe` | {`San_Sang`, `Dang_Thue`, `KHOA_TAM_15M`, `Dang_Bao_Duong`, `Dang_Sua_Chua`} | Xe chỉ cho thuê khi `San_Sang`; `KHOA_TAM_15M` khi đang giữ chỗ chờ cọc |
+| `TrangThaiGPLX` | {`Khong_Dang_Ky`, `Da_Upload`} | `Khong_Dang_Ky`: Khách không khai báo GPLX → chỉ thuê 50cc/Điện; `Da_Upload`: Khách đã tải ảnh → hệ thống tự phân quyền theo `HangGPLX`, không cần Admin duyệt |
 | `NhomXe` | {`Nhom_50cc_Dien`, `Nhom_A1`, `Nhom_A2_PKL`} | Phân loại theo PhanKhoi và LoaiXe |
 | `HangGPLX` | {`A1`, `A2`, `Khong`} | A1: xe dưới 175cc; A2: xe mọi phân khối |
 | `LoaiXe` | {`Xe_So`, `Xe_Ga`, `Xe_Con_Tay`, `Xe_PKL`, `Xe_Dien`} | Ảnh hưởng đến phí phạt trễ giờ |

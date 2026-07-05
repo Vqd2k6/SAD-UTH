@@ -1,20 +1,13 @@
 # ĐẶC TẢ TIẾN TRÌNH (PROCESS SPECIFICATIONS — PS)
 
-Tài liệu này chứa đặc tả chi tiết cho toàn bộ 6 tiến trình cốt lõi của Hệ thống Quản lý và Cho thuê Xe máy Thông minh. Mỗi tiến trình được đặc tả bằng ba công cụ chuẩn:
-1. **Structured English (Ngôn ngữ cấu trúc)**
-2. **Decision Table (Bảng quyết định)**
-3. **Decision Tree (Cây quyết định)**
-
----
-
-## 1. TIẾN TRÌNH 1.0 — ĐĂNG KÝ & XÁC THỰC GPLX
+## 1. TIẾN TRÌNH 1.0 — ĐĂNG KÝ & TỰ ĐỘNG PHÂN QUYỀN GPLX
 
 ### 1.1. Structured English (Ngôn ngữ cấu trúc)
 
 ```text
-PROCESS 1.0: Đăng ký & Xác thực GPLX
+PROCESS 1.0: Đăng ký & Tự động phân quyền GPLX (SRS v2.0 — Không Admin duyệt)
 BEGIN
-    RECEIVE F1.1: Yêu cầu đăng ký tài khoản (HoTen, Email, SoDienThoai, HangGPLX, AnhGPLXMatTruoc, AnhGPLXMatSau)
+    RECEIVE F1.1: Yêu cầu đăng ký tài khoản (HoTen, Email, SoDienThoai, MatKhau, LuaChonGPLX, HangGPLX, AnhGPLXMatTruoc, AnhGPLXMatSau)
     
     // Bước 1: Kiểm tra tính hợp lệ dữ liệu đầu vào cơ bản
     IF Email không đúng định dạng HOẶC SoDienThoai không phải dạng số THEN
@@ -28,71 +21,68 @@ BEGIN
     IF Tìm thấy bản ghi tương ứng trong D3 THEN
         SEND Thông báo lỗi "Tài khoản đã tồn tại trên hệ thống" to Khách hàng E1
         TERMINATE PROCESS
-    ELSE
-        // Ghi nhận tài khoản mới chờ Admin duyệt GPLX
-        WRITE D3: Khach_Hang_GPLX
-            VALUES (MaKhachHang = AutoGen, HoTen, Email, SoDienThoai, TrangThaiGPLX = 'CHO_DUYET', HangGPLX)
-        SEND F1.4: Hồ sơ GPLX chờ duyệt to Admin E3
     ENDIF
 
-    // Bước 3: Tiếp nhận lệnh kiểm duyệt từ Admin
-    RECEIVE F1.5: Kết quả duyệt GPLX (MaKhachHang, LuachonDuyet ∈ {APPROVED, REJECTED}, LyDoTuChoi)
-    
-    IF LuachonDuyet = APPROVED THEN
-        // Phân loại nhóm xe được phép thuê dựa trên hạng bằng lái
+    // Bước 3: Tự động phân quyền theo lựa chọn GPLX — KHÔNG gửi Admin duyệt
+    IF LuaChonGPLX = 'Co_GPLX' AND (AnhGPLXMatTruoc IS NOT NULL OR AnhGPLXMatSau IS NOT NULL) THEN
+        // Khách có GPLX và đã tải ảnh lên
+        SET TrangThaiGPLX = 'DA_UPLOAD'
         IF HangGPLX = 'A2' THEN
-            SET NhomXeDuocThue = 'Nhom_A2_PKL' (Được phép thuê tất cả các loại xe)
+            SET NhomXeDuocThue = 'Nhom_A2_PKL'  // Được phép thuê tất cả các loại xe
         ELSE IF HangGPLX = 'A1' THEN
-            SET NhomXeDuocThue = 'Nhom_A1' (Được phép thuê xe dưới 175cc và xe điện)
+            SET NhomXeDuocThue = 'Nhom_A1'       // Được phép thuê xe dưới 175cc và xe điện
         ELSE
-            SET NhomXeDuocThue = 'Nhom_50cc_Dien' (Chỉ được phép thuê xe dưới 50cc hoặc xe điện)
+            SET NhomXeDuocThue = 'Nhom_50cc_Dien' // Hạng khai báo không xác định
         ENDIF
-        
-        // Cập nhật trạng thái duyệt trong kho dữ liệu
-        UPDATE D3: Khach_Hang_GPLX
-            SET TrangThaiGPLX = 'DA_DUYET',
-                NhomXeDuocThue = NhomXeDuocThue
-            WHERE D3.MaKhachHang = MaKhachHang
-            
-        SEND F1.6: Thông báo kết quả GPLX (TrangThaiGPLX = APPROVED, NhomXeDuocThue) to Khách hàng E1
     ELSE
-        // Trường hợp bị từ chối
-        UPDATE D3: Khach_Hang_GPLX
-            SET TrangThaiGPLX = 'TU_CHOI',
-                LyDoTuChoiGPLX = LyDoTuChoi,
-                NhomXeDuocThue = 'Nhom_50cc_Dien'
-            WHERE D3.MaKhachHang = MaKhachHang
-            
-        SEND F1.6: Thông báo kết quả GPLX (TrangThaiGPLX = REJECTED, LyDoTuChoi) to Khách hàng E1
+        // Khách không khai báo GPLX hoặc chưa tải ảnh
+        SET TrangThaiGPLX = 'Khong_Dang_Ky'
+        SET NhomXeDuocThue = 'Nhom_50cc_Dien'
     ENDIF
+    
+    // Bước 4: Ghi thông tin tài khoản vào kho D3 — GHI TRỰC TIếP, KHÔNG QUA ADMIN
+    WRITE D3: Khach_Hang_GPLX
+        VALUES (MaKhachHang = AutoGen, HoTen, Email, SoDienThoai, MatKhau = Hash(MatKhau),
+                LuaChonGPLX, HangGPLX, AnhGPLXMatTruoc, AnhGPLXMatSau,
+                TrangThaiGPLX = TrangThaiGPLX, NhomXeDuocThue = NhomXeDuocThue,
+                TrangThaiBlacklist = FALSE, NgayTao = CurrentTime)
+    
+    SEND F1.6: Thông báo tài khoản sẵn sàng (TrangThaiGPLX, NhomXeDuocThue) to Khách hàng E1
 END
 ```
 
 ### 1.2. Decision Table (Bảng quyết định)
 
-Bảng quyết định dưới đây thể hiện quy tắc phân hạng nhóm xe được phép thuê của khách hàng sau khi Admin tiến hành duyệt hồ sơ bằng lái:
+Bảng quyết định dưới đây thể hiện quy tắc **tự động phân hạng** nhóm xe được phép thuê dựa trên dữ liệu khách hàng tự khai báo khi đăng ký:
 
 | Điều kiện (Conditions) | Q1 | Q2 | Q3 | Q4 |
 | :--- | :---: | :---: | :---: | :---: |
-| Admin duyệt GPLX thành công (`APPROVED`)? | Y | Y | Y | N |
+| Khách hàng có tải ảnh GPLX lên (`AnhGPLX IS NOT NULL`)? | Y | Y | Y | N |
 | Hạng GPLX hiện tại của khách hàng là gì? | A2 | A1 | Không/Hạng khác | Bất kỳ |
 | **Hành động (Actions)** | | | | |
-| Cập nhật `TrangThaiGPLX = DA_DUYET` | X | X | X | |
-| Cập nhật `TrangThaiGPLX = TU_CHOI` | | | | X |
+| Cập nhật `TrangThaiGPLX = DA_UPLOAD` | X | X | X | |
+| Cập nhật `TrangThaiGPLX = Khong_Dang_Ky` | | | | X |
 | Gán nhóm xe được thuê = `Nhom_A2_PKL` | X | | | |
 | Gán nhóm xe được thuê = `Nhom_A1` | | X | | |
 | Gán nhóm xe được thuê = `Nhom_50cc_Dien` | | | X | X |
+| Ghi trực tiếp vào D3 (không gửi Admin duyệt) | X | X | X | X |
 
 ### 1.3. Decision Tree (Cây quyết định)
 
 ```mermaid
 graph LR
-    A["Kiểm duyệt GPLX từ Admin"] -->|"Từ chối (APPROVED = False)"| B["TrangThaiGPLX = TU_CHOI, NhomXeDuocThue = Nhom_50cc_Dien"]
-    A -->|"Chấp thuận (APPROVED = True)"| C{"Xét hạng bằng lái"}
-    C -->|HangGPLX = A2| D["TrangThaiGPLX = DA_DUYET, NhomXeDuocThue = Nhom_A2_PKL"]
-    C -->|HangGPLX = A1| E["TrangThaiGPLX = DA_DUYET, NhomXeDuocThue = Nhom_A1"]
-    C -->|"Không có bằng lái hoặc hạng khác"| F["TrangThaiGPLX = DA_DUYET, NhomXeDuocThue = Nhom_50cc_Dien"]
-```
+    A["Khách đăng ký tài khoản"] --> B{"Có tải ảnh GPLX lên?"}
+    B -->|"Không tải / Không có GPLX"| C["TrangThaiGPLX = Khong_Dang_Ky\nNhomXeDuocThue = Nhom_50cc_Dien"]
+    B -->|"Có tải ảnh GPLX lên"| D{"Xét hạng bằng lái khai báo"}
+    D -->|HangGPLX = A2| E["TrangThaiGPLX = DA_UPLOAD\nNhomXeDuocThue = Nhom_A2_PKL"]
+    D -->|HangGPLX = A1| F["TrangThaiGPLX = DA_UPLOAD\nNhomXeDuocThue = Nhom_A1"]
+    D -->|"Hạng không xác định"| G["TrangThaiGPLX = DA_UPLOAD\nNhomXeDuocThue = Nhom_50cc_Dien"]
+    C --> H["Ghi vào D3 — Xong"]
+    E --> H
+    F --> H
+    G --> H
+
+
 
 ---
 
@@ -291,9 +281,15 @@ BEGIN
             TERMINATE PROCESS
         ENDIF
 
-        // Bước 4: Tính chi phí phụ thu gia hạn
-        READ D5: Cau_Hinh_He_Thong (Đọc bảng giá ngày của xe)
-        SET ChiPhiGiaHan = D2.DonGiaApDung * SoNgayGiaHanThem
+        // Bước 4: Tính chi phí phụ thu gia hạn dựa trên đơn giá NGÀY THỰC TẾ GIA HẠN
+        // SRS v2.0 quy định: Tính theo giá của ngày gia hạn, bao gồm cả giá động Lễ/Tết nếu có
+        READ D5: Cau_Hinh_He_Thong (Lấy PhanTramTangGiaLe và danh sách ngày lễ)
+        READ D1: Xe_May WHERE D1.MaXe = D2.MaXe (Lấy DonGiaNgay gốc của xe)
+        SET DonGiaNgayGiaHan = D1.DonGiaNgay  // Giá gốc
+        IF ThoiGianTraMoi thuộc Ngày Lễ/Tết hoặc Cuối tuần THEN
+            SET DonGiaNgayGiaHan = D1.DonGiaNgay * (1 + D5.PhanTramTangGiaLe / 100)
+        ENDIF
+        SET ChiPhiGiaHan = DonGiaNgayGiaHan * SoNgayGiaHanThem
 
         // Bước 5: Thực hiện thanh toán trực tuyến phần tiền phụ thu gia hạn
         SEND F3.12: Yêu cầu giao dịch gia hạn trực tuyến (ChiPhiGiaHan, MaBooking) to Cổng thanh toán E4
@@ -459,13 +455,27 @@ BEGIN
         IF TongThanhToan > 0 THEN
             // Khách cần nộp thêm phụ phí trễ giờ hoặc hư hỏng
             SEND F4.17: Yêu cầu giao dịch quyết toán trực tuyến (TongThanhToan, MaBooking, Loai = 'Thu_Them') to Cổng thanh toán E4
-            RECEIVE F4.18: Kết quả giao dịch quyết toán (MaBooking, TrangThaiGD = 'Thanh_Cong')
+            RECEIVE F4.18: Kết quả giao dịch quyết toán (MaBooking, TrangThaiGD)
+            IF TrangThaiGD != 'Thanh_Cong' THEN
+                // Ghi nhận lỗi, tạo task thủ công cho kế toán xử lý
+                UPDATE D2: Hop_Dong_Booking
+                    SET GhiChu = 'LOI_CONG_TT: Thu_Them thất bại, cần xử lý thủ công'
+                    WHERE D2.MaBooking = MaBooking
+            ENDIF
         ELSE IF TongThanhToan < 0 THEN
             // Hoàn lại tiền cọc dư cho khách (do trả xe sớm hoặc tiền cọc lớn hơn phụ phí)
             SET TienHoan = AbsoluteValue(TongThanhToan)
             SEND F4.17: Yêu cầu giao dịch quyết toán trực tuyến (TienHoan, MaBooking, Loai = 'Hoan_Tra') to Cổng thanh toán E4
-            RECEIVE F4.18: Kết quả giao dịch quyết toán (MaBooking, TrangThaiGD = 'Thanh_Cong')
+            RECEIVE F4.18: Kết quả giao dịch quyết toán (MaBooking, TrangThaiGD)
+            IF TrangThaiGD != 'Thanh_Cong' THEN
+                // Hoàn tiền thất bại — ghi nhận để kế toán xử lý tay
+                UPDATE D2: Hop_Dong_Booking
+                    SET GhiChu = 'LOI_CONG_TT: Hoan_Tra thất bại, cần xử lý thủ công'
+                    WHERE D2.MaBooking = MaBooking
+                // Vẫn tiếp tục đóng đơn và giải phóng xe để không ảnh hưởng hoạt động
+            ENDIF
         ENDIF
+        // Trường hợp TongThanhToan = 0: Quyết toán cân bằng, không cần giao dịch TT
 
         // Bước 2.5: Cập nhật trạng thái phương tiện và lưu trữ hồ sơ
         UPDATE D2: Hop_Dong_Booking

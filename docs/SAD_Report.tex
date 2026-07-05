@@ -1,0 +1,261 @@
+\documentclass[12pt,a4paper]{report}
+
+% ==========================================
+% KHAI BÁO CÁC GÓI CƠ BẢN (PACKAGES)
+% ==========================================
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese]{babel}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[left=2.5cm,right=2.0cm,top=2.5cm,bottom=2.5cm]{geometry}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{float}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{parskip} % Khoảng cách giữa các đoạn
+
+% Thiết lập màu sắc và định dạng link
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    pdftitle={Báo cáo Phân tích Thiết kế Hệ thống},
+}
+
+% Định dạng tiêu đề chương (Chapter)
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\centering}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{30pt}
+
+% ==========================================
+% BẮT ĐẦU TÀI LIỆU
+% ==========================================
+\begin{document}
+
+% ------------------------------------------
+% TRANG BÌA
+% ------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Large \textbf{TRƯỜNG ĐẠI HỌC GIAO THÔNG VẬN TẢI TP.HCM}}\\[0.5cm]
+    {\large \textbf{KHOA CÔNG NGHỆ THÔNG TIN}}\\[2cm]
+    
+    % \includegraphics[width=0.3\textwidth]{images/logo_truong.png}\\[2cm] % Thêm Logo trường nếu có
+    
+    {\Huge \textbf{BÁO CÁO MÔN HỌC}}\\[0.5cm]
+    {\huge \textbf{PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG}}\\[2cm]
+    
+    {\Large \textbf{ĐỀ TÀI:}}\\[0.5cm]
+    {\LARGE \textbf{PHÂN TÍCH VÀ THIẾT KẾ HỆ THỐNG CHO THUÊ XE MÁY TỰ LÁI SMARTRENTAL}}\\[3cm]
+    
+    \begin{flushright}
+        \large
+        \textbf{Giảng viên hướng dẫn:} ...\\
+        \textbf{Sinh viên thực hiện:} ...\\
+        \textbf{Mã số sinh viên:} ...\\
+        \textbf{Lớp:} ...
+    \end{flushright}
+    
+    \vfill
+    
+    {\large \textbf{TP. Hồ Chí Minh, Năm 2026}}
+\end{titlepage}
+
+% ------------------------------------------
+% MỤC LỤC
+% ------------------------------------------
+\tableofcontents
+\newpage
+\listoffigures
+\listoftables
+\newpage
+
+% ==========================================
+% CHƯƠNG 1: TỔNG QUAN VỀ HỆ THỐNG (SRS)
+% ==========================================
+\chapter{Tổng Quan \& Đặc Tả Yêu Cầu (SRS)}
+
+\section{Giới thiệu đề tài}
+Dự án SmartRental là một hệ thống cho thuê xe máy tự lái, được thiết kế chuyên biệt để tự động hóa quy trình quản lý hợp đồng thuê xe, giao nhận phương tiện và thanh toán. Điểm nhấn của hệ thống là khả năng tính toán thông minh các phụ phí (Dynamic Pricing, Phí trễ hạn tự động) và phân quyền thuê xe theo Hạng giấy phép lái xe (GPLX).
+
+\section{Mục tiêu hệ thống}
+\begin{itemize}
+    \item \textbf{Khách hàng:} Trải nghiệm thuê xe nhanh chóng, thanh toán trực tuyến, và chủ động quản lý hành trình (gia hạn, trả sớm).
+    \item \textbf{Nhân viên:} Rút ngắn quy trình bàn giao xe, kiểm đếm ODO và trạng thái xe qua ứng dụng di động/Dashboard.
+    \item \textbf{Quản trị viên:} Quản lý tập trung toàn bộ danh mục phương tiện, cấu hình giá động và giám sát lịch sử thuê.
+\end{itemize}
+
+\section{Yêu cầu chức năng chính}
+\begin{itemize}
+    \item Tự động nhận diện và phân quyền loại xe (50cc, A1, A2) dựa trên ảnh chụp GPLX.
+    \item Khóa xe tạm thời 15 phút khi đặt cọc.
+    \item Quản lý vòng đời Hợp đồng: Chờ cọc $\rightarrow$ Chờ nhận xe $\rightarrow$ Đang thuê $\rightarrow$ Chờ trả xe $\rightarrow$ Quyết toán.
+    \item Quản lý thanh toán trực tuyến và tự động hoàn tiền/phạt cọc.
+\end{itemize}
+
+
+% ==========================================
+% CHƯƠNG 2: MÔ HÌNH CA SỬ DỤNG (USE CASE)
+% ==========================================
+\chapter{Mô Hình Ca Sử Dụng (Use Case Diagrams)}
+
+\section{Danh sách tác nhân (Actors)}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|l|c|p{8cm}|}
+        \hline
+        \textbf{Tác nhân} & \textbf{Ký hiệu} & \textbf{Vai trò} \\
+        \hline
+        Khách hàng (Customer) & E1 & Đăng ký, đặt xe, quản lý chuyến đi, thanh toán. \\
+        Nhân viên (Staff) & E2 & Check-in, Check-out, ghi nhận hư hại/vi phạm. \\
+        Quản trị viên (Admin) & E3 & Quản trị xe, nhân viên, cấu hình, blacklist. \\
+        Cổng thanh toán & E4 & (Actor hỗ trợ) Xử lý giao dịch thanh toán. \\
+        Cron Job & E5 & (Actor hỗ trợ) Kích hoạt thông báo, hủy đơn. \\
+        \hline
+    \end{tabular}
+    \caption{Danh sách các tác nhân trong hệ thống}
+\end{table}
+
+\section{Sơ đồ Use Case tổng thể}
+\textit{Lưu ý: Bạn có thể export sơ đồ Mermaid ra file ảnh PNG và lưu vào thư mục images/}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.9\textwidth]{images/use_case_tong_the.png}
+    \fbox{\rule{0pt}{3in} \rule{0.9\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ Use Case Tổng thể hệ thống}
+\end{figure}
+
+\section{Sơ đồ Use Case phân hệ}
+\subsection{Phân hệ Khách hàng}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{images/use_case_khach_hang.png}
+    \fbox{\rule{0pt}{2.5in} \rule{0.8\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ Use Case phân hệ Khách hàng}
+\end{figure}
+
+
+% ==========================================
+% CHƯƠNG 3: SƠ ĐỒ HOẠT ĐỘNG (ACTIVITY)
+% ==========================================
+\chapter{Sơ Đồ Hoạt Động (Activity Diagrams)}
+
+\section{Luồng đặt xe và khóa tạm 15 phút}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.9\textwidth]{images/activity_dat_xe.png}
+    \fbox{\rule{0pt}{3in} \rule{0.9\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ hoạt động Đặt xe trực tuyến}
+\end{figure}
+
+\section{Luồng Check-in, Check-out và Quyết toán}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.9\textwidth]{images/activity_checkout.png}
+    \fbox{\rule{0pt}{3in} \rule{0.9\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ hoạt động Bàn giao và Thu hồi xe}
+\end{figure}
+
+
+% ==========================================
+% CHƯƠNG 4: SƠ ĐỒ LỚP (CLASS DIAGRAM)
+% ==========================================
+\chapter{Sơ Đồ Lớp (Class Diagram - Domain Model)}
+
+Thiết kế lớp của hệ thống được tuân thủ nghiêm ngặt theo mô hình Hướng đối tượng thuần (Pure OOP / Rich Domain Model), trong đó các thực thể mang đầy đủ hành vi tính toán và quản lý vòng đời của mình.
+
+\section{Sơ đồ Lớp tổng thể}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=1\textwidth]{images/class_diagram.png}
+    \fbox{\rule{0pt}{4in} \rule{1\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ Lớp Tổng quan Hệ thống}
+\end{figure}
+
+\section{Đặc tả các lớp chính}
+\subsection{Lớp HopDongBooking}
+Đây là lớp trung tâm (Core Entity) chịu trách nhiệm lưu trữ giao dịch và thực thi toàn bộ logic: \texttt{calculateTotalSettlement()}, \texttt{calculateLateFee()}, \texttt{cancelBooking()}.
+
+\subsection{Lớp KhachHang}
+Đại diện cho khách hàng, tự khởi tạo đối tượng Booking qua phương thức \texttt{rentalMotorbike()} và kiểm tra quyền thuê qua \texttt{autoAssignVehicleGroup()}.
+
+
+% ==========================================
+% CHƯƠNG 5: SƠ ĐỒ TUẦN TỰ (SEQUENCE)
+% ==========================================
+\chapter{Sơ Đồ Tuần Tự (Sequence Diagrams)}
+
+\section{Luồng Khách hàng Đặt xe trực tuyến}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.95\textwidth]{images/sequence_dat_xe.png}
+    \fbox{\rule{0pt}{4in} \rule{0.95\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ tuần tự Đặt xe trực tuyến}
+\end{figure}
+
+\section{Luồng Bàn giao xe (Check-in)}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{images/sequence_checkin.png}
+    \fbox{\rule{0pt}{3in} \rule{0.8\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ tuần tự Bàn giao xe}
+\end{figure}
+
+
+% ==========================================
+% CHƯƠNG 6: SƠ ĐỒ DÒNG DỮ LIỆU (DFD)
+% ==========================================
+\chapter{Mô Hình Dòng Dữ Liệu (DFD)}
+
+\section{Sơ đồ Ngữ cảnh (Context Diagram)}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.8\textwidth]{images/dfd_context.png}
+    \fbox{\rule{0pt}{3in} \rule{0.8\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ Ngữ cảnh hệ thống (DFD Level 0)}
+\end{figure}
+
+\section{Sơ đồ DFD Cấp 1}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.95\textwidth]{images/dfd_level1.png}
+    \fbox{\rule{0pt}{4in} \rule{0.95\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ DFD Cấp 1 hệ thống SmartRental}
+\end{figure}
+
+
+% ==========================================
+% CHƯƠNG 7: THIẾT KẾ DỮ LIỆU (ERD \& DATA DICTIONARY)
+% ==========================================
+\chapter{Thiết Kế Cơ Sở Dữ Liệu}
+
+\section{Sơ đồ Thực thể Liên kết (ERD)}
+\begin{figure}[H]
+    \centering
+    % \includegraphics[width=0.9\textwidth]{images/erd_diagram.png}
+    \fbox{\rule{0pt}{4in} \rule{0.9\linewidth}{0pt}} % Placeholder
+    \caption{Sơ đồ ERD Vật lý (Physical Data Model)}
+\end{figure}
+
+\section{Ghi chú Khử chuẩn (Denormalization)}
+Trong thiết kế CSDL, hệ thống chủ đích áp dụng Khử chuẩn (Denormalization) tại một số trường hợp để tối ưu hiệu năng:
+\begin{itemize}
+    \item Trường \textbf{SoNgayThue} trong bảng \texttt{Hop\_Dong\_Booking}: Là một Derived Attribute, được lưu trữ dư thừa nhằm tối ưu Query Performance cho các báo cáo Dashboard thay vì tính toán \texttt{DATEDIFF} real-time.
+    \item Lưu trữ \textbf{Ảnh Ngoại Quan}: Sử dụng mảng JSON lưu thẳng vào định dạng TEXT để tối ưu hóa thiết kế hướng tài liệu (Document-oriented), tránh phải kết nối (JOIN) thêm một bảng liên kết 1-N không cần thiết.
+\end{itemize}
+
+% ==========================================
+% PHẦN KẾT LUẬN
+% ==========================================
+\chapter{Kết Luận}
+Tài liệu Phân tích và Thiết kế Hệ thống cho dự án SmartRental đã hoàn thành việc mô hình hóa bài toán từ góc nhìn Use Case, Luồng hoạt động, Cấu trúc đối tượng cho đến Mô hình dữ liệu vật lý. Việc áp dụng kiến trúc Hướng đối tượng (Pure OOP) và các nguyên tắc thiết kế tối ưu truy vấn (Khử chuẩn CSDL) đảm bảo tính mở rộng và hiệu năng của hệ thống trong môi trường thực tế.
+
+\end{document}
