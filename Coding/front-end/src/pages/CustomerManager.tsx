@@ -24,6 +24,9 @@ export default function CustomerManager() {
   const [blacklistTarget, setBlacklistTarget] = useState<string | null>(null);
   const [lyDoBlacklist, setLyDoBlacklist] = useState('');
 
+  // GPLX viewer dialog
+  const [gplxViewUser, setGplxViewUser] = useState<User | null>(null);
+
   const fetchCustomers = async () => {
     try {
       const res = await api.get('/users/');
@@ -131,10 +134,9 @@ export default function CustomerManager() {
                   <Box className="flex flex-col gap-1 py-1">
                     {kh.TrangThaiGPLX === 'Da_Upload' && (
                       <>
-                        <Tooltip title={`Xem ảnh GPLX`}>
-                          <Button size="small" variant="outlined" color="info" 
-                            href={kh.AnhGPLXMatTruoc || '#'} target="_blank">
-                            Xem GPLX
+                        <Tooltip title="Xem ảnh GPLX">
+                          <Button size="small" variant="outlined" color="info" onClick={() => setGplxViewUser(kh)}>
+                            🖼️ Xem GPLX
                           </Button>
                         </Tooltip>
                         <Button size="small" variant="contained" color="success" onClick={() => handleApproveGPLX(kh.MaKhachHang)}>
@@ -161,6 +163,36 @@ export default function CustomerManager() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* GPLX Image Viewer Dialog */}
+      <Dialog open={!!gplxViewUser} onClose={() => setGplxViewUser(null)} maxWidth="md" fullWidth>
+        <DialogTitle className="font-bold">📋 GPLX của {gplxViewUser?.HoTen} ({gplxViewUser?.MaKhachHang})</DialogTitle>
+        <DialogContent>
+          {gplxViewUser?.AnhGPLXMatTruoc || gplxViewUser?.AnhGPLXMatSau ? (
+            <Box className="flex gap-4 mt-2">
+              <Box className="flex-1">
+                <Typography variant="caption" className="font-bold block mb-1">Mặt trước</Typography>
+                {gplxViewUser.AnhGPLXMatTruoc ? (
+                  <img src={gplxViewUser.AnhGPLXMatTruoc} alt="GPLX mặt trước" className="w-full rounded border" />
+                ) : <Typography color="textSecondary">Không có ảnh</Typography>}
+              </Box>
+              <Box className="flex-1">
+                <Typography variant="caption" className="font-bold block mb-1">Mặt sau</Typography>
+                {gplxViewUser.AnhGPLXMatSau ? (
+                  <img src={gplxViewUser.AnhGPLXMatSau} alt="GPLX mặt sau" className="w-full rounded border" />
+                ) : <Typography color="textSecondary">Không có ảnh</Typography>}
+              </Box>
+            </Box>
+          ) : (
+            <Typography color="textSecondary" className="mt-2">Không có ảnh GPLX nào được tải lên.</Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => { setGplxViewUser(null); handleApproveGPLX(gplxViewUser!.MaKhachHang); setGplxViewUser(null); }} variant="contained" color="success">✓ Phê duyệt</Button>
+          <Button onClick={() => { handleRejectGPLX(gplxViewUser!.MaKhachHang); setGplxViewUser(null); }} variant="outlined" color="error">✗ Từ chối</Button>
+          <Button onClick={() => setGplxViewUser(null)}>Đóng</Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Blacklist dialog */}
       <Dialog open={!!blacklistTarget} onClose={() => setBlacklistTarget(null)} maxWidth="xs" fullWidth>

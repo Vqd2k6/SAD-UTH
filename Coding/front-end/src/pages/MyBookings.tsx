@@ -169,8 +169,15 @@ export default function MyBookings() {
                         </>
                       )}
                       {b.TrangThaiBooking === 'Hoan_Tat' && (
-                        <Button variant="contained" color="secondary" size="small" onClick={() => setRatingBookingId(b.MaBooking)}>
-                          ⭐ Đánh giá
+                        <Button
+                          variant={b.DanhGiaSao !== null ? 'outlined' : 'contained'}
+                          color="secondary"
+                          size="small"
+                          onClick={() => !b.DanhGiaSao && setRatingBookingId(b.MaBooking)}
+                          disabled={b.DanhGiaSao !== null}
+                          sx={{ opacity: b.DanhGiaSao !== null ? 0.5 : 1 }}
+                        >
+                          {b.DanhGiaSao !== null ? `⭐ Đã đánh giá (${b.DanhGiaSao}★)` : '⭐ Đánh giá'}
                         </Button>
                       )}
                     </Box>

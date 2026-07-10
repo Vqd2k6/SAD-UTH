@@ -96,6 +96,25 @@ class MotorbikeUpdate(SQLModel):
     DonGiaNgay: Optional[float] = None
     ODOHienTai: Optional[int] = None
 
+class MotorbikeCreate(SQLModel):
+    MaXe: str
+    BienSo: str
+    SoKhung: str
+    SoMay: str
+    HangXe: str
+    TenXe: str
+    LoaiXe: str
+    PhanKhoi: int
+    NhomXe: str
+    DoiXe: int
+    HinhAnhXe: Optional[str] = None
+    TrangThaiXe: str = "San_Sang"
+    MucTieuThuXang: Optional[float] = None
+    SoMuBaoHiem: int = 2
+    CoAoMua: bool = True
+    DonGiaNgay: float
+    ODOHienTai: int = 0
+
 class DanhGiaCreate(SQLModel):
     MaBooking: str
     DiemDanhGia: int

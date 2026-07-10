@@ -40,9 +40,23 @@ def booking_check_in(
             status_code=400, detail="Đơn không ở trạng thái Chờ Nhận Xe"
         )
 
-    xe = db.get(XeMay, booking.MaXe)
+    # --- Time Window Validation ---
+    now = datetime.utcnow()
+    diff_seconds = (booking.ThoiGianNhan - now).total_seconds()
+    diff_hours = diff_seconds / 3600
+    if diff_hours > 2:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Chưa đến giờ nhận xe. Chỉ được check-in sớm tối đa 2 tiếng. Còn {diff_hours:.1f} tiếng nữa mới tới giờ."
+        )
+    if diff_hours < -24:
+        raise HTTPException(
+            status_code=400,
+            detail="Đã quá 24 tiếng kể từ giờ hẹn nhận xe. Đơn này đã hết hiệu lực check-in."
+        )
 
     # Handle GPLX fraud
+    xe = db.get(XeMay, booking.MaXe)
     if check_in_data.KhachGianLanGPLX:
         booking.TrangThaiBooking = TrangThaiBookingEnum.Khong_Den_Nhan_Xe
         booking.GhiChu = "Nhân viên phát hiện gian lận GPLX lúc Check-in. Xử lý như No-show (Phạt 100% cọc)."

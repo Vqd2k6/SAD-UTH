@@ -13,6 +13,7 @@ from app.models import (
     KhachHangGPLX,
     PhuongThucCocEnum,
     TrangThaiBookingEnum,
+    TrangThaiGPLXEnum,
     TrangThaiThanhToanEnum,
     XeMay,
 )
@@ -42,6 +43,18 @@ def create_booking(
     if thoi_gian_nhan >= thoi_gian_tra:
         raise HTTPException(
             status_code=400, detail="Thời gian trả phải sau thời gian nhận"
+        )
+
+    # Validate GPLX status before booking
+    if current_user.TrangThaiGPLX != TrangThaiGPLXEnum.Da_Xac_Thuc:
+        gplx_msg = {
+            "Khong_Dang_Ky": "Bạn chưa đăng ký GPLX. Vui lòng cập nhật hồ sơ GPLX để đặt xe.",
+            "Da_Upload": "GPLX của bạn đang chờ Admin phê duyệt. Vui lòng đợi xác nhận.",
+            "Tu_Choi": "GPLX của bạn đã bị từ chối. Vui lòng cập nhật lại ảnh GPLX hợp lệ.",
+        }
+        raise HTTPException(
+            status_code=403,
+            detail=gplx_msg.get(current_user.TrangThaiGPLX.value, "GPLX chưa được xác thực.")
         )
 
     # Anti Race-Condition: Lock the row of the specific motorbike for update

@@ -16,6 +16,9 @@ export default function MotorbikeManager() {
   const [formData, setFormData] = useState<Partial<Motorbike>>({});
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const fetchBikes = async () => {
     try {
@@ -33,15 +36,30 @@ export default function MotorbikeManager() {
 
   const handleOpen = (bike?: Motorbike) => {
     setEditingBike(bike || null);
+    setImageFile(null);
+    setImagePreview(bike?.HinhAnhXe || null);
     setFormData(bike ? { ...bike } : {
-      MaXe: `XM00${Math.floor(Math.random() * 900) + 10}`,
+      MaXe: `XM${Math.floor(Math.random() * 9000) + 100}`,
       BienSo: '', SoKhung: '', SoMay: '', HangXe: '', TenXe: '', 
       LoaiXe: 'Xe_Ga', PhanKhoi: 110, NhomXe: 'Nhom_A1', DoiXe: new Date().getFullYear(),
       HinhAnhXe: '', TrangThaiXe: 'San_Sang', DonGiaNgay: 150000,
-      MucTieuThuXang: 'MUC_TRUNG_BINH', SoMuBaoHiem: 2, CoAoMua: true, ODOHienTai: 0
+      SoMuBaoHiem: 2, CoAoMua: true, ODOHienTai: 0
     });
     setMessage('');
     setOpen(true);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = reader.result as string;
+      setImagePreview(dataUrl);
+      setFormData(prev => ({ ...prev, HinhAnhXe: dataUrl }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSave = async () => {
@@ -135,12 +153,35 @@ export default function MotorbikeManager() {
             <TextField label="Phân Khối (cc)" type="number" value={formData.PhanKhoi || 0} onChange={e => setFormData({...formData, PhanKhoi: Number(e.target.value)})} fullWidth />
             <TextField label="Số Khung" value={formData.SoKhung || ''} onChange={e => setFormData({...formData, SoKhung: e.target.value})} fullWidth />
             <TextField label="Số Máy" value={formData.SoMay || ''} onChange={e => setFormData({...formData, SoMay: e.target.value})} fullWidth />
+            <TextField label="Năm SX" type="number" value={formData.DoiXe || new Date().getFullYear()} onChange={e => setFormData({...formData, DoiXe: Number(e.target.value)})} fullWidth />
+            
+            <TextField select label="Loại Xe" value={formData.LoaiXe || 'Xe_Ga'} onChange={e => setFormData({...formData, LoaiXe: e.target.value as any})} fullWidth>
+              <MenuItem value="Xe_Ga">Xe Ga</MenuItem>
+              <MenuItem value="Xe_So">Xe Số</MenuItem>
+              <MenuItem value="Xe_Con">Xe Côn/Thể Thao</MenuItem>
+              <MenuItem value="Xe_Dien">Xe Điện</MenuItem>
+            </TextField>
+
+            <TextField select label="Nhóm Bằng Lái" value={formData.NhomXe || 'Nhom_A1'} onChange={e => setFormData({...formData, NhomXe: e.target.value as any})} fullWidth>
+              <MenuItem value="Nhom_50cc_Dien">50cc / Điện (Không cần bằng)</MenuItem>
+              <MenuItem value="Nhom_A1">Nhóm A1 (≤125cc)</MenuItem>
+              <MenuItem value="Nhom_A2_PKL">Nhóm A2 (Phân Khối Lớn)</MenuItem>
+            </TextField>
             
             <TextField select label="Trạng Thái Xe" value={formData.TrangThaiXe || 'San_Sang'} onChange={e => setFormData({...formData, TrangThaiXe: e.target.value as any})} fullWidth>
               <MenuItem value="San_Sang">Sẵn Sàng</MenuItem>
               <MenuItem value="Dang_Bao_Duong">Đang Bảo Dưỡng</MenuItem>
               <MenuItem value="Dang_Sua_Chua">Đang Sửa Chữa</MenuItem>
             </TextField>
+
+            {/* Image Upload */}
+            <Box className="col-span-2">
+              <Typography variant="caption" className="font-bold block mb-2">Ảnh Xe (tối đa 5MB)</Typography>
+              <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'block', marginBottom: 8 }} />
+              {imagePreview && (
+                <img src={imagePreview} alt="Preview" style={{ maxHeight: 160, borderRadius: 8, border: '1px solid #e0e0e0' }} />
+              )}
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions>

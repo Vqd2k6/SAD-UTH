@@ -1,18 +1,20 @@
 from datetime import datetime
 from typing import Any, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlmodel import Session, select
 
 from app.api.deps import get_current_admin, get_session
 from app.models import (
     HopDongBooking,
+    LoaiXeEnum,
     NhanVien,
+    NhomXeEnum,
     TrangThaiBookingEnum,
     TrangThaiXeEnum,
     XeMay,
 )
-from app.schemas import MotorbikeUpdate
+from app.schemas import MotorbikeCreate, MotorbikeUpdate
 
 router = APIRouter(prefix="/motorbikes", tags=["motorbikes"])
 
@@ -67,10 +69,33 @@ def search_motorbikes(
 
 @router.post("/", response_model=XeMay)
 def create_motorbike(
-    xe_may: XeMay,
+    xe_in: MotorbikeCreate,
     db: Session = Depends(get_session),
     current_admin: NhanVien = Depends(get_current_admin),
 ) -> Any:
+    existing = db.exec(select(XeMay).where(XeMay.BienSo == xe_in.BienSo)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail=f"Biển số {xe_in.BienSo} đã tồn tại")
+
+    xe_may = XeMay(
+        MaXe=xe_in.MaXe,
+        BienSo=xe_in.BienSo,
+        SoKhung=xe_in.SoKhung,
+        SoMay=xe_in.SoMay,
+        HangXe=xe_in.HangXe,
+        TenXe=xe_in.TenXe,
+        LoaiXe=LoaiXeEnum(xe_in.LoaiXe),
+        PhanKhoi=xe_in.PhanKhoi,
+        NhomXe=NhomXeEnum(xe_in.NhomXe),
+        DoiXe=xe_in.DoiXe,
+        HinhAnhXe=xe_in.HinhAnhXe,
+        TrangThaiXe=TrangThaiXeEnum(xe_in.TrangThaiXe),
+        MucTieuThuXang=xe_in.MucTieuThuXang,
+        SoMuBaoHiem=xe_in.SoMuBaoHiem,
+        CoAoMua=xe_in.CoAoMua,
+        DonGiaNgay=xe_in.DonGiaNgay,
+        ODOHienTai=xe_in.ODOHienTai,
+    )
     db.add(xe_may)
     db.commit()
     db.refresh(xe_may)
@@ -81,6 +106,23 @@ def create_motorbike(
         )
 
     return xe_may
+
+
+@router.post("/upload-image", response_model=dict)
+def upload_motorbike_image(
+    file: UploadFile = File(...),
+    current_admin: NhanVien = Depends(get_current_admin),
+) -> Any:
+    """Upload ảnh xe máy, trả về chuỗi base64 để lưu vào HinhAnhXe."""
+    import base64
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail="File phải là ảnh (jpg, png, webp...)")
+    content = file.file.read()
+    if len(content) > 5 * 1024 * 1024:  # 5MB limit
+        raise HTTPException(status_code=400, detail="Ảnh không được vượt quá 5MB")
+    b64 = base64.b64encode(content).decode("utf-8")
+    data_url = f"data:{file.content_type};base64,{b64}"
+    return {"image_data": data_url}
 
 
 @router.delete("/{ma_xe}")

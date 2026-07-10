@@ -62,6 +62,7 @@ export interface Booking {
   PhiPhatTreHan: number;
   PhiMatPhuKien: number;
   TongThanhToan: number;
+  DanhGiaSao: number | null;
 }
 
 export interface AuthResponse {
@@ -86,6 +87,10 @@ export interface Maintenance {
 
 export interface DashboardStats {
   total_revenue: number;
+  revenue_week: number;
+  revenue_month: number;
+  bookings_week: number;
+  bookings_month: number;
   total_motorbikes: number;
   active_rentals: number;
   motorbikes_in_maintenance: number;

@@ -54,6 +54,36 @@ def get_all_maintenance(
 ) -> Any:
     return db.exec(select(BaoDuong)).all()
 
+@router.put("/{ma_bao_duong}/complete")
+def complete_maintenance(
+    ma_bao_duong: str,
+    db: Session = Depends(get_session),
+    current_staff: NhanVien = Depends(get_current_staff),
+) -> Any:
+    """Hoàn thành bảo dưỡng, đưa xe về trạng thái Sẵn Sàng."""
+    record = db.get(BaoDuong, ma_bao_duong)
+    if not record:
+        raise HTTPException(status_code=404, detail="Không tìm thấy bản ghi bảo dưỡng")
+
+    xe = db.get(XeMay, record.MaXe)
+    if not xe:
+        raise HTTPException(status_code=404, detail="Không tìm thấy xe máy tương ứng")
+
+    if xe.TrangThaiXe != TrangThaiXeEnum.Dang_Bao_Duong:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Xe hiện đang ở trạng thái '{xe.TrangThaiXe.value}', không phải Đang Bảo Dưỡng"
+        )
+
+    xe.TrangThaiXe = TrangThaiXeEnum.San_Sang
+    xe.NgayCapNhat = datetime.utcnow()
+    db.commit()
+
+    with open("be-log.md", "a") as f:
+        f.write(f"\n- **{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}**: PUT /api/maintenance/{ma_bao_duong}/complete -> Xe {xe.BienSo} hoàn tất bảo dưỡng, trả về Sẵn Sàng\n")
+
+    return {"message": f"Xe {xe.BienSo} đã hoàn tất bảo dưỡng và trở về trạng thái Sẵn Sàng!", "MaXe": xe.MaXe}
+
 @router.get("/motorbike/{ma_xe}", response_model=List[BaoDuong])
 def get_motorbike_maintenance(
     ma_xe: str,

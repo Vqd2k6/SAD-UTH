@@ -31,15 +31,15 @@ export default function AdminDashboard() {
   if (loading) return <Box className="flex justify-center mt-20"><CircularProgress /></Box>;
   if (!stats) return <Typography align="center" className="mt-20">Lỗi tải dữ liệu thống kê</Typography>;
 
-  const revenueWeek = stats.total_revenue * 0.3; // Placeholder logic
-  const revenueMonth = stats.total_revenue * 0.6; // Placeholder logic
-
   const cards = [
-    { title: 'Doanh Thu Tổng', value: `${stats.total_revenue.toLocaleString()} ₫`, color: 'bg-green-100 text-green-800' },
-    { title: 'Doanh Thu Tháng', value: `${revenueMonth.toLocaleString()} ₫`, color: 'bg-teal-100 text-teal-800' },
-    { title: 'Doanh Thu Tuần', value: `${revenueWeek.toLocaleString()} ₫`, color: 'bg-emerald-100 text-emerald-800' },
+    { title: 'Doanh Thu Tổng', value: `${Number(stats.total_revenue || 0).toLocaleString()} ₫`, color: 'bg-green-100 text-green-800' },
+    { title: 'Doanh Thu Tháng này', value: `${Number(stats.revenue_month || 0).toLocaleString()} ₫`, color: 'bg-teal-100 text-teal-800' },
+    { title: 'Doanh Thu Tuần này', value: `${Number(stats.revenue_week || 0).toLocaleString()} ₫`, color: 'bg-emerald-100 text-emerald-800' },
+    { title: 'Đơn Tuần này', value: stats.bookings_week ?? 0, color: 'bg-blue-50 text-blue-700' },
+    { title: 'Đơn Tháng này', value: stats.bookings_month ?? 0, color: 'bg-indigo-50 text-indigo-700' },
     { title: 'Tổng Kho Xe', value: stats.total_motorbikes, color: 'bg-blue-100 text-blue-800' },
     { title: 'Xe Đang Thuê', value: stats.active_rentals, color: 'bg-purple-100 text-purple-800' },
+    { title: 'Xe Sẵn Sàng', value: stats.available_motorbikes, color: 'bg-cyan-100 text-cyan-800' },
     { title: 'Đang Bảo Dưỡng', value: stats.motorbikes_in_maintenance, color: 'bg-red-100 text-red-800' },
   ];
 
