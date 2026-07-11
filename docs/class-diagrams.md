@@ -1,9 +1,6 @@
-# TÀI LIỆU THIẾT KẾ: SƠ ĐỒ LỚP CHI TIẾT (CLASS DIAGRAM)
+# TÀI LIỆU THIẾT KẾ: SƠ ĐỒ LỚP CHI TIẾT (DOMAIN MODEL)
 
-**Quy ước Access Modifier:**
-- `-` (private): Thuộc tính dữ liệu.
-- `+` (public): Phương thức giao tiếp (Messages).
-- `#` (protected): Thuộc tính dùng chung trong lớp cha.
+Tài liệu này mô tả sơ đồ lớp lĩnh vực nghiệp vụ (Domain Model / Conceptual Class Diagram) của hệ thống cho thuê xe máy. Sơ đồ tập trung biểu diễn các thực thể thông tin trong thế giới thực, các thuộc tính nghiệp vụ chính và mối liên kết giữa các thực thể, hoàn toàn loại bỏ các yếu tố cài đặt công nghệ như lớp điều phối (Controllers) và các phương thức xử lý kỹ thuật.
 
 ---
 
@@ -14,60 +11,43 @@ classDiagram
     direction TB
 
     %% ============================================================
-    %% CÁC LỚP NGƯỜI DÙNG (ACTOR CLASSES)
+    %% CÁC LỚP NGƯỜI DÙNG (ACTOR ENTITIES)
     %% ============================================================
     class NguoiDung {
         <<Abstract>>
-        #String hoTen
-        #String email
-        #String soDienThoai
-        #String matKhau
-        #datetime ngayTao
-        +login(email, matKhau) boolean
+        HoTen
+        Email
+        SoDienThoai
+        MatKhau
+        NgayTao
     }
 
     class KhachHang {
-        -String maKhachHang
-        -String cccd
-        -String diaChi
-        -boolean coGPLX
-        -String maHangGPLX
-        -String soGPLX
-        -date ngayCapGPLX
-        -date ngayHetHanGPLX
-        -String anhGPLXMatTruoc
-        -String anhGPLXMatSau
-        -String trangThaiGPLX
-        -String maNhomXeDuocThue
-        -boolean trangThaiBlacklist
-        -String lyDoBlacklist
-        +uploadGPLX(anhTruoc, anhSau, hangGPLX) void
-        +autoAssignVehicleGroup() void
-        +rentalMotorbike(xeMay: XeMay, thoiGianNhan, thoiGianTra) HopDongBooking
-        +requestExtension(booking: HopDongBooking, soNgayThem) boolean
-        +requestEarlyReturn(booking: HopDongBooking) boolean
-        +cancelBooking(booking: HopDongBooking) boolean
-        +canRent(nhomXe) boolean
+        MaKhachHang
+        CCCD
+        DiaChi
+        LuaChonGPLX
+        HangGPLX
+        SoGPLX
+        NgayCapGPLX
+        NgayHetHanGPLX
+        AnhGPLXMatTruoc
+        AnhGPLXMatSau
+        TrangThaiGPLX
+        NhomXeDuocThue
+        TrangThaiBlacklist
+        LyDoBlacklist
     }
 
     class NhanVien {
-        -String maNhanVien
-        -String vaiTro
-        -boolean trangThaiTaiKhoan
-        +approveGPLX(khachHang: KhachHang) boolean
-        +rejectGPLX(khachHang: KhachHang) boolean
-        +submitCheckin(booking: HopDongBooking, dataCheckin) boolean
-        +submitCheckout(booking: HopDongBooking, dataCheckout) boolean
-        +completeMaintenance(baoDuong: BaoDuong) boolean
-        +addViolationNote(lichSu: LichSuThue, ghiChu) void
+        MaNhanVien
+        VaiTro
+        TrangThaiTaiKhoan
+        NgayTao
     }
 
     class Admin {
-        +manageVehicle(action, vehicleData) void
-        +manageStaff(action, staffData) void
-        +updateSystemConfig(configData) void
-        +addToBlacklist(khachHang: KhachHang, lyDo) void
-        +generateNetRevenueReport() decimal
+        %% Kế thừa từ NhanVien, không có thuộc tính riêng biệt ở mức khái niệm
     }
 
     NguoiDung <|-- KhachHang
@@ -75,207 +55,152 @@ classDiagram
     NhanVien <|-- Admin
 
     %% ============================================================
-    %% CÁC LỚP ĐIỀU KHIỂN (CONTROL CLASSES - BUSINESS LOGIC)
-    %% ============================================================
-
-    class AuthController {
-        +registerUser(thongTinCaNhan) KhachHang
-        +uploadGPLX(maKhachHang, anhTruoc, anhSau, hangGPLX) boolean
-        +reviewGPLX(maKhachHang, action) boolean
-    }
-
-    class BookingController {
-        +createBooking(maXe, nhan, tra) HopDongBooking
-        +checkEligibility(maKhachHang, maXe) boolean
-        +processDepositPayment(maBooking, phuongThuc) boolean
-        +requestExtension(maBooking, soNgayThem) boolean
-        +processExtensionPayment(maBooking, phuongThuc) boolean
-    }
-
-    class OrderController {
-        +submitCheckin(maBooking, checkinData) boolean
-        +submitCheckout(maBooking, checkoutData) boolean
-        +processPayment(amount) boolean
-        +processRefund(amount) boolean
-        +finalizeSettlement(maBooking) boolean
-    }
-
-    class MaintenanceController {
-        +completeMaintenance(maBaoDuong) boolean
-    }
-
-    %% ============================================================
-    %% CÁC LỚP NGHIỆP VỤ (BUSINESS CLASSES)
+    %% CÁC LỚP THỰC THỂ NGHIỆP VỤ (DOMAIN ENTITIES)
     %% ============================================================
 
     class XeMay {
-        -String maXe
-        -String bienSo
-        -String soKhung
-        -String soMay
-        -String hangXe
-        -String tenXe
-        -String maLoaiXe
-        -int phanKhoi
-        -String maNhomXe
-        -int doiXe
-        -String hinhAnhXe
-        -String trangThaiXe
-        -decimal mucTieuThuXang
-        -int soMuBaoHiem
-        -boolean coAoMua
-        -decimal donGiaNgay
-        -int odoHienTai
-        -datetime ngayTao
-        +checkAvailability(nhan, tra) boolean
-        +lockTemporarily() void
-        +release() void
-        +updateStatus(status) void
-        +updateODO(odo) void
-        +calculateRentalPrice(soNgay) decimal
+        MaXe
+        BienSo
+        LoaiXe
+        PhanKhoi
+        NhomXe
+        HangXe
+        TenXe
+        SoKhung
+        SoMay
+        DoiXe
+        MucTieuThuXang
+        SoMuBaoHiem
+        CoAoMua
+        DonGiaNgay
+        TrangThaiXe
+        ODOHienTai
+        NgayTao
     }
 
     class HopDongBooking {
-        -String maBooking
-        -datetime thoiGianNhan
-        -datetime thoiGianTra
-        -datetime thoiGianTraGoc
-        -int soNgayThue
-        -int soNgayThueGoc
-        -String trangThaiBooking
-        -int soLanGiaHan
-        -boolean coTraSom
-        -datetime thoiGianYeuCauTraSom
-        -String ghiChu
-        -datetime ngayTao
-        +validateConditions() boolean
-        +confirmBooking() void
-        +applyExtension(soNgayThem, tienGiaHan) void
-        +processCheckin(dataCheckin, nhanVien: NhanVien) void
-        +processCheckout(dataCheckout, nhanVien: NhanVien) void
-        +finalizeSettlement() void
-        +cancelBooking() void
-        +isReviewed() boolean
+        MaBooking
+        MaKhachHang
+        MaXe
+        ThoiGianNhan
+        ThoiGianTra
+        ThoiGianTraGoc
+        ThoiGianTraThucTe
+        SoNgayThue
+        TrangThaiBooking
+        DonGiaApDung
+        TongTienThue
+        TienCoc
+        PhuongThucCoc
+        MaGiaoDichCoc
+        TrangThaiThanhToanCoc
+        SoLanGiaHan
+        TongTienGiaHan
+        CoTraSom
+        ODONhan
+        ODOTra
+        MucXangNhan
+        MucXangTra
+        PhiDenBuHuHai
+        PhiPhatTreHan
+        PhiMatPhuKien
+        TongThanhToan
+        DanhGiaSao
+        NgayTao
     }
 
     class HoaDonQuyetToan {
-        -String maHoaDon
-        -decimal donGiaApDung
-        -decimal tongTienThue
-        -decimal phanTramGiamGia
-        -decimal tienGiamGia
-        -decimal phanTramTangGia
-        -decimal tienTangGia
-        -decimal tienCoc
-        -String phuongThucCoc
-        -String maGiaoDichCoc
-        -String trangThaiThanhToanCoc
-        -decimal tongTienGiaHan
-        -decimal phiPhatTreHan
-        -decimal phiDenBuHuHai
-        -decimal phiMatPhuKien
-        -String lyDoPhat
-        -decimal tongThanhToan
-        -datetime ngayTao
-        +calculateDeposit() decimal
-        +calculateTotalSettlement() decimal
-        +calculateLateFee(thoiGianTraThucTe) decimal
-        +calculateAccessoriesPenalty() decimal
+        MaHoaDon
+        MaBooking
+        TongTienThue
+        TongTienGiaHan
+        PhiTreHan
+        PhiMatMu
+        PhiMatAoMua
+        PhiDenBuHuHai
+        TongQuyetToan
+        TienCocDaDong
+        SoTienCanThuThemHoacHoanTra
+        NgayTao
     }
 
     class BienBanGiaoNhan {
-        -String maBienBan
-        -datetime thoiGianTraThucTe
-        -int odoNhan
-        -int odoTra
-        -String mucXangNhan
-        -String mucXangTra
-        -String anhNgoaiQuanNhan
-        -String anhNgoaiQuanTra
-        -int soMuBaoHiemGiao
-        -int soMuBaoHiemTra
-        -boolean coAoMuaGiao
-        -boolean coAoMuaTra
-        -String maNhanVienGiao
-        -String maNhanVienNhan
-        -datetime ngayTao
+        MaBienBan
+        MaBooking
+        LoaiBienBan
+        ThoiGianGiaoNhan
+        ODOGiaoNhan
+        MucXangGiaoNhan
+        AnhNgoaiQuan
+        SoMuBaoHiemGiaoNhan
+        CoAoMuaGiaoNhan
+        MaNhanVienThucHien
+        NgayTao
     }
 
     class BaoDuong {
-        -String maBaoDuong
-        -datetime ngayBaoDuong
-        -decimal chiPhi
-        -String chiTietBaoDuong
-        -boolean daHoanThanh
-        +complete() void
+        MaBaoDuong
+        MaXe
+        NgayBaoDuong
+        ChiPhi
+        ChiTietBaoDuong
+        DaHoanThanh
     }
 
     class DanhGia {
-        -String maDanhGia
-        -int diemDanhGia
-        -String noiDung
-        -datetime ngayTao
-        +submitReview() void
+        MaDanhGia
+        MaBooking
+        DiemDanhGia
+        NoiDung
+        NgayTao
     }
 
     class ThanhToan {
-        -String maGiaoDich
-        -decimal soTien
-        -String loaiGiaoDich
-        -String phuongThuc
-        -String trangThaiGiaoDich
-        -datetime thoiGianGiaoDich
-        +processPayment(amount, phuongThuc) boolean
-        +processRefund(amount, phuongThuc) boolean
+        MaGiaoDich
+        MaBooking
+        SoTien
+        LoaiGiaoDich
+        PhuongThuc
+        TrangThaiGiaoDich
+        ThoiGianGiaoDich
     }
 
     class LichSuThue {
-        -String maLichSu
-        -String bienSoXe
-        -datetime thoiGianNhan
-        -datetime thoiGianTra
-        -decimal tongTienThanhToan
-        -String ghiChuNoiBo
-        -boolean danhDauViPham
-        -datetime ngayTao
-        +markViolation(ghiChu) void
+        MaLichSu
+        BienSoXe
+        ThoiGianNhan
+        ThoiGianTra
+        TongTienThanhToan
+        GhiChuNoiBo
+        DanhDauViPham
+        NgayTao
     }
 
     class CauHinhHeThong {
-        -String maCauHinh
-        -int soLanGiaHanToiDa
-        -decimal donGiaPhatXeThuong_Gio
-        -decimal donGiaPhatXePKL_Gio
-        -decimal phatMatMuBaoHiem
-        -decimal phatMatAoMua
-        -decimal phanTramTangGiaLe
-        +getDynamicPriceMultiplier(ngay) decimal
-        +getLateFeeRate(loaiXe) decimal
+        MaCauHinh
+        SoLanGiaHanToiDa
+        DonGiaPhatXeThuong_Gio
+        DonGiaPhatXePKL_Gio
+        PhatMatMuBaoHiem
+        PhatMatAoMua
+        PhanTramTangGiaLe
+        NgayCapNhat
     }
 
     %% ============================================================
-    %% QUAN HỆ CÁC LỚP (ASSOCIATION & COMPOSITION)
+    %% MỐI QUAN HỆ GIỮA CÁC THỰC THỂ (DOMAIN RELATIONSHIPS)
     %% ============================================================
     
-    KhachHang "1" -- "0..*" HopDongBooking : tạo
+    KhachHang "1" -- "0..*" HopDongBooking : đăng ký
     XeMay "1" -- "0..*" HopDongBooking : được thuê
     XeMay "1" -- "0..*" BaoDuong : được bảo dưỡng
-    NhanVien "0..2" -- "0..*" BienBanGiaoNhan : giao/nhận xe
-    HopDongBooking "1" -- "0..1" HoaDonQuyetToan : sinh ra
-    HopDongBooking "1" -- "0..1" BienBanGiaoNhan : có biên bản
-    HoaDonQuyetToan "1" *-- "0..*" ThanhToan : chứa giao dịch
-    HopDongBooking "1" -- "0..1" LichSuThue : lưu trữ thành
-    HopDongBooking "1" -- "0..1" DanhGia : có đánh giá
-    CauHinhHeThong "1" -- "*" HoaDonQuyetToan : áp dụng quy tắc cho
-
-    AuthController --> KhachHang : quản lý
-    BookingController --> KhachHang : xác thực
-    BookingController --> XeMay : kiểm tra
-    BookingController --> HopDongBooking : tạo
-    OrderController --> HopDongBooking : cập nhật
-    OrderController --> NhanVien : ủy quyền
-    MaintenanceController --> BaoDuong : xử lý
-    MaintenanceController --> XeMay : giải phóng
+    NhanVien "1" -- "0..*" BienBanGiaoNhan : lập
+    HopDongBooking "1" -- "0..1" HoaDonQuyetToan : đi kèm với
+    HopDongBooking "1" -- "0..2" BienBanGiaoNhan : có biên bản (nhận/trả)
+    HopDongBooking "1" -- "0..*" ThanhToan : có giao dịch
+    HopDongBooking "1" -- "0..1" LichSuThue : lưu vết thành
+    HopDongBooking "1" -- "0..1" DanhGia : nhận đánh giá từ
+    CauHinhHeThong "1" -- "0..*" HopDongBooking : cung cấp quy tắc cho
 ```
 
 ---
@@ -284,112 +209,95 @@ classDiagram
 
 | Class Entity | Kho dữ liệu (Database Table) | Ghi chú |
 |---|---|---|
-| `XeMay` | D1 — Xe_May | Tự chứa các hàm kiểm tra lịch trống và tính giá ngày. |
-| `HopDongBooking` | D2 — Hop_Dong_Booking | Lưu giữ thông tin giao dịch, xe máy, khách hàng. |
-| `HoaDonQuyetToan` | D10 — Hoa_Don_Quyet_Toan | Chứa toàn bộ logic tính tổng tiền, tính phí trễ, và quyết toán tài chính. |
-| `BienBanGiaoNhan` | D11 — Bien_Ban_Giao_Nhan | Ghi nhận thông tin thực tế của xe (ODO, mức xăng) tại thời điểm bàn giao. |
-| `KhachHang` | D3 — Khach_Hang_GPLX | Điểm neo (Entry point) khi khách hàng tương tác với hệ thống. |
-| `LichSuThue` | D4 — Lich_Su_Thue | Bản ghi offline. |
-| `CauHinhHeThong` | D5 — Cau_Hinh_He_Thong | Cung cấp thông số cấu hình chung. |
-| `NhanVien` | D6 — Nhan_Vien | Quản lý tác nhân nhân viên. |
-| `BaoDuong` | D7 — Bao_Duong | Ghi nhận lịch sử bảo dưỡng xe máy. |
-| `DanhGia` | D8 — Danh_Gia | Ghi nhận đánh giá của khách hàng. |
-| `ThanhToan` | Lớp trừu tượng (Interface với E4) | Tương tác trực tiếp với Cổng thanh toán (E4). |
+| `XeMay` | D1 — Xe_May | Lưu giữ thông tin phương tiện trong kho xe. |
+| `HopDongBooking` | D2 — Hop_Dong_Booking | Lưu giữ thông tin giao dịch đặt thuê xe của khách. |
+| `HoaDonQuyetToan` | D10 — Hoa_Don_Quyet_Toan | Dữ liệu tính toán chi phí thực tế tại thời điểm trả xe. |
+| `BienBanGiaoNhan` | D11 — Bien_Ban_Giao_Nhan | Biên bản ghi nhận tình trạng xe khi giao hoặc nhận xe thực tế. |
+| `KhachHang` | D3 — Khach_Hang_GPLX | Chứa hồ sơ cá nhân và trạng thái bằng lái xe của khách hàng. |
+| `LichSuThue` | D4 — Lich_Su_Thue | Bản ghi phi cấu trúc lưu giữ dữ liệu thuê xe phục vụ thống kê lịch sử. |
+| `CauHinhHeThong` | D5 — Cau_Hinh_He_Thong | Bản ghi tham chiếu các quy tắc phạt và hệ số tăng giá toàn cục. |
+| `NhanVien` | D6 — Nhan_Vien | Thông tin tài khoản nhân viên của cửa hàng. |
+| `BaoDuong` | D7 — Bao_Duong | Nhật ký ghi nhận hoạt động bảo dưỡng sửa chữa xe máy. |
+| `DanhGia` | D8 — Danh_Gia | Phản hồi điểm số và ý kiến đánh giá từ khách hàng. |
+| `ThanhToan` | E4 — Payment | Giao dịch tài chính (cọc, gia hạn, quyết toán, hoàn cọc). |
 
 ---
 
 ## 3. ĐẶC TẢ CHI TIẾT CÁC LỚP (CLASS SPECIFICATIONS)
 
-### 3.1. Các lớp Người dùng (Actor Classes)
+### 3.1. Các lớp Người dùng (Actor Entities)
 
 **a) Lớp `KhachHang` (Customer)**
-- **Mô tả:** Đại diện cho khách hàng sử dụng dịch vụ thuê xe. Lớp này quản lý thông tin cá nhân, hồ sơ bằng lái và là nơi khởi tạo các luồng nghiệp vụ chính.
-- **Trách nhiệm (Responsibilities):** 
-  - Khởi tạo quá trình đặt xe mới.
-  - Quản lý và tự động phân quyền theo loại Giấy phép lái xe (GPLX).
-  - Khởi tạo các yêu cầu gia hạn, trả sớm hoặc hủy hợp đồng.
-- **Phương thức chính:**
-  - `uploadGPLX()`: Tải lên và lưu trữ thông tin bằng lái.
-  - `autoAssignVehicleGroup()`: Tự động tính toán và gán nhóm xe (50cc/A1/A2) dựa trên thông tin GPLX.
-  - `rentalMotorbike()`: Khởi tạo một đối tượng `HopDongBooking` mới.
-  - `requestExtension()`: Gửi thông điệp tới `HopDongBooking` để yêu cầu gia hạn số ngày thuê.
+- **Mô tả:** Đại diện cho khách hàng sử dụng dịch vụ thuê xe máy. Lớp này quản lý hồ sơ thông tin cá nhân và thông tin giấy phép lái xe để phân loại nhóm xe được phép đặt.
+- **Trách nhiệm chính:**
+  - Khai báo thông tin cá nhân cơ bản và cập nhật hình ảnh Giấy phép lái xe (GPLX).
+  - Yêu cầu và theo dõi trạng thái các đơn đặt xe, gia hạn, trả xe sớm hoặc hủy đơn thuê.
 
 **b) Lớp `NhanVien` (Staff)**
-- **Mô tả:** Đại diện cho nhân viên vận hành tại cửa hàng.
-- **Trách nhiệm:** 
-  - Tương tác với đối tượng `HopDongBooking` để thực hiện check-in và check-out.
-  - Ghi nhận thông tin thực tế của xe (ODO, mức xăng, tình trạng ngoại quan) tại thời điểm bàn giao.
-  - Xét duyệt ảnh GPLX do khách hàng tải lên.
-  - Hoàn thành tiến trình bảo dưỡng xe máy.
-- **Phương thức chính:**
-  - `approveGPLX() / rejectGPLX()`: Duyệt hoặc từ chối giấy phép lái xe.
-  - `submitCheckin()`: Xác nhận bàn giao xe cho khách. Nếu phát hiện khách gian lận GPLX sẽ gọi hàm hủy cọc.
-  - `submitCheckout()`: Xác nhận thu hồi xe và tạo hóa đơn dữ liệu quyết toán chi tiết.
-  - `completeMaintenance()`: Xác nhận xe đã bảo dưỡng xong và đưa về trạng thái sẵn sàng.
+- **Mô tả:** Đại diện cho nhân viên vận hành tại tiệm xe máy.
+- **Trách nhiệm chính:**
+  - Kiểm tra điều kiện bàn giao xe thực tế và xác nhận Biên bản giao nhận xe (Check-in).
+  - Tiếp nhận xe khi trả, ghi nhận hư hỏng thực tế và tạo Biên bản nhận lại xe (Check-out).
+  - Hỗ trợ duyệt nhanh ảnh GPLX do khách hàng tải lên.
+  - Cập nhật thông tin bảo dưỡng định kỳ cho phương tiện.
 
 **c) Lớp `Admin`**
-- **Mô tả:** Đại diện cho quản trị viên, kế thừa từ `NhanVien`.
-- **Trách nhiệm:** 
-  - Quản lý danh mục xe, tài khoản nhân viên.
-  - Cấu hình các thông số hệ thống.
-  - Đưa khách hàng vi phạm vào Blacklist.
-  - Xem báo cáo lợi nhuận ròng.
-- **Phương thức chính:**
-  - `generateNetRevenueReport()`: Tính toán doanh thu ròng (Tổng doanh thu - Tổng chi phí bảo dưỡng).
+- **Mô tả:** Đại diện cho quản trị viên hệ thống (kế thừa từ `NhanVien`).
+- **Trách nhiệm chính:**
+  - Quản lý danh mục phương tiện trong kho xe máy.
+  - Quản lý hồ sơ và cấp tài khoản nhân viên tiệm xe.
+  - Cập nhật các thông số cấu hình biểu phí phạt và hệ số tăng giá lễ tết của hệ thống.
+  - Đưa khách hàng vi phạm nghiêm trọng vào danh sách đen (Blacklist).
 
-### 3.2. Các Lớp Điều Khiển (Control Classes)
-- **`AuthController`**: Điều phối luồng đăng ký, đăng nhập và duyệt GPLX. Giao tiếp với thực thể `KhachHang`.
-- **`BookingController`**: Xử lý logic đặt xe từ AppUI, kiểm tra tính khả dụng, tạo `HopDongBooking` và gọi cổng thanh toán đặt cọc/gia hạn.
-- **`OrderController`**: Xử lý logic Check-in, Check-out từ StaffUI, thực thi tính toán quyết toán phạt trễ thông qua `HopDongBooking`.
-- **`MaintenanceController`**: Xử lý quy trình báo cáo bảo dưỡng và chuyển trạng thái phương tiện từ StaffUI sang `BaoDuong` và `XeMay`.
+---
 
-### 3.3. Các lớp Thực thể Nghiệp vụ (Business Classes)
+### 3.2. Các lớp Thực thể Nghiệp vụ (Domain/Entity Classes)
 
 **a) Lớp `XeMay` (Motorcycle)**
-- **Mô tả:** Đại diện cho một phương tiện cho thuê trong hệ thống.
-- **Trách nhiệm:** 
-  - Quản lý trạng thái và tính khả dụng của chính nó.
-  - Tự động tính toán giá thuê cơ bản dựa trên thông tin của xe.
-- **Phương thức chính:**
-  - `checkAvailability(nhan, tra)`: Tự kiểm tra xem xe có trống lịch trong khoảng thời gian được yêu cầu hay không.
-  - `lockTemporarily()`: Khóa trạng thái xe trong 15 phút khi chờ thanh toán cọc.
-  - `calculateRentalPrice(soNgay)`: Tính tổng tiền thuê cơ bản dựa trên đơn giá ngày của xe.
+- **Mô tả:** Đại diện cho một phương tiện xe máy cụ thể trong kho xe của tiệm.
+- **Trách nhiệm chính:**
+  - Quản lý thông tin đăng ký pháp lý của xe (biển số, số khung, số máy) và trạng thái hiện tại (sẵn sàng, đang thuê, đang bảo dưỡng, khóa tạm thời).
+  - Quản lý trang thiết bị đi kèm (số lượng mũ bảo hiểm, áo mưa) và chỉ số ODO thực tế.
 
 **b) Lớp `HopDongBooking` (Booking Contract)**
-- **Mô tả:** Đây là lớp cốt lõi (Core Entity) trong Domain Model, lưu trữ trạng thái và thông tin lịch trình của một lần thuê xe.
-- **Trách nhiệm:** 
-  - Liên kết xe máy, khách hàng và thời gian thuê.
-  - Phối hợp với `HoaDonQuyetToan` và `BienBanGiaoNhan` để xử lý các nghiệp vụ vòng đời hợp đồng (check-in, check-out, gia hạn).
-- **Phương thức chính:**
-  - `validateConditions()`: Kiểm tra tính hợp lệ trước khi tạo hợp đồng (GPLX hợp lệ, lịch trống).
-  - `applyExtension()`: Cập nhật lịch trình trả xe mới.
-  - `processCheckin() / processCheckout()`: Gọi tạo Biên bản giao nhận.
-  - `finalizeSettlement()`: Gắn kết với Hóa đơn quyết toán.
+- **Mô tả:** Thực thể cốt lõi ghi nhận một giao dịch thuê xe cụ thể xuyên suốt vòng đời từ khi đặt cọc đến khi hoàn tất quyết toán.
+- **Trách nhiệm chính:**
+  - Liên kết chặt chẽ thông tin khách hàng thuê xe, phương tiện được thuê, thời gian thuê và giá trị hợp đồng.
+  - Theo dõi trạng thái tiến trình của hợp đồng (Chờ thanh toán cọc, Chờ nhận xe, Đang thuê, Quá hạn, Chờ quyết toán, Hoàn tất hoặc Đã hủy).
 
 **c) Lớp `HoaDonQuyetToan` (Financial Settlement)**
-- **Mô tả:** Quản lý toàn bộ thông tin tài chính của đơn thuê.
-- **Trách nhiệm:** Chứa logic tính toán tiền cọc, phụ phí trễ hạn, đền bù hư hại và tổng quyết toán.
-- **Phương thức chính:**
-  - `calculateDeposit()`: Tự động tính toán số tiền cọc cần thanh toán.
-  - `calculateLateFee(thoiGianTraThucTe)`: Tự động áp dụng các mốc tính phí phạt theo thời gian trễ.
-  - `calculateAccessoriesPenalty()`: Tính phí mất phụ kiện.
-  - `calculateTotalSettlement()`: Tổng hợp tất cả các chi phí và khấu trừ tiền cọc để ra số tiền thanh toán cuối cùng.
+- **Mô tả:** Thực thể ghi nhận thông tin tài chính chi tiết tại thời điểm quyết toán thanh lý hợp đồng.
+- **Trách nhiệm chính:**
+  - Ghi nhận chi tiết doanh thu thực tế, tiền cọc đã đóng, và phụ thu phát sinh (phạt trễ giờ, đền bù mất phụ kiện bảo hiểm/áo mưa, đền bù hư hỏng ngoại quan).
+  - Xác định tổng số tiền cuối cùng cần phải thu thêm từ khách hàng hoặc hoàn trả lại cho khách hàng.
 
 **d) Lớp `BienBanGiaoNhan` (Handover Record)**
-- **Mô tả:** Ghi nhận thực tế tình trạng phương tiện khi Check-in và Check-out.
-- **Trách nhiệm:** Lưu trữ ODO, mức xăng, hình ảnh ngoại quan. Bắt lỗi logic như ODO trả < ODO nhận.
+- **Mô tả:** Tài liệu lưu trữ tình trạng vật lý thực tế của xe máy tại các thời điểm chuyển giao quyền sở hữu xe (giao xe cho khách hoặc nhận lại xe từ khách).
+- **Trách nhiệm chính:**
+  - Ghi nhận ODO thực tế, mức xăng trong bình, tình trạng hư hỏng ngoại quan bằng hình ảnh tại thời điểm giao/nhận xe.
+  - Ghi nhận số lượng mũ bảo hiểm và tình trạng áo mưa thực tế được chuyển giao.
 
-**e) Lớp `ThanhToan` (Payment)**
-- **Mô tả:** Đối tượng trung gian (Interface object) làm việc với Cổng thanh toán ngoại vi (E4).
-- **Trách nhiệm:** Thực hiện và ghi nhận trạng thái các giao dịch tài chính (thanh toán cọc, thanh toán gia hạn, quyết toán, hoàn tiền).
-- **Phương thức chính:**
-  - `processPayment()`: Gọi API thực hiện thanh toán trực tuyến.
-  - `processRefund()`: Gọi API thực hiện hoàn tiền (VD: khi khách hủy đơn hợp lệ).
+**e) Lớp `BaoDuong` (Maintenance)**
+- **Mô tả:** Thực thể ghi nhận một hoạt động bảo trì, bảo dưỡng định kỳ hoặc sửa chữa đột xuất của phương tiện.
+- **Trách nhiệm chính:**
+  - Ghi nhận thời gian, tổng chi phí thực tế và chi tiết các hạng mục phụ tùng thay thế/sửa chữa của xe máy.
 
-**g) Lớp `LichSuThue` (Rental History)**
-- **Mô tả:** Bản lưu trữ (Snapshot) dạng Read-Only của một hợp đồng đã hoàn tất.
-- **Trách nhiệm:** Lưu vết lịch sử phục vụ tra cứu offline, báo cáo thống kê và xử lý phạt nguội về sau.
+**f) Lớp `DanhGia` (Review)**
+- **Mô tả:** Ý kiến đóng góp và phản hồi từ phía khách hàng sau khi kết thúc chuyến đi.
+- **Trách nhiệm chính:**
+  - Lưu giữ điểm số đánh giá (sao) và nội dung ý kiến đóng góp của khách hàng dành cho một mã đơn đặt xe cụ thể.
 
-**h) Lớp `CauHinhHeThong` (System Settings)**
-- **Mô tả:** Đối tượng cấu hình toàn cục (Singleton).
-- **Trách nhiệm:** Cung cấp các thông số chung (phí phạt giờ, phí mất phụ kiện, tỷ lệ tăng giá Lễ/Tết) để các thực thể khác như `HopDongBooking` gọi và sử dụng trong quá trình tính toán.
+**g) Lớp `ThanhToan` (Payment)**
+- **Mô tả:** Ghi nhận thông tin một giao dịch tài chính phát sinh trong vòng đời hợp đồng.
+- **Trách nhiệm chính:**
+  - Ghi nhận mã giao dịch, số tiền chuyển khoản/tiền mặt, mục đích thanh toán (đặt cọc, gia hạn, quyết toán, hoàn tiền cọc) và trạng thái giao dịch từ phía cổng thanh toán.
+
+**h) Lớp `LichSuThue` (Rental History)**
+- **Mô tả:** Bản lưu trữ tĩnh đóng vai trò như một Snapshot của đơn thuê đã hoàn thành để phục vụ tra cứu nhanh mà không cần truy vấn ngược cơ sở dữ liệu lớn.
+- **Trách nhiệm chính:**
+  - Lưu trữ tổng tiền thuê, khoảng thời gian thực tế, biển số xe và đánh dấu khách hàng có vi phạm quy định (nếu có) để phục vụ chấm điểm tín nhiệm khách hàng.
+
+**i) Lớp `CauHinhHeThong` (System Settings)**
+- **Mô tả:** Chứa các hằng số và cấu hình định giá toàn cục do quản trị viên thiết lập.
+- **Trách nhiệm chính:**
+  - Cung cấp các thông số biểu phí phạt (phạt trả trễ theo giờ cho xe thường, phạt trả trễ cho xe phân khối lớn, phạt mất phụ kiện) làm căn cứ tính toán cho hóa đơn quyết toán.
