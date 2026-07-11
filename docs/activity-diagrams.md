@@ -194,7 +194,7 @@ graph TB
         S17[Gọi API E4:\nThu thêm TongQuyetToan từ khách]
         S18[Gọi API E4:\nHoàn tiền |TongQuyetToan| cho khách]
         S19{Nhận kết quả\ntừ Cổng TT?}
-        S20[Ghi nhận lỗi giao dịch\nTrangThaiHoanTien = CHO_XU_LY\nChuyển Admin xử lý thủ công]
+        S20[Ghi nhận lỗi giao dịch\nTrangThaiBooking = CHO_HOAN_TIEN_THU_CONG\nChuyển Kế toán xử lý thủ công]
         S21[Cập nhật D2:\nTrangThaiBooking = HOAN_TAT]
         S22[Cập nhật D1:\nTrangThaiXe = SAN_SANG\nODOHienTai = ODOTra]
         S23[Lưu bản ghi vào D4:\nLich_Su_Thue]
@@ -235,16 +235,17 @@ graph TB
     P2 -- Thành công --> P3 --> S19
     P2 -- Thất bại --> P4 --> S19
     S19 -- Thành công --> S21
-    S19 -- Thất bại --> S20 --> S21
+    S19 -- Thất bại --> S20
+    S20 --> S22
 
     S21 --> S22 --> S23 --> S24 --> KH1 --> End_CO_OK([Kết thúc - Thành công])
 ```
 
 ---
 
-## 4. LUỒNG TỰ ĐỘNG MỞ KHÓA QUYỀN THUÊ XE (GPLX AUTO-UNLOCK)
+## 4. LUỒNG ĐĂNG KÝ VÀ DUYỆT GPLX (MANUAL APPROVAL)
 
-Mô tả luồng hệ thống tự động phân quyền nhóm xe thuê ngay khi Khách hàng tải ảnh GPLX và khai báo hạng bằng lái — không cần Admin can thiệp. Đây là luồng nghiệp vụ hoàn toàn tự động.
+Mô tả luồng hệ thống ghi nhận ảnh GPLX và Nhân viên/Admin thực hiện duyệt thủ công để cấp quyền thuê xe.
 
 ```mermaid
 graph TB
@@ -255,31 +256,96 @@ graph TB
         A2[Chọn tệp ảnh GPLX hợp lệ]
         A3[Khai báo Hạng bằng lái:\nA1 / A2]
         A4[Nhận thông báo:\nĐã mở khóa quyền thuê xe\ntương ứng thành công]
-        A5[Nhận thông báo:\nTải ảnh thất bại\nVui lòng thử lại]
+        A5[Nhận thông báo:\nTải ảnh thất bại hoặc Bị từ chối]
     end
 
     subgraph SYS_GPLX [Hệ thống SmartRental]
         S1{Tệp ảnh hợp lệ?\nĐúng định dạng & kích thước}
         S2[Lưu ảnh GPLX vào kho lưu trữ]
-        S3[Gán TrangThaiGPLX = DA_UPLOAD\nvào hồ sơ D3]
-        S4{HangGPLX\nkhai báo là gì?}
-        S5[Gán NhomXeDuocThue = NHOM_A1\nXe <= 175cc được phép thuê\nGhi vào D3]
-        S6[Gán NhomXeDuocThue = NHOM_A2_PKL\nXe > 175cc / PKL được phép thuê\nGhi vào D3]
-        S7[Gửi thông báo mở khóa\nthành công cho Khách hàng]
+        S3[Gán TrangThaiGPLX = DA_UPLOAD\nvà NhomXeDuocThue = Nhom_50cc_Dien\nvào hồ sơ D3]
+        S4[Thông báo chờ duyệt]
         S8[Trả về lỗi tải ảnh]
+    end
+
+    subgraph E2_GPLX [Nhân viên/Admin - E2/E3]
+        NV1[Nhận thông báo có hồ sơ mới]
+        NV2[Kiểm tra tính hợp lệ của ảnh GPLX]
+        NV3{Duyệt hay\nTừ chối?}
+        NV4[Từ chối: Cập nhật TrangThaiGPLX = TU_CHOI]
+        NV5[Duyệt: Kiểm tra Hạng GPLX khai báo]
+        NV6[Hạng A1: Gán Nhom_A1\nHạng A2: Gán Nhom_A2_PKL\nCập nhật TrangThaiGPLX = DA_XAC_MINH]
     end
 
     %% Flow
     Start --> A1 --> A2 --> S1
     S1 -- Không hợp lệ --> S8 --> A5 --> End_Fail([Kết thúc - Thất bại])
     S1 -- Hợp lệ --> S2 --> A3 --> S3 --> S4
-    S4 -- Hạng A1 --> S5 --> S7 --> A4 --> End_OK([Kết thúc - Thành công])
-    S4 -- Hạng A2 --> S6 --> S7
+    
+    S4 --> NV1 --> NV2 --> NV3
+    NV3 -- Từ chối --> NV4 --> A5
+    NV3 -- Duyệt --> NV5 --> NV6 --> A4 --> End_OK([Kết thúc - Thành công])
+```
+
+---
+
+## 5. LUỒNG HOÀN THÀNH BẢO DƯỠNG XE
+
+```mermaid
+graph TB
+    Start([Bắt đầu])
+
+    subgraph E2_BD [Nhân viên - E2]
+        BD1[Truy cập danh sách xe\nđang bảo dưỡng]
+        BD2[Chọn xe và nhấn\nHoàn thành bảo dưỡng]
+    end
+
+    subgraph SYS_BD [Hệ thống SmartRental]
+        S1[Đọc bản ghi bảo dưỡng từ D7]
+        S2{Xe có trạng thái\nDANG_BAO_DUONG?}
+        S3[Báo lỗi: Trạng thái không hợp lệ]
+        S4[Cập nhật D7:\nDaHoanThanh = TRUE]
+        S5[Cập nhật D1:\nTrangThaiXe = SAN_SANG]
+        S6[Hiển thị nút xám (Disabled)\nngăn bấm lại lần 2]
+    end
+
+    %% Flow
+    Start --> BD1 --> BD2 --> S1 --> S2
+    S2 -- Không --> S3 --> End1([Kết thúc])
+    S2 -- Có --> S4 --> S5 --> S6 --> End2([Kết thúc - Thành công])
+```
+
+---
+
+## 6. LUỒNG ĐÁNH GIÁ CHUYẾN ĐI
+
+```mermaid
+graph TB
+    Start([Bắt đầu])
+
+    subgraph E1_Rating [Khách hàng - E1]
+        R1[Mở trang chi tiết\nĐơn đặt xe đã hoàn tất]
+        R2{Đơn đã được\nđánh giá chưa?}
+        R3[Nút Đánh giá bị mờ (Disabled)\nKhông thể thao tác]
+        R4[Nhấn nút Đánh giá]
+        R5[Nhập số sao (1-5) & Nội dung]
+        R6[Nhận thông báo:\nCảm ơn bạn đã đánh giá]
+    end
+
+    subgraph SYS_Rating [Hệ thống SmartRental]
+        S1[Gọi hàm isReviewed()]
+        S2[Lưu bản ghi DanhGia vào D8]
+        S3[Cập nhật UI vô hiệu hóa nút Đánh giá]
+    end
+
+    %% Flow
+    Start --> R1 --> S1 --> R2
+    R2 -- Rồi (isReviewed = true) --> R3 --> End1([Kết thúc])
+    R2 -- Chưa (isReviewed = false) --> R4 --> R5 --> S2 --> S3 --> R6 --> End2([Kết thúc - Thành công])
 ```
 
 ---
 
 > **Ghi chú tổng hợp:**
 > - Tất cả mã trạng thái (`TrangThaiBooking`, `TrangThaiXe`, `TrangThaiGPLX`, `NhomXeDuocThue`) được sử dụng **đồng nhất 100%** với Từ điển dữ liệu (D1–D6).
-> - Sơ đồ 4 (GPLX Auto-Unlock) thể hiện việc **Admin không can thiệp vào luồng cấp quyền** theo đúng SRS Version 2.0.
+> - Sơ đồ 4 (GPLX Auto-Unlock) thể hiện việc Admin/Nhân viên can thiệp vào luồng cấp quyền.
 > - Sơ đồ 3 Check-out đảm bảo hệ thống **chỉ giải phóng xe và đóng đơn sau khi nhận tín hiệu phản hồi từ Cổng thanh toán**, không bỏ qua bước xác nhận giao dịch.

@@ -5,7 +5,7 @@
 ### 1.1. Structured English (Ngôn ngữ cấu trúc)
 
 ```text
-PROCESS 1.0: Đăng ký & Tự động phân quyền GPLX (SRS v2.0 — Không Admin duyệt)
+PROCESS 1.0: Đăng ký & Xét duyệt GPLX (Nhân viên/Admin duyệt)
 BEGIN
     RECEIVE F1.1: Yêu cầu đăng ký tài khoản (HoTen, Email, SoDienThoai, MatKhau, LuaChonGPLX, HangGPLX, AnhGPLXMatTruoc, AnhGPLXMatSau)
     
@@ -23,31 +23,38 @@ BEGIN
         TERMINATE PROCESS
     ENDIF
 
-    // Bước 3: Tự động phân quyền theo lựa chọn GPLX — KHÔNG gửi Admin duyệt
+    // Bước 3: Đăng ký GPLX chờ duyệt
     IF LuaChonGPLX = 'Co_GPLX' AND (AnhGPLXMatTruoc IS NOT NULL OR AnhGPLXMatSau IS NOT NULL) THEN
-        // Khách có GPLX và đã tải ảnh lên
+        // Khách có GPLX và đã tải ảnh lên, chờ NV/Admin duyệt
         SET TrangThaiGPLX = 'DA_UPLOAD'
-        IF HangGPLX = 'A2' THEN
-            SET NhomXeDuocThue = 'Nhom_A2_PKL'  // Được phép thuê tất cả các loại xe
-        ELSE IF HangGPLX = 'A1' THEN
-            SET NhomXeDuocThue = 'Nhom_A1'       // Được phép thuê xe dưới 175cc và xe điện
-        ELSE
-            SET NhomXeDuocThue = 'Nhom_50cc_Dien' // Hạng khai báo không xác định
-        ENDIF
+        SET NhomXeDuocThue = 'Nhom_50cc_Dien' // Mặc định trước khi duyệt
     ELSE
         // Khách không khai báo GPLX hoặc chưa tải ảnh
         SET TrangThaiGPLX = 'Khong_Dang_Ky'
         SET NhomXeDuocThue = 'Nhom_50cc_Dien'
     ENDIF
     
-    // Bước 4: Ghi thông tin tài khoản vào kho D3 — GHI TRỰC TIếP, KHÔNG QUA ADMIN
+    // Bước 4: Ghi thông tin tài khoản vào kho D3
     WRITE D3: Khach_Hang_GPLX
         VALUES (MaKhachHang = AutoGen, HoTen, Email, SoDienThoai, MatKhau = Hash(MatKhau),
                 LuaChonGPLX, HangGPLX, AnhGPLXMatTruoc, AnhGPLXMatSau,
                 TrangThaiGPLX = TrangThaiGPLX, NhomXeDuocThue = NhomXeDuocThue,
                 TrangThaiBlacklist = FALSE, NgayTao = CurrentTime)
     
-    SEND F1.6: Thông báo tài khoản sẵn sàng (TrangThaiGPLX, NhomXeDuocThue) to Khách hàng E1
+    SEND F1.6: Thông báo tài khoản tạo thành công to Khách hàng E1
+
+    // Bước 5: NV/Admin xét duyệt GPLX (Nghiệp vụ độc lập)
+    IF RECEIVE F1.4: Lệnh duyệt/từ chối GPLX (KetQuaDuyet) THEN
+        IF KetQuaDuyet = 'APPROVE' THEN
+            IF HangGPLX = 'A2' THEN SET NhomXeDuocThue = 'Nhom_A2_PKL'
+            ELSE IF HangGPLX = 'A1' THEN SET NhomXeDuocThue = 'Nhom_A1'
+            ENDIF
+            UPDATE D3: Khach_Hang_GPLX SET TrangThaiGPLX = 'DA_XAC_MINH', NhomXeDuocThue = NhomXeDuocThue
+        ELSE
+            UPDATE D3: Khach_Hang_GPLX SET TrangThaiGPLX = 'TU_CHOI'
+        ENDIF
+        SEND F1.5: Kết quả duyệt GPLX to Khách hàng E1
+    ENDIF
 END
 ```
 
@@ -55,17 +62,19 @@ END
 
 Bảng quyết định dưới đây thể hiện quy tắc **tự động phân hạng** nhóm xe được phép thuê dựa trên dữ liệu khách hàng tự khai báo khi đăng ký:
 
-| Điều kiện (Conditions) | Q1 | Q2 | Q3 | Q4 |
-| :--- | :---: | :---: | :---: | :---: |
-| Khách hàng có tải ảnh GPLX lên (`AnhGPLX IS NOT NULL`)? | Y | Y | Y | N |
-| Hạng GPLX hiện tại của khách hàng là gì? | A2 | A1 | Không/Hạng khác | Bất kỳ |
-| **Hành động (Actions)** | | | | |
-| Cập nhật `TrangThaiGPLX = DA_UPLOAD` | X | X | X | |
-| Cập nhật `TrangThaiGPLX = Khong_Dang_Ky` | | | | X |
-| Gán nhóm xe được thuê = `Nhom_A2_PKL` | X | | | |
-| Gán nhóm xe được thuê = `Nhom_A1` | | X | | |
-| Gán nhóm xe được thuê = `Nhom_50cc_Dien` | | | X | X |
-| Ghi trực tiếp vào D3 (không gửi Admin duyệt) | X | X | X | X |
+| Điều kiện (Conditions) | Q1 | Q2 | Q3 | Q4 | Q5 |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Khách hàng có tải ảnh GPLX lên (`AnhGPLX IS NOT NULL`)? | Y | Y | Y | N | Bất kỳ |
+| Hạng GPLX hiện tại của khách hàng là gì? | Bất kỳ | Bất kỳ | Bất kỳ | Bất kỳ | Bất kỳ |
+| Kết quả xét duyệt từ Nhân viên/Admin? | APPROVE (A2) | APPROVE (A1) | REJECT | Không cần duyệt | - |
+| **Hành động (Actions)** | | | | | |
+| Cập nhật `TrangThaiGPLX = DA_UPLOAD` (Chờ duyệt) | | | | | X |
+| Cập nhật `TrangThaiGPLX = DA_XAC_MINH` | X | X | | | |
+| Cập nhật `TrangThaiGPLX = TU_CHOI` | | | X | | |
+| Cập nhật `TrangThaiGPLX = Khong_Dang_Ky` | | | | X | |
+| Gán nhóm xe được thuê = `Nhom_A2_PKL` | X | | | | |
+| Gán nhóm xe được thuê = `Nhom_A1` | | X | | | |
+| Gán nhóm xe được thuê = `Nhom_50cc_Dien` | | | X | X | X |
 
 ### 1.3. Decision Tree (Cây quyết định)
 
@@ -73,14 +82,15 @@ Bảng quyết định dưới đây thể hiện quy tắc **tự động phân
 graph LR
     A["Khách đăng ký tài khoản"] --> B{"Có tải ảnh GPLX lên?"}
     B -->|"Không tải / Không có GPLX"| C["TrangThaiGPLX = Khong_Dang_Ky\nNhomXeDuocThue = Nhom_50cc_Dien"]
-    B -->|"Có tải ảnh GPLX lên"| D{"Xét hạng bằng lái khai báo"}
-    D -->|HangGPLX = A2| E["TrangThaiGPLX = DA_UPLOAD\nNhomXeDuocThue = Nhom_A2_PKL"]
-    D -->|HangGPLX = A1| F["TrangThaiGPLX = DA_UPLOAD\nNhomXeDuocThue = Nhom_A1"]
-    D -->|"Hạng không xác định"| G["TrangThaiGPLX = DA_UPLOAD\nNhomXeDuocThue = Nhom_50cc_Dien"]
-    C --> H["Ghi vào D3 — Xong"]
-    E --> H
-    F --> H
-    G --> H
+    B -->|"Có tải ảnh GPLX lên"| D["TrangThaiGPLX = DA_UPLOAD\nChờ NV/Admin duyệt"]
+    D --> E{"Kết quả duyệt"}
+    E -->|APPROVE (A2)| F["TrangThaiGPLX = DA_XAC_MINH\nNhomXeDuocThue = Nhom_A2_PKL"]
+    E -->|APPROVE (A1)| G["TrangThaiGPLX = DA_XAC_MINH\nNhomXeDuocThue = Nhom_A1"]
+    E -->|REJECT| H["TrangThaiGPLX = TU_CHOI\nNhomXeDuocThue = Nhom_50cc_Dien"]
+    C --> I["Ghi vào D3"]
+    F --> I
+    G --> I
+    H --> I
 
 
 
@@ -130,7 +140,7 @@ BEGIN
         // Tạo đơn hàng tạm, giữ xe 15 phút
         WRITE D2: Hop_Dong_Booking
             VALUES (MaBooking = AutoGen, MaKhachHang, MaXe, ThoiGianNhan, ThoiGianTra, TrangThaiBooking = 'CHO_THANH_TOAN_COC', ThoiGianTao = CurrentTime)
-        UPDATE D1: Xe_May SET TrangThaiXe = 'Dang_Thue' WHERE D1.MaXe = MaXe
+        UPDATE D1: Xe_May SET TrangThaiXe = 'KHOA_TAM_15M' WHERE D1.MaXe = MaXe
         SEND F2.8: Thông báo khóa xe tạm (15 phút chờ cọc) to Khách hàng E1
 
         // Tính toán tiền đặt cọc (30% tổng tiền thuê)
@@ -152,6 +162,7 @@ BEGIN
         
         IF TrangThaiGD = 'Thanh_Cong' THEN
             UPDATE D2: Hop_Dong_Booking SET TrangThaiBooking = 'CHO_NHAN_XE' WHERE D2.MaBooking = MaBooking
+            UPDATE D1: Xe_May SET TrangThaiXe = 'Dang_Thue' WHERE D1.MaXe = D2.MaXe
             SEND F2.14: Xác nhận đặt xe thành công to Khách hàng E1
             SEND F2.12: Thông báo đơn mới to Nhân viên E2 chuẩn bị bàn giao
         ELSE
@@ -195,6 +206,15 @@ BEGIN
         
         SEND F2.26: Cập nhật giao dịch hoàn tiền to D2
         SEND Thông báo xác nhận hủy và kết quả hoàn tiền to Khách hàng E1
+    ENDIF
+
+    // Xử lý Hủy đơn tự động (Khách không đến nhận xe quá 2h)
+    IF RECEIVE F2.27: Tín hiệu Cron Job THEN
+        READ D2: Hop_Dong_Booking WHERE TrangThaiBooking = 'CHO_NHAN_XE' AND CurrentTime > (ThoiGianNhan + 2 giờ)
+        IF Tìm thấy bản ghi THEN
+            UPDATE D2: Hop_Dong_Booking SET TrangThaiBooking = 'Khong_Den_Nhan_Xe'
+            UPDATE D1: Xe_May SET TrangThaiXe = 'San_Sang' WHERE D1.MaXe = D2.MaXe
+        ENDIF
     ENDIF
 END
 ```
@@ -265,8 +285,9 @@ BEGIN
         ENDIF
 
         // Bước 2: Kiểm tra số lần đã gia hạn
-        IF D2.SoLanGiaHan >= 3 THEN
-            SEND Thông báo lỗi "Vượt quá giới hạn gia hạn tối đa (3 lần)" to Khách hàng E1
+        READ D5: Cau_Hinh_He_Thong (Đọc GioHanGiaHanToiDa)
+        IF D2.SoLanGiaHan >= D5.GioHanGiaHanToiDa THEN
+            SEND Thông báo lỗi "Vượt quá giới hạn gia hạn tối đa" to Khách hàng E1
             TERMINATE PROCESS
         ENDIF
 
@@ -409,6 +430,10 @@ BEGIN
     // 2. NGHIỆP VỤ CHECK-OUT & QUYẾT TOÁN TÀI CHÍNH
     IF RECEIVE F4.6: Biên bản Check-out (MaBooking, ODOTra, MucXangTra, PhiDenBuHuHai, SoPhuKienThuHoi) THEN
         READ D2: Hop_Dong_Booking WHERE D2.MaBooking = MaBooking
+        IF ODOTra < D2.ODONhan THEN
+            SEND Thông báo lỗi "ODO trả không được nhỏ hơn ODO nhận" to Nhân viên E2
+            TERMINATE PROCESS
+        ENDIF
         READ D1: Xe_May WHERE D1.MaXe = D2.MaXe
         READ D5: Cau_Hinh_He_Thong (Đọc thông số đơn giá đền bù phụ kiện và biểu phí phạt trễ giờ)
 
@@ -422,9 +447,9 @@ BEGIN
                 SET PhiPhatTreHan = 0  // Thời gian ân hạn
             ELSE IF HoursLate > 2 AND HoursLate <= 6 THEN
                 IF D1.LoaiXe = 'Xe_So' OR D1.LoaiXe = 'Xe_Ga' THEN
-                    SET DonGiaPhatGio = 30000
+                    SET DonGiaPhatGio = D5.BieuPhiPhatGioThuong
                 ELSE
-                    SET DonGiaPhatGio = 50000
+                    SET DonGiaPhatGio = D5.BieuPhiPhatGioPKL
                 ENDIF
                 SET PhiPhatTreHan = HoursLate * DonGiaPhatGio
                 // Phạt tối đa theo giờ không vượt quá nửa đơn giá thuê ngày
@@ -500,6 +525,14 @@ BEGIN
         SEND F4.12: Giải phóng xe thành công to D1
         SEND F4.13: Lưu lịch sử thuê thành công to D4
     ENDIF
+
+    // 3. NGHIỆP VỤ HOÀN THÀNH BẢO DƯỠNG
+    IF RECEIVE F4.20: Lệnh hoàn thành bảo dưỡng (MaBaoDuong) THEN
+        UPDATE D7: Bao_Duong SET DaHoanThanh = TRUE WHERE MaBaoDuong = MaBaoDuong
+        READ D7: Bao_Duong WHERE MaBaoDuong = MaBaoDuong
+        UPDATE D1: Xe_May SET TrangThaiXe = 'San_Sang' WHERE MaXe = D7.MaXe
+        SEND F4.21: Cập nhật bảo dưỡng thành công to D7
+    ENDIF
 END
 ```
 
@@ -512,8 +545,8 @@ END
 | Loại xe máy đang thuê là gì? | Bất kỳ | Xe số / Xe ga | Côn tay / PKL | Bất kỳ | Bất kỳ |
 | **Hành động (Actions)** | | | | | |
 | Miễn phí phạt trễ giờ (Thời gian ân hạn) | X | | | | |
-| Tính phạt: $HoursLate \times 30,000$ VNĐ (Tối đa = 50% đơn giá ngày) | | X | | | |
-| Tính phạt: $HoursLate \times 50,000$ VNĐ (Tối đa = 50% đơn giá ngày) | | | X | | |
+| Tính phạt: $HoursLate \times$ BieuPhiPhatGioThuong (Tối đa = 50% đơn giá ngày) | | X | | | |
+| Tính phạt: $HoursLate \times$ BieuPhiPhatGioPKL (Tối đa = 50% đơn giá ngày) | | | X | | |
 | Phạt mặc định bằng 50% đơn giá ngày thuê của xe | | | | X | |
 | Phạt tính tròn bằng 1 ngày thuê mới (100% đơn giá ngày) | | | | | X |
 
@@ -523,8 +556,8 @@ END
 graph TD
     A["Quyết toán Trễ giờ"] -->|"Trễ dưới hoặc bằng 2 tiếng"| B["PhiPhatTreHan = 0 VNĐ (Ân hạn)"]
     A -->|"Trễ từ trên 2 tiếng đến dưới 6 tiếng"| C{"Phân loại dòng xe"}
-    C -->|Xe số hoặc Xe ga| D["Phạt 30K / giờ, Tối đa = 50% đơn giá ngày"]
-    C -->|Xe côn tay hoặc PKL| E["Phạt 50K / giờ, Tối đa = 50% đơn giá ngày"]
+    C -->|Xe số hoặc Xe ga| D["Phạt theo BieuPhiPhatGioThuong, Tối đa = 50% đơn giá ngày"]
+    C -->|Xe côn tay hoặc PKL| E["Phạt theo BieuPhiPhatGioPKL, Tối đa = 50% đơn giá ngày"]
     A -->|"Trễ từ trên 6 tiếng đến dưới 12 tiếng"| F["Phạt mặc định = 50% đơn giá ngày"]
     A -->|"Trễ trên 12 tiếng"| G["Tính tròn thành 1 ngày thuê mới (100% đơn giá ngày)"]
 ```

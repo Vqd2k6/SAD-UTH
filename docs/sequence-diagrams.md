@@ -6,80 +6,92 @@
 sequenceDiagram
     autonumber
     actor Customer as 👤 Khách hàng
-    participant AppUI as 📱 App Interface
-    participant KH as 🧑‍💼 kh: KhachHang
-    participant XM as 🛵 xe: XeMay
-    participant HD as 📄 hd: HopDongBooking
-    participant CH as ⚙️ ch: CauHinhHeThong
-    participant TT as 💳 tt: ThanhToan
+    participant AppUI as 📱 AppUI (Boundary)
+    participant BC as ⚙️ BookingController (Control)
+    participant KH as 🧑‍💼 KhachHang (Entity)
+    participant XM as 🛵 XeMay (Entity)
+    participant HD as 📄 HopDongBooking (Entity)
+    participant CH as ⚙️ CauHinhHeThong (Entity)
+    participant TT as 💳 ThanhToan (Entity)
     participant E4 as 🏦 E4: Cổng Thanh Toán
 
     Customer->>AppUI: Chọn Xe & Thời gian Nhận/Trả
-    AppUI->>KH: rentalMotorbike(xe, thoiGianNhan, thoiGianTra)
-    activate KH
+    AppUI->>BC: createBooking(maXe, thoiGianNhan, thoiGianTra)
+    activate BC
 
     %% === VALIDATION TẠI OBJECT KHÁCH HÀNG ===
-    KH->>KH: canRent(xe.nhomXe)
-    alt Không đủ điều kiện (Thiếu GPLX / Blacklist)
-        KH-->>AppUI: Exception: Tài khoản không đủ điều kiện
-        AppUI-->>Customer: Hiển thị lỗi (Cần GPLX / Bị khóa)
+    BC->>KH: checkEligibility(maKhachHang, maXe)
+    activate KH
+    KH-->>BC: result (Hợp lệ / Lỗi GPLX / Lỗi Blacklist)
+    deactivate KH
+
+    alt Không đủ điều kiện
+        BC-->>AppUI: Exception: Tài khoản không đủ điều kiện
+        AppUI-->>Customer: Hiển thị lỗi (Cần duyệt GPLX / Bị khóa)
     end
 
     %% === VALIDATION TẠI OBJECT XE MÁY ===
-    KH->>XM: checkAvailability(thoiGianNhan, thoiGianTra)
+    BC->>XM: checkAvailability(maXe, thoiGianNhan, thoiGianTra)
     activate XM
     alt Xe đã bị đặt
-        XM-->>KH: false
-        KH-->>AppUI: Exception: Xe đã bận lịch
+        XM-->>BC: false
+        BC-->>AppUI: Exception: Xe đã bận lịch
         AppUI-->>Customer: Đề xuất xe khác
     end
-    XM-->>KH: true
+    XM-->>BC: true
     deactivate XM
 
     %% === KHỞI TẠO OBJECT BOOKING VÀ TÍNH TOÁN ===
-    KH->>HD: create(kh, xe, thoiGianNhan, thoiGianTra)
+    BC->>CH: getDynamicPriceMultiplier(ngayNhan)
+    activate CH
+    CH-->>BC: multiplier
+    deactivate CH
+    BC->>HD: create(maKhachHang, maXe, thoiGianNhan, thoiGianTra, multiplier)
     activate HD
-    HD->>CH: getDynamicPriceMultiplier(ngayNhan)
-    CH-->>HD: multiplier
     HD->>XM: calculateRentalPrice(soNgay)
     XM-->>HD: donGiaGoc
     HD->>HD: calculateTotalSettlement()
     HD->>HD: calculateDeposit()
-    HD-->>KH: hd (trạng thái: Chờ Cọc)
+    HD-->>BC: hd (trạng thái: Chờ Cọc)
     deactivate HD
 
-    KH->>XM: lockTemporarily()
-    XM-->>KH: khóa xe 15 phút
-    KH-->>AppUI: Đối tượng hd & Yêu cầu thanh toán
-    deactivate KH
+    BC->>XM: lockTemporarily(maXe)
+    XM-->>BC: khóa xe 15 phút
+    BC-->>AppUI: Đối tượng hd & Yêu cầu thanh toán
+    deactivate BC
     AppUI-->>Customer: Hiển thị QR thanh toán cọc
 
     %% === XỬ LÝ THANH TOÁN ===
     Customer->>AppUI: Xác nhận thanh toán cọc
-    AppUI->>TT: processPayment(hd.tienCoc, phuongThuc)
+    AppUI->>BC: processDepositPayment(maBooking, phuongThuc)
+    activate BC
+    BC->>TT: processPayment(hd.tienCoc, phuongThuc)
     activate TT
     TT->>E4: Gửi yêu cầu trừ tiền
     
     alt Giao dịch thành công
         E4-->>TT: THANH_CONG
-        TT->>HD: confirmBooking()
+        TT-->>BC: OK
+        BC->>HD: confirmBooking()
         activate HD
         HD->>XM: updateStatus('Dang_Thue')
-        HD-->>TT: Cập nhật thành công
+        HD-->>BC: Cập nhật thành công
         deactivate HD
-        TT-->>AppUI: true
+        BC-->>AppUI: true
         AppUI-->>Customer: Thông báo đặt xe thành công
     else Giao dịch thất bại / Quá hạn
         E4-->>TT: THAT_BAI
-        TT->>HD: cancelBooking()
+        TT-->>BC: FAIL
+        BC->>HD: cancelBooking()
         activate HD
         HD->>XM: release()
-        HD-->>TT: Hủy thành công
+        HD-->>BC: Hủy thành công
         deactivate HD
-        TT-->>AppUI: false
+        BC-->>AppUI: false
         AppUI-->>Customer: Thông báo hủy đơn do lỗi thanh toán
     end
     deactivate TT
+    deactivate BC
 ```
 
 ---
@@ -90,57 +102,65 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor Customer as 👤 Khách hàng
-    participant AppUI as 📱 App Interface
-    participant KH as 🧑‍💼 kh: KhachHang
-    participant HD as 📄 hd: HopDongBooking
-    participant XM as 🛵 xe: XeMay
-    participant CH as ⚙️ ch: CauHinhHeThong
-    participant TT as 💳 tt: ThanhToan
+    participant AppUI as 📱 AppUI (Boundary)
+    participant BC as ⚙️ BookingController (Control)
+    participant HD as 📄 HopDongBooking (Entity)
+    participant XM as 🛵 XeMay (Entity)
+    participant CH as ⚙️ CauHinhHeThong (Entity)
+    participant TT as 💳 ThanhToan (Entity)
 
     Customer->>AppUI: Nhập số ngày muốn gia hạn
-    AppUI->>KH: requestExtension(hd, soNgayThem)
-    activate KH
+    AppUI->>BC: requestExtension(maBooking, soNgayThem)
+    activate BC
 
-    KH->>HD: applyExtension(soNgayThem)
+    BC->>HD: validateExtensionConditions()
     activate HD
     
     %% === VALIDATION TẠI OBJECT BOOKING ===
-    HD->>HD: validateConditions() (Kiểm tra <= 3 lần & > 2 tiếng)
-    alt Không thỏa mãn
-        HD-->>KH: Exception: Quá số lần / Gửi quá trễ
-        KH-->>AppUI: Báo lỗi nghiệp vụ
+    alt Không thỏa mãn (Quá 3 lần / Trễ)
+        HD-->>BC: false
+        BC-->>AppUI: Exception: Quá số lần / Gửi quá trễ
         AppUI-->>Customer: Thông báo từ chối gia hạn
     end
 
     HD->>XM: checkAvailability(thoiGianTraCu, thoiGianTraMoi)
     alt Bị trùng lịch
         XM-->>HD: false
-        HD-->>KH: Exception: Xe đã có lịch tiếp theo
-        KH-->>AppUI: Báo lỗi trùng lịch
+        HD-->>BC: false
+        BC-->>AppUI: Exception: Xe đã có lịch tiếp theo
+        AppUI-->>Customer: Báo lỗi trùng lịch
     end
 
     %% === TÍNH PHÍ GIA HẠN THÔNG MINH ===
-    HD->>CH: getDynamicPriceMultiplier(ngayGiaHan)
-    CH-->>HD: multiplier
+    BC->>CH: getDynamicPriceMultiplier(ngayGiaHan)
+    activate CH
+    CH-->>BC: multiplier
+    deactivate CH
+    BC->>HD: calculateExtensionCost(multiplier)
+    activate HD
     HD->>XM: calculateRentalPrice(soNgayThem)
     XM-->>HD: donGiaGoc
     HD->>HD: tính chi phí gia hạn = donGiaGoc * multiplier
-    HD-->>KH: Yêu cầu thanh toán (chiPhiGiaHan)
+    HD-->>BC: Yêu cầu thanh toán (chiPhiGiaHan)
     deactivate HD
 
-    KH-->>AppUI: Gửi phí tạm tính
+    BC-->>AppUI: Gửi phí tạm tính
     AppUI-->>Customer: Hiển thị phí gia hạn & Nút Thanh toán
     
     Customer->>AppUI: Bấm Thanh toán
-    AppUI->>TT: processPayment(chiPhiGiaHan, phuongThuc)
+    AppUI->>BC: processExtensionPayment(maBooking, phuongThuc)
+    BC->>TT: processPayment(chiPhiGiaHan, phuongThuc)
     activate TT
-    TT->>HD: Nếu thành công -> lưu thông tin gia hạn
-    HD-->>TT: OK
-    TT-->>AppUI: Giao dịch thành công
+    TT-->>BC: Giao dịch thành công
     deactivate TT
+
+    BC->>HD: applyExtension(soNgayThem, chiPhiGiaHan)
+    HD-->>BC: OK
+    
+    BC-->>AppUI: Cập nhật thành công
+    deactivate BC
     
     AppUI-->>Customer: Hiển thị giờ trả mới
-    deactivate KH
 ```
 
 ---
@@ -151,26 +171,30 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor Staff as 🧑‍💼 Nhân viên
-    participant StaffUI as 💻 Staff Dashboard
-    participant NV as 🧑‍🔧 nv: NhanVien
-    participant HD as 📄 hd: HopDongBooking
-    participant XM as 🛵 xe: XeMay
+    participant StaffUI as 💻 StaffUI (Boundary)
+    participant OC as ⚙️ OrderController (Control)
+    participant NV as 🧑‍🔧 NhanVien (Entity)
+    participant HD as 📄 HopDongBooking (Entity)
+    participant XM as 🛵 XeMay (Entity)
 
     Staff->>StaffUI: Nhập ODO, Mức xăng, Hình ảnh nhận
-    StaffUI->>NV: submitCheckin(hd, checkinData)
-    activate NV
+    StaffUI->>OC: submitCheckin(maBooking, checkinData)
+    activate OC
 
-    NV->>HD: processCheckin(checkinData, nv)
+    OC->>NV: checkStaffStatus()
+    NV-->>OC: Status (Active)
+
+    OC->>HD: processCheckin(checkinData)
     activate HD
     
     HD->>XM: updateStatus('Dang_Thue')
     HD->>XM: updateODO(checkinData.odoNhan)
     
-    HD-->>NV: Bàn giao thành công
+    HD-->>OC: Bàn giao thành công
     deactivate HD
 
-    NV-->>StaffUI: true
-    deactivate NV
+    OC-->>StaffUI: true
+    deactivate OC
     StaffUI-->>Staff: Hiển thị xác nhận Check-in thành công
 ```
 
@@ -182,85 +206,139 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor Staff as 🧑‍💼 Nhân viên
-    participant StaffUI as 💻 Staff Dashboard
-    participant NV as 🧑‍🔧 nv: NhanVien
-    participant HD as 📄 hd: HopDongBooking
-    participant XM as 🛵 xe: XeMay
-    participant CH as ⚙️ ch: CauHinhHeThong
-    participant TT as 💳 tt: ThanhToan
-    participant LS as 🗄️ ls: LichSuThue
+    participant StaffUI as 💻 StaffUI (Boundary)
+    participant OC as ⚙️ OrderController (Control)
+    participant HD as 📄 HopDongBooking (Entity)
+    participant XM as 🛵 XeMay (Entity)
+    participant CH as ⚙️ CauHinhHeThong (Entity)
+    participant TT as 💳 ThanhToan (Entity)
+    participant LS as 🗄️ LichSuThue (Entity)
 
     Staff->>StaffUI: Nhập ODO, Xăng trả, Phí đền bù
-    StaffUI->>NV: submitCheckout(hd, checkoutData)
-    activate NV
+    StaffUI->>OC: submitCheckout(maBooking, checkoutData)
+    activate OC
 
     %% === GIAO TIẾP VỚI OBJECT BOOKING ===
-    NV->>HD: processCheckout(checkoutData, nv)
+    OC->>CH: getLateFeeRate(xe.loaiXe)
+    activate CH
+    CH-->>OC: donGiaPhatGio
+    deactivate CH
+    OC->>HD: processCheckout(checkoutData, donGiaPhatGio)
     activate HD
     
     HD->>HD: validateODO()
-    HD->>CH: getLateFeeRate(xe.loaiXe)
-    CH-->>HD: donGiaPhatGio
-    
-    HD->>HD: calculateLateFee(thoiGianTraThucTe)
+    HD->>HD: calculateLateFee(thoiGianTraThucTe, donGiaPhatGio)
     HD->>HD: calculateTotalSettlement()
-    HD-->>NV: tongThanhToan
+    HD-->>OC: tongThanhToan
     deactivate HD
 
-    NV-->>StaffUI: Hiển thị hóa đơn chi tiết
+    OC-->>StaffUI: Hiển thị hóa đơn chi tiết
 
     %% === XỬ LÝ THANH TOÁN (HOÀN HOẶC THU THÊM) ===
     alt tongThanhToan > 0 (Thu thêm)
         Staff->>StaffUI: Khách thanh toán nợ
-        StaffUI->>TT: processPayment(tongThanhToan)
-        TT-->>StaffUI: OK
+        StaffUI->>OC: processPayment(tongThanhToan)
+        OC->>TT: processPayment(tongThanhToan)
+        TT-->>OC: OK
+        OC-->>StaffUI: OK
     else tongThanhToan < 0 (Hoàn cọc)
         Staff->>StaffUI: Yêu cầu hoàn cọc dư
-        StaffUI->>TT: processRefund(abs(tongThanhToan))
-        TT-->>StaffUI: OK
+        StaffUI->>OC: processRefund(abs(tongThanhToan))
+        OC->>TT: processRefund(abs(tongThanhToan))
+        TT-->>OC: OK
+        OC-->>StaffUI: OK
     end
 
     %% === CHỐT ĐƠN VÀ LƯU LỊCH SỬ ===
-    StaffUI->>NV: finalizeSettlement(hd)
-    NV->>HD: finalizeSettlement()
+    StaffUI->>OC: finalizeSettlement(maBooking)
+    OC->>HD: finalizeSettlement()
     activate HD
     HD->>XM: release() (Trả về San_Sang)
     HD->>XM: updateODO(odoTra)
     HD->>LS: create(hd) (Khởi tạo bản lưu lịch sử)
-    HD-->>NV: Hoàn tất Check-out
+    HD-->>OC: Hoàn tất Check-out
     deactivate HD
     
-    NV-->>StaffUI: true
-    deactivate NV
+    OC-->>StaffUI: true
+    deactivate OC
     StaffUI-->>Staff: Đóng đơn thành công
 ```
 
 ---
 
-## 5. LUỒNG ĐĂNG KÝ TÀI KHOẢN VÀ TỰ ĐỘNG PHÂN QUYỀN GPLX
+## 5. LUỒNG ĐĂNG KÝ TÀI KHOẢN VÀ DUYỆT GPLX THỦ CÔNG
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor Customer as 👤 Khách hàng
-    participant AppUI as 📱 App Interface
-    participant KH as 🧑‍💼 kh: KhachHang
+    actor Staff as 🧑‍💼 Nhân viên
+    participant AppUI as 📱 AppUI (Boundary)
+    participant StaffUI as 💻 StaffUI (Boundary)
+    participant AC as ⚙️ AuthController (Control)
+    participant KH as 🧑‍💼 KhachHang (Entity)
 
     Customer->>AppUI: Nhập Thông tin cá nhân & Mật khẩu
-    AppUI->>KH: create(thongTinCaNhan)
-    activate KH
-    KH-->>AppUI: kh (instance)
-    deactivate KH
+    AppUI->>AC: registerUser(thongTinCaNhan)
+    activate AC
+    AC->>KH: create(thongTinCaNhan)
+    KH-->>AC: kh (instance)
+    AC-->>AppUI: Đăng ký thành công
+    deactivate AC
 
     opt Khách có GPLX
         Customer->>AppUI: Tải ảnh GPLX & Chọn hạng (A1/A2)
-        AppUI->>KH: uploadGPLX(anhTruoc, anhSau, hangGPLX)
-        activate KH
-        KH->>KH: autoAssignVehicleGroup()
-        Note over KH: Đặt trạng thái GPLX = DA_UPLOAD<br/>Set NhomXeDuocThue tương ứng
-        KH-->>AppUI: Cập nhật quyền thành công
-        deactivate KH
+        AppUI->>AC: uploadGPLX(maKhachHang, anhTruoc, anhSau, hangGPLX)
+        activate AC
+        AC->>KH: updateGPLX(anhTruoc, anhSau, hangGPLX, 'DA_UPLOAD')
+        KH-->>AC: OK
+        AC-->>AppUI: Tải lên thành công, chờ duyệt
+        deactivate AC
+
+        %% Nhân viên duyệt GPLX
+        Staff->>StaffUI: Xem hồ sơ Khách hàng
+        StaffUI->>AC: reviewGPLX(maKhachHang, 'APPROVE')
+        activate AC
+        AC->>KH: assignVehicleGroup(hangGPLX)
+        Note over KH: Set TrangThaiGPLX = DA_XAC_MINH<br/>Set NhomXeDuocThue tương ứng
+        KH-->>AC: OK
+        AC-->>StaffUI: Đã duyệt thành công
+        deactivate AC
     end
 
-    AppUI-->>Customer: Tài khoản đã sẵn sàng (với nhóm xe được cấp phép)
+    AppUI-->>Customer: Tài khoản đã được phê duyệt
+```
+
+---
+
+## 6. LUỒNG HOÀN THÀNH BẢO DƯỠNG
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Staff as 🧑‍💼 Nhân viên
+    participant StaffUI as 💻 StaffUI (Boundary)
+    participant MC as ⚙️ MaintenanceController (Control)
+    participant BD as 🛠️ BaoDuong (Entity)
+    participant XM as 🛵 XeMay (Entity)
+
+    Staff->>StaffUI: Chọn "Hoàn thành bảo dưỡng"
+    StaffUI->>MC: completeMaintenance(maBaoDuong)
+    activate MC
+
+    MC->>BD: markAsCompleted()
+    activate BD
+    BD-->>MC: OK
+    deactivate BD
+
+    MC->>XM: releaseFromMaintenance()
+    activate XM
+    Note over XM: Set TrangThaiXe = SAN_SANG
+    XM-->>MC: OK
+    deactivate XM
+
+    MC-->>StaffUI: Thành công
+    deactivate MC
+
+    StaffUI-->>Staff: Vô hiệu hóa nút Hoàn thành (Màu xám)
 ```

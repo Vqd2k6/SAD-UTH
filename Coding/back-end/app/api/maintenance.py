@@ -69,13 +69,12 @@ def complete_maintenance(
     if not xe:
         raise HTTPException(status_code=404, detail="Không tìm thấy xe máy tương ứng")
 
-    if xe.TrangThaiXe != TrangThaiXeEnum.Dang_Bao_Duong:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Xe hiện đang ở trạng thái '{xe.TrangThaiXe.value}', không phải Đang Bảo Dưỡng"
-        )
+    if record.DaHoanThanh:
+        return {"message": f"Xe {xe.BienSo} đã hoàn tất bảo dưỡng từ trước!", "MaXe": xe.MaXe}
 
-    xe.TrangThaiXe = TrangThaiXeEnum.San_Sang
+    record.DaHoanThanh = True
+    if xe.TrangThaiXe == TrangThaiXeEnum.Dang_Bao_Duong:
+        xe.TrangThaiXe = TrangThaiXeEnum.San_Sang
     xe.NgayCapNhat = datetime.utcnow()
     db.commit()
 

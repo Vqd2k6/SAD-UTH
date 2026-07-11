@@ -67,10 +67,10 @@ const AdminCheckIn: React.FC = () => {
               <InputLabel>Mức Xăng Giao</InputLabel>
               <Select label="Mức Xăng Giao" name="MucXangNhan" value={checkInData.MucXangNhan} onChange={handleChange}>
                 <MenuItem value="Day">Đầy (100%)</MenuItem>
-                <MenuItem value="Mot_Phan_Tu">1/4 Bình</MenuItem>
-                <MenuItem value="Mot_Phan_Hai">1/2 Bình</MenuItem>
-                <MenuItem value="Ba_Phan_Tu">3/4 Bình</MenuItem>
-                <MenuItem value="Rong">Rỗng</MenuItem>
+                <MenuItem value="1_Phan_4">1/4 Bình</MenuItem>
+                <MenuItem value="1_Phan_2">1/2 Bình</MenuItem>
+                <MenuItem value="3_Phan_4">3/4 Bình</MenuItem>
+                <MenuItem value="Gan_Het">Gần Hết (Rỗng)</MenuItem>
               </Select>
             </FormControl>
             <TextField label="Số mũ bảo hiểm giao" name="SoMuBaoHiemGiao" type="number" required value={checkInData.SoMuBaoHiemGiao} onChange={handleChange} />

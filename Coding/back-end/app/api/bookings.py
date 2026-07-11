@@ -45,11 +45,10 @@ def create_booking(
             status_code=400, detail="Thời gian trả phải sau thời gian nhận"
         )
 
-    # Validate GPLX status before booking
-    if current_user.TrangThaiGPLX != TrangThaiGPLXEnum.Da_Xac_Thuc:
+    # Validate GPLX status before booking (Allow Da_Upload and Da_Xac_Thuc)
+    if current_user.TrangThaiGPLX not in [TrangThaiGPLXEnum.Da_Upload, TrangThaiGPLXEnum.Da_Xac_Thuc]:
         gplx_msg = {
             "Khong_Dang_Ky": "Bạn chưa đăng ký GPLX. Vui lòng cập nhật hồ sơ GPLX để đặt xe.",
-            "Da_Upload": "GPLX của bạn đang chờ Admin phê duyệt. Vui lòng đợi xác nhận.",
             "Tu_Choi": "GPLX của bạn đã bị từ chối. Vui lòng cập nhật lại ảnh GPLX hợp lệ.",
         }
         raise HTTPException(

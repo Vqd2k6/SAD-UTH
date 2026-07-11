@@ -58,11 +58,29 @@ const AdminCheckOut: React.FC = () => {
         
         {result && (
           <Box className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <Typography variant="h6" className="text-green-800 font-bold mb-2">Hóa Đơn Quyết Toán</Typography>
-            <Typography variant="body1">Tổng quyết toán: <b>{result.TongQuyetToan?.toLocaleString()} VNĐ</b></Typography>
-            <Typography variant="body1" className="text-red-600 mt-2">
-              Khách Cần Thanh Toán Thêm (đã trừ cọc): <b>{result.SoTienCanThuThemHoacHoanTra?.toLocaleString()} VNĐ</b>
-            </Typography>
+            <Typography variant="h6" className="text-green-800 font-bold mb-4 border-b border-green-200 pb-2">🧾 Hóa Đơn Quyết Toán</Typography>
+            <div className="flex flex-col gap-2 mb-4">
+              <div className="flex justify-between"><span>Tiền thuê xe gốc:</span> <span>{result.TongTienThue?.toLocaleString()} VNĐ</span></div>
+              <div className="flex justify-between"><span>Tiền gia hạn (nếu có):</span> <span>{result.TongTienGiaHan?.toLocaleString()} VNĐ</span></div>
+              <div className="flex justify-between text-red-600"><span>Phí trễ hạn:</span> <span>+ {result.PhiTreHan?.toLocaleString()} VNĐ</span></div>
+              <div className="flex justify-between text-red-600"><span>Phí đền bù mũ bảo hiểm:</span> <span>+ {result.PhiMatMu?.toLocaleString()} VNĐ</span></div>
+              <div className="flex justify-between text-red-600"><span>Phí đền bù áo mưa:</span> <span>+ {result.PhiMatAoMua?.toLocaleString()} VNĐ</span></div>
+              <div className="flex justify-between text-red-600"><span>Phí đền bù hư hại:</span> <span>+ {result.PhiDenBuHuHai?.toLocaleString()} VNĐ</span></div>
+            </div>
+            <div className="border-t border-green-200 pt-2 flex flex-col gap-2">
+              <div className="flex justify-between font-bold text-lg"><span>Tổng quyết toán:</span> <span>{result.TongQuyetToan?.toLocaleString()} VNĐ</span></div>
+              <div className="flex justify-between text-green-700"><span>Đã đặt cọc:</span> <span>- {result.TienCocDaDong?.toLocaleString()} VNĐ</span></div>
+              <div className="flex justify-between text-red-700 font-bold text-xl mt-2 border-t border-red-200 pt-2">
+                <span>Khách Cần Thanh Toán Thêm:</span> 
+                <span>{result.SoTienCanThuThemHoacHoanTra > 0 ? result.SoTienCanThuThemHoacHoanTra?.toLocaleString() : 0} VNĐ</span>
+              </div>
+              {result.SoTienCanThuThemHoacHoanTra < 0 && (
+                <div className="flex justify-between text-blue-700 font-bold text-xl mt-2">
+                  <span>Cửa Hàng Cần Hoàn Trả Khách:</span> 
+                  <span>{Math.abs(result.SoTienCanThuThemHoacHoanTra)?.toLocaleString()} VNĐ</span>
+                </div>
+              )}
+            </div>
           </Box>
         )}
 
@@ -82,10 +100,10 @@ const AdminCheckOut: React.FC = () => {
               <InputLabel>Mức Xăng Trả</InputLabel>
               <Select label="Mức Xăng Trả" name="MucXangTra" value={checkOutData.MucXangTra} onChange={handleChange}>
                 <MenuItem value="Day">Đầy (100%)</MenuItem>
-                <MenuItem value="Mot_Phan_Tu">1/4 Bình</MenuItem>
-                <MenuItem value="Mot_Phan_Hai">1/2 Bình</MenuItem>
-                <MenuItem value="Ba_Phan_Tu">3/4 Bình</MenuItem>
-                <MenuItem value="Rong">Rỗng</MenuItem>
+                <MenuItem value="1_Phan_4">1/4 Bình</MenuItem>
+                <MenuItem value="1_Phan_2">1/2 Bình</MenuItem>
+                <MenuItem value="3_Phan_4">3/4 Bình</MenuItem>
+                <MenuItem value="Gan_Het">Gần Hết (Rỗng)</MenuItem>
               </Select>
             </FormControl>
             <TextField label="Số mũ bảo hiểm thu lại" name="SoMuBaoHiemTra" type="number" required value={checkOutData.SoMuBaoHiemTra} onChange={handleChange} />

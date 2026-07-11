@@ -66,7 +66,7 @@ def seed_data():
                 SoMay="SM987654321",
                 HangXe="Yamaha",
                 TenXe="Exciter 155 VVA",
-                LoaiXe=LoaiXeEnum.Xe_Con,
+                LoaiXe=LoaiXeEnum.Xe_Con_Tay,
                 PhanKhoi=155,
                 NhomXe=NhomXeEnum.Nhom_A1,
                 DoiXe=2024,

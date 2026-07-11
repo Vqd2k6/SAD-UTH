@@ -48,6 +48,8 @@ graph LR
         UC_Checkin("Bàn giao xe (Check-in)")
         UC_Checkout("Nhận lại xe & Quyết toán (Check-out)")
         UC_History("Tra cứu lịch sử xe & Ghi chú vi phạm")
+        UC_ApproveGPLX("Duyệt/Từ chối GPLX")
+        UC_Maintenance("Hoàn thành Bảo dưỡng xe")
 
         %% Admin Core
         UC_ReviewCustomer("Xem hồ sơ khách hàng")
@@ -56,7 +58,7 @@ graph LR
         
         %% Auto Core
         UC_Remind("Gửi thông báo nhắc nhở")
-        UC_CancelAuto("Hủy đơn quá hạn")
+        UC_CancelAuto("Hủy đơn & Đánh dấu Không đến nhận")
     end
 
     %% Relationships - Customer
@@ -71,6 +73,8 @@ graph LR
     E2 --> UC_Checkin
     E2 --> UC_Checkout
     E2 --> UC_History
+    E2 --> UC_ApproveGPLX
+    E2 --> UC_Maintenance
 
     %% Relationships - Admin
     E3 --> UC_Auth
@@ -166,6 +170,8 @@ graph TB
         UC_Checkin("Bàn giao xe (Check-in)")
         UC_Checkout("Nhận lại xe & Quyết toán (Check-out)")
         UC_Damage("Ghi nhận đền bù hư hại")
+        UC_ApproveGPLX("Duyệt/Từ chối GPLX")
+        UC_Maintenance("Hoàn thành Bảo dưỡng xe")
 
         %% Admin Use Cases
         UC_ReviewCustomer("Xem hồ sơ khách hàng")
@@ -184,6 +190,8 @@ graph TB
     E2 --> UC_Checkout
     E2 --> UC_History
     E2 --> UC_Violate
+    E2 --> UC_ApproveGPLX
+    E2 --> UC_Maintenance
 
     %% Admin Actions
     E3 --> UC_LoginStaff
@@ -195,6 +203,7 @@ graph TB
     E3 --> UC_History
     E3 --> UC_Violate
     E3 --> UC_Report
+    E3 --> UC_ApproveGPLX
 
     %% Relationships (Includes/Extends)
     UC_Checkout -.->|"<<extend>>"| UC_Damage
@@ -214,7 +223,7 @@ graph TB
 *   **Tác nhân hỗ trợ:** Cổng thanh toán (E4).
 *   **Tiền điều kiện:** 
     1. Khách hàng đã đăng nhập tài khoản thành công.
-    2. Khách hàng đã hoàn tất tải ảnh chụp GPLX lên hệ thống (đối với xe > 50cc) và phân hạng GPLX khai báo tương thích với nhóm xe muốn thuê (ví dụ: GPLX hạng A1 cho xe dưới 175cc, A2 cho xe từ 175cc trở lên).
+    2. Nếu đặt xe > 50cc, khách hàng đã tải ảnh GPLX và **được Nhân viên/Admin phê duyệt** hợp lệ, phân hạng tương thích với nhóm xe muốn thuê.
     3. Khách hàng không nằm trong danh sách đen (Blacklist) của hệ thống.
 *   **Luồng sự kiện chính:**
     1. Khách hàng chọn chiếc xe máy mong muốn và khoảng thời gian thuê (Ngày/Giờ Nhận - Ngày/Giờ Trả).
@@ -261,3 +270,18 @@ graph TB
     *   *Ngoại lệ 3a (Sai lệch dữ liệu chỉ số ODO hoặc nhiên liệu):* Nếu chỉ số ODO trả nhỏ hơn chỉ số ODO bàn giao ban đầu, hệ thống báo lỗi dữ liệu không hợp lệ và yêu cầu nhân viên kiểm tra, nhập lại.
     *   *Ngoại lệ 7a (Khách hàng không đồng ý mức phí phạt hoặc đền bù):* Nhân viên ghi nhận tình trạng, tải lên các bằng chứng (ảnh chụp, video) và chọn trạng thái đơn hàng là `TRANH_CHAP`. Xe máy vẫn tạm thời chuyển về trạng thái `KHOA_TAM` để kiểm định thêm và luồng quyết toán tài chính sẽ chuyển cho Admin giải quyết thủ công.
     *   *Ngoại lệ 7b (Lỗi kết nối Cổng thanh toán khi thực hiện hoàn cọc):* Hệ thống ghi nhận trạng thái hoàn cọc lỗi, lưu vết lệnh hoàn tiền ở trạng thái `CHO_XU_LY` (Pending) để kế toán thực hiện xử lý tay, đồng thời đơn thuê vẫn chuyển về `HOAN_TAT` để giải phóng xe hoạt động.
+
+### 5.3. Use Case: Đánh giá chuyến đi
+*   **Mô tả:** Khách hàng thực hiện đánh giá chất lượng xe và dịch vụ sau khi chuyến đi kết thúc. Hệ thống đảm bảo mỗi đơn đặt xe chỉ được đánh giá duy nhất một lần bằng cách vô hiệu hóa nút đánh giá nếu đã có dữ liệu.
+*   **Tác nhân chính:** Khách hàng (E1).
+*   **Tiền điều kiện:** 
+    1. Chuyến đi đã được hoàn tất (`TrangThaiBooking = HOAN_TAT`).
+    2. Phương thức `isReviewed()` của `HopDongBooking` trả về `false` (Khách hàng chưa từng đánh giá đơn này).
+*   **Luồng sự kiện chính:**
+    1. Hệ thống hiển thị nút "Đánh giá" trên đơn thuê đã hoàn tất.
+    2. Khách hàng click vào nút Đánh giá, chọn số sao (1-5) và nhập nội dung.
+    3. Hệ thống kiểm tra lại điều kiện `isReviewed() == false`.
+    4. Hệ thống lưu bản ghi đánh giá vào kho dữ liệu `D8: Danh_Gia`.
+    5. Hệ thống vô hiệu hóa nút "Đánh giá" (chuyển sang màu xám/disabled).
+*   **Luồng thay thế và Luồng ngoại lệ:**
+    *   *Ngoại lệ 3a (Khách hàng đã đánh giá):* Nếu hệ thống phát hiện đơn hàng đã có dữ liệu đánh giá trước đó do khách click đúp hoặc mở trên nhiều thiết bị, hệ thống báo lỗi "Đơn này đã được đánh giá" và hủy thao tác.

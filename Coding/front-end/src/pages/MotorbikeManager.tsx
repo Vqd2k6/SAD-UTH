@@ -16,9 +16,7 @@ export default function MotorbikeManager() {
   const [formData, setFormData] = useState<Partial<Motorbike>>({});
   const [message, setMessage] = useState('');
   const [isError, setIsError] = useState(false);
-  const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
 
   const fetchBikes = async () => {
     try {
@@ -36,7 +34,6 @@ export default function MotorbikeManager() {
 
   const handleOpen = (bike?: Motorbike) => {
     setEditingBike(bike || null);
-    setImageFile(null);
     setImagePreview(bike?.HinhAnhXe || null);
     setFormData(bike ? { ...bike } : {
       MaXe: `XM${Math.floor(Math.random() * 9000) + 100}`,
@@ -52,7 +49,6 @@ export default function MotorbikeManager() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
     const reader = new FileReader();
     reader.onloadend = () => {
       const dataUrl = reader.result as string;
@@ -158,7 +154,7 @@ export default function MotorbikeManager() {
             <TextField select label="Loại Xe" value={formData.LoaiXe || 'Xe_Ga'} onChange={e => setFormData({...formData, LoaiXe: e.target.value as any})} fullWidth>
               <MenuItem value="Xe_Ga">Xe Ga</MenuItem>
               <MenuItem value="Xe_So">Xe Số</MenuItem>
-              <MenuItem value="Xe_Con">Xe Côn/Thể Thao</MenuItem>
+              <MenuItem value="Xe_Con_Tay">Xe Côn/Thể Thao</MenuItem>
               <MenuItem value="Xe_Dien">Xe Điện</MenuItem>
             </TextField>
 

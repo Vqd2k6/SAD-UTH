@@ -4,6 +4,10 @@
 
 ```mermaid
 erDiagram
+    %% === LOOKUP TABLES (DYNAMIC) ===
+    DM_LoaiXe { varchar_20 MaLoaiXe PK }
+    DM_NhomXe { varchar_20 MaNhomXe PK }
+
     %% === ENTITIES & ATTRIBUTES ===
     Xe_May {
         varchar_10 MaXe PK
@@ -12,12 +16,12 @@ erDiagram
         varchar_20 SoMay UK
         varchar_30 HangXe
         varchar_50 TenXe
-        enum LoaiXe
+        varchar_20 MaLoaiXe FK
         int PhanKhoi
-        enum NhomXe
+        varchar_20 MaNhomXe FK
         int DoiXe
         text HinhAnhXe
-        enum TrangThaiXe
+        varchar_20 TrangThaiXe "ENUM: San_Sang, Dang_Thue, KHOA_TAM_15M, Dang_Bao_Duong"
         decimal_4_1 MucTieuThuXang
         int SoMuBaoHiem
         boolean CoAoMua
@@ -34,10 +38,20 @@ erDiagram
         datetime ThoiGianNhan
         datetime ThoiGianTra
         datetime ThoiGianTraGoc
-        datetime ThoiGianTraThucTe
         int SoNgayThue
         int SoNgayThueGoc
-        enum TrangThaiBooking
+        varchar_20 TrangThaiBooking "ENUM: Cho_Thanh_Toan_Coc, Cho_Nhan_Xe, Dang_Thue, CHO_HOAN_TIEN_THU_CONG,..."
+        int SoLanGiaHan
+        boolean CoTraSom
+        datetime ThoiGianYeuCauTraSom
+        text GhiChu
+        datetime NgayTao
+        datetime NgayCapNhat
+    }
+
+    Hoa_Don_Quyet_Toan {
+        varchar_15 MaHoaDon PK
+        varchar_15 MaBooking FK
         decimal_12_0 DonGiaApDung
         decimal_15_0 TongTienThue
         decimal_4_1 PhanTramGiamGia
@@ -45,19 +59,26 @@ erDiagram
         decimal_4_1 PhanTramTangGia
         decimal_15_0 TienTangGia
         decimal_15_0 TienCoc
-        enum PhuongThucCoc
-        int SoLanGiaHan
+        varchar_20 PhuongThucCoc "ENUM: Chuyen_Khoan, Tien_Mat, Vi_Dien_Tu"
+        varchar_100 MaGiaoDichCoc
+        varchar_20 TrangThaiThanhToanCoc "ENUM: PENDING, SUCCESS, FAILED, REFUNDED"
         decimal_15_0 TongTienGiaHan
-        boolean CoTraSom
-        datetime ThoiGianYeuCauTraSom
         decimal_15_0 PhiPhatTreHan
         decimal_15_0 PhiDenBuHuHai
         decimal_15_0 PhiMatPhuKien
+        text LyDoPhat
         decimal_15_0 TongThanhToan
+        datetime NgayTao
+    }
+
+    Bien_Ban_Giao_Nhan {
+        varchar_15 MaBienBan PK
+        varchar_15 MaBooking FK
+        datetime ThoiGianTraThucTe
         int ODONhan
         int ODOTra
-        enum MucXangNhan
-        enum MucXangTra
+        varchar_20 MucXangNhan "ENUM: Day, 3_Phan_4, 1_Phan_2, 1_Phan_4, Gan_Het"
+        varchar_20 MucXangTra "ENUM: Day, 3_Phan_4, 1_Phan_2, 1_Phan_4, Gan_Het"
         text AnhNgoaiQuanNhan
         text AnhNgoaiQuanTra
         int SoMuBaoHiemGiao
@@ -66,9 +87,6 @@ erDiagram
         boolean CoAoMuaTra
         varchar_10 MaNhanVienGiao FK
         varchar_10 MaNhanVienNhan FK
-        int DanhGiaSao
-        text NoiDungDanhGia
-        text GhiChu
         datetime NgayTao
         datetime NgayCapNhat
     }
@@ -81,15 +99,15 @@ erDiagram
         varchar_12 CCCD UK
         nvarchar_200 DiaChi
         varchar_255 MatKhau
-        enum LuaChonGPLX
-        enum HangGPLX
+        boolean CoGPLX
+        varchar_20 HangGPLX "ENUM: A1, A2, Khac"
         varchar_12 SoGPLX UK
         date NgayCapGPLX
         date NgayHetHanGPLX
         text AnhGPLXMatTruoc
         text AnhGPLXMatSau
-        enum TrangThaiGPLX
-        enum NhomXeDuocThue
+        varchar_20 TrangThaiGPLX "ENUM: Khong_Dang_Ky, Da_Upload, Hop_Le, Tu_Choi"
+        varchar_20 MaNhomXeDuocThue FK
         boolean TrangThaiBlacklist
         text LyDoBlacklist
         datetime NgayTao
@@ -108,6 +126,10 @@ erDiagram
         text GhiChuNoiBo
         boolean DanhDauViPham
         datetime NgayTao
+        
+        %% Indexes
+        Index idx_BienSoXe(BienSoXe)
+        Index idx_ThoiGian(ThoiGianNhan, ThoiGianTra)
     }
 
     Cau_Hinh_He_Thong {
@@ -127,21 +149,48 @@ erDiagram
         nvarchar_100 HoTen
         varchar_100 Email UK
         varchar_15 SoDienThoai
-        enum VaiTro
-        enum TrangThaiTaiKhoan
+        varchar_20 VaiTro "ENUM: Nhan_Vien, Admin"
+        boolean TrangThaiTaiKhoan
         varchar_255 MatKhau
         datetime NgayTao
+    }
+
+    Danh_Gia {
+        varchar_15 MaDanhGia PK
+        varchar_15 MaBooking FK
+        int DiemDanhGia
+        text NoiDung
+        datetime NgayTao
+    }
+
+    Bao_Duong {
+        varchar_15 MaBaoDuong PK
+        varchar_10 MaXe FK
+        datetime NgayBaoDuong
+        decimal_15_0 ChiPhi
+        text ChiTietBaoDuong
+        boolean DaHoanThanh
     }
 
     %% === RELATIONSHIPS ===
     Khach_Hang_GPLX ||--o{ Hop_Dong_Booking : "dat don"
     Xe_May ||--o{ Hop_Dong_Booking : "thuoc don"
-    Nhan_Vien ||--o{ Hop_Dong_Booking : "giao xe (MaNhanVienGiao)"
-    Nhan_Vien ||--o{ Hop_Dong_Booking : "nhan xe (MaNhanVienNhan)"
+    
+    Hop_Dong_Booking ||--o| Hoa_Don_Quyet_Toan : "co hoa don"
+    Hop_Dong_Booking ||--o| Bien_Ban_Giao_Nhan : "co bien ban"
+    
+    Nhan_Vien ||--o{ Bien_Ban_Giao_Nhan : "giao xe (MaNhanVienGiao)"
+    Nhan_Vien ||--o{ Bien_Ban_Giao_Nhan : "nhan xe (MaNhanVienNhan)"
     
     Hop_Dong_Booking ||--o| Lich_Su_Thue : "luu vet"
+    Hop_Dong_Booking ||--o| Danh_Gia : "co danh gia"
     Khach_Hang_GPLX ||--o{ Lich_Su_Thue : "co lich su"
     Xe_May ||--o{ Lich_Su_Thue : "co lich su"
+    Xe_May ||--o{ Bao_Duong : "duoc bao duong"
+
+    %% === LOOKUP RELATIONSHIPS ===
+    DM_LoaiXe ||--o{ Xe_May : "loai xe"
+    DM_NhomXe ||--o{ Xe_May : "nhom xe"
 ```
 
 ---
@@ -151,12 +200,14 @@ erDiagram
 - `varchar_XX` $\to$ `VARCHAR(XX)`
 - `nvarchar_XX` $\to$ `NVARCHAR(XX)`
 - `decimal_XX_Y` $\to$ `DECIMAL(XX, Y)`
-- `enum` $\to$ `ENUM(...)`
+- Lookup tables (Danh mục) được dùng thay cho `ENUM(...)` để chuẩn hóa dữ liệu theo chuẩn 3NF, dễ dàng mở rộng động.
 - `text` $\to$ `TEXT`
 
 ---
 
 ## 3. THIẾT KẾ CHI TIẾT CÁC BẢNG CƠ SỞ DỮ LIỆU
+
+*(Ghi chú: Để tinh gọn đặc tả SQL, các bảng danh mục (DM_...) mặc định có 1 cột Primary Key là Mã và 1 cột Tên mô tả. Dưới đây là đặc tả SQL cho các bảng nghiệp vụ chính).*
 
 ### 3.1. Bảng `Xe_May` (Motorcycles)
 *   **Mã SQL tạo bảng:**
@@ -168,19 +219,21 @@ CREATE TABLE Xe_May (
     SoMay VARCHAR(20) NOT NULL UNIQUE,
     HangXe VARCHAR(30) NOT NULL,
     TenXe VARCHAR(50) NOT NULL,
-    LoaiXe ENUM('Xe_So', 'Xe_Ga', 'Xe_Con_Tay', 'Xe_PKL', 'Xe_Dien') NOT NULL,
+    MaLoaiXe VARCHAR(20) NOT NULL,
     PhanKhoi INT NOT NULL CHECK (PhanKhoi >= 0),
-    NhomXe ENUM('Nhom_50cc_Dien', 'Nhom_A1', 'Nhom_A2_PKL') NOT NULL,
+    MaNhomXe VARCHAR(20) NOT NULL,
     DoiXe INT NOT NULL CHECK (DoiXe >= 1900),
     HinhAnhXe TEXT, -- Lưu mảng JSON các URL
-    TrangThaiXe ENUM('San_Sang', 'Dang_Thue', 'KHOA_TAM_15M', 'Dang_Bao_Duong', 'Dang_Sua_Chua') NOT NULL DEFAULT 'San_Sang',
+    TrangThaiXe VARCHAR(20) NOT NULL DEFAULT 'San_Sang',
     MucTieuThuXang DECIMAL(4,1) NULL CHECK (MucTieuThuXang >= 0),
     SoMuBaoHiem INT NOT NULL DEFAULT 2,
     CoAoMua BOOLEAN NOT NULL DEFAULT TRUE,
     DonGiaNgay DECIMAL(12,0) NOT NULL CHECK (DonGiaNgay > 0),
     ODOHienTai INT NOT NULL DEFAULT 0 CHECK (ODOHienTai >= 0),
     NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (MaLoaiXe) REFERENCES DM_LoaiXe(MaLoaiXe),
+    FOREIGN KEY (MaNhomXe) REFERENCES DM_NhomXe(MaNhomXe)
 );
 ```
 
@@ -195,19 +248,20 @@ CREATE TABLE Khach_Hang_GPLX (
     CCCD VARCHAR(12) UNIQUE NULL,
     DiaChi VARCHAR(200) CHARACTER SET utf8mb4 NULL,
     MatKhau VARCHAR(255) NOT NULL,
-    LuaChonGPLX ENUM('Co_GPLX', 'Khong_GPLX') NOT NULL,
-    HangGPLX ENUM('A1', 'A2', 'Khong') NULL,
+    CoGPLX BOOLEAN NOT NULL DEFAULT FALSE,
+    HangGPLX VARCHAR(20) NULL,
     SoGPLX VARCHAR(12) UNIQUE NULL,
     NgayCapGPLX DATE NULL,
     NgayHetHanGPLX DATE NULL,
     AnhGPLXMatTruoc TEXT NULL,
     AnhGPLXMatSau TEXT NULL,
-    TrangThaiGPLX ENUM('Khong_Dang_Ky', 'Da_Upload') NOT NULL DEFAULT 'Khong_Dang_Ky',
-    NhomXeDuocThue ENUM('Nhom_50cc_Dien', 'Nhom_A1', 'Nhom_A2_PKL') NOT NULL DEFAULT 'Nhom_50cc_Dien',
+    TrangThaiGPLX VARCHAR(20) NOT NULL DEFAULT 'Khong_Dang_Ky',
+    MaNhomXeDuocThue VARCHAR(20) NOT NULL DEFAULT 'Nhom_50cc_Dien',
     TrangThaiBlacklist BOOLEAN NOT NULL DEFAULT FALSE,
     LyDoBlacklist TEXT NULL,
     NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (MaNhomXeDuocThue) REFERENCES DM_NhomXe(MaNhomXe)
 );
 ```
 
@@ -219,8 +273,8 @@ CREATE TABLE Nhan_Vien (
     HoTen VARCHAR(100) CHARACTER SET utf8mb4 NOT NULL,
     Email VARCHAR(100) UNIQUE NOT NULL,
     SoDienThoai VARCHAR(15) NOT NULL,
-    VaiTro ENUM('Nhan_Vien', 'Admin') NOT NULL,
-    TrangThaiTaiKhoan ENUM('Hoat_Dong', 'Bi_Khoa') NOT NULL DEFAULT 'Hoat_Dong',
+    VaiTro VARCHAR(20) NOT NULL,
+    TrangThaiTaiKhoan BOOLEAN NOT NULL DEFAULT TRUE,
     MatKhau VARCHAR(255) NOT NULL,
     NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
@@ -236,10 +290,27 @@ CREATE TABLE Hop_Dong_Booking (
     ThoiGianNhan DATETIME NOT NULL,
     ThoiGianTra DATETIME NOT NULL,
     ThoiGianTraGoc DATETIME NOT NULL,
-    ThoiGianTraThucTe DATETIME NULL,
     SoNgayThue INT NOT NULL CHECK (SoNgayThue > 0),
     SoNgayThueGoc INT NOT NULL CHECK (SoNgayThueGoc > 0),
-    TrangThaiBooking ENUM('Cho_Thanh_Toan_Coc', 'Cho_Nhan_Xe', 'Dang_Thue', 'Yeu_Cau_Tra_Som', 'Qua_Han', 'Cho_Tra_Xe', 'Dang_Quyet_Toan', 'Hoan_Tat', 'Da_Huy') NOT NULL DEFAULT 'Cho_Thanh_Toan_Coc',
+    TrangThaiBooking VARCHAR(20) NOT NULL DEFAULT 'Cho_Thanh_Toan_Coc',
+    SoLanGiaHan INT NOT NULL DEFAULT 0 CHECK (SoLanGiaHan <= 3),
+    CoTraSom BOOLEAN NOT NULL DEFAULT FALSE,
+    ThoiGianYeuCauTraSom DATETIME NULL,
+    GhiChu TEXT NULL,
+    NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (MaKhachHang) REFERENCES Khach_Hang_GPLX(MaKhachHang),
+    FOREIGN KEY (MaXe) REFERENCES Xe_May(MaXe)
+);
+```
+
+### 3.5. Bảng `Hoa_Don_Quyet_Toan` (Financial Records)
+*   **Mã SQL tạo bảng:**
+```sql
+CREATE TABLE Hoa_Don_Quyet_Toan (
+    MaHoaDon VARCHAR(15) PRIMARY KEY,
+    MaBooking VARCHAR(15) NOT NULL UNIQUE,
     DonGiaApDung DECIMAL(12,0) NOT NULL,
     TongTienThue DECIMAL(15,0) NOT NULL,
     PhanTramGiamGia DECIMAL(4,1) DEFAULT 0 CHECK (PhanTramGiamGia >= 0),
@@ -247,19 +318,32 @@ CREATE TABLE Hop_Dong_Booking (
     PhanTramTangGia DECIMAL(4,1) DEFAULT 0 CHECK (PhanTramTangGia >= 0),
     TienTangGia DECIMAL(15,0) DEFAULT 0,
     TienCoc DECIMAL(15,0) NOT NULL,
-    PhuongThucCoc ENUM('Chuyen_Khoan', 'Vi_Dien_Tu', 'Tien_Mat') NOT NULL,
-    SoLanGiaHan INT NOT NULL DEFAULT 0 CHECK (SoLanGiaHan <= 3),
+    PhuongThucCoc VARCHAR(20) NOT NULL,
+    MaGiaoDichCoc VARCHAR(100) NULL,
+    TrangThaiThanhToanCoc VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     TongTienGiaHan DECIMAL(15,0) DEFAULT 0,
-    CoTraSom BOOLEAN NOT NULL DEFAULT FALSE,
-    ThoiGianYeuCauTraSom DATETIME NULL,
     PhiPhatTreHan DECIMAL(15,0) DEFAULT 0,
     PhiDenBuHuHai DECIMAL(15,0) DEFAULT 0,
     PhiMatPhuKien DECIMAL(15,0) DEFAULT 0,
+    LyDoPhat TEXT NULL,
     TongThanhToan DECIMAL(15,0) NOT NULL,
+    NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (MaBooking) REFERENCES Hop_Dong_Booking(MaBooking)
+);
+```
+
+### 3.6. Bảng `Bien_Ban_Giao_Nhan` (Check-in / Check-out Records)
+*   **Mã SQL tạo bảng:**
+```sql
+CREATE TABLE Bien_Ban_Giao_Nhan (
+    MaBienBan VARCHAR(15) PRIMARY KEY,
+    MaBooking VARCHAR(15) NOT NULL UNIQUE,
+    ThoiGianTraThucTe DATETIME NULL,
     ODONhan INT NULL,
     ODOTra INT NULL,
-    MucXangNhan ENUM('Day', '3_Phan_4', '1_Phan_2', '1_Phan_4', 'Gan_Het') NULL,
-    MucXangTra ENUM('Day', '3_Phan_4', '1_Phan_2', '1_Phan_4', 'Gan_Het') NULL,
+    MucXangNhan VARCHAR(20) NULL,
+    MucXangTra VARCHAR(20) NULL,
     AnhNgoaiQuanNhan TEXT NULL,
     AnhNgoaiQuanTra TEXT NULL,
     SoMuBaoHiemGiao INT DEFAULT 0,
@@ -268,20 +352,16 @@ CREATE TABLE Hop_Dong_Booking (
     CoAoMuaTra BOOLEAN DEFAULT FALSE,
     MaNhanVienGiao VARCHAR(10) NULL,
     MaNhanVienNhan VARCHAR(10) NULL,
-    DanhGiaSao INT NULL CHECK (DanhGiaSao BETWEEN 1 AND 5),
-    NoiDungDanhGia TEXT NULL,
-    GhiChu TEXT NULL,
     NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (MaKhachHang) REFERENCES Khach_Hang_GPLX(MaKhachHang),
-    FOREIGN KEY (MaXe) REFERENCES Xe_May(MaXe),
+    FOREIGN KEY (MaBooking) REFERENCES Hop_Dong_Booking(MaBooking),
     FOREIGN KEY (MaNhanVienGiao) REFERENCES Nhan_Vien(MaNhanVien),
     FOREIGN KEY (MaNhanVienNhan) REFERENCES Nhan_Vien(MaNhanVien)
 );
 ```
 
-### 3.5. Bảng `Lich_Su_Thue` (Rental History)
+### 3.7. Bảng `Lich_Su_Thue` (Rental History)
 *   **Mã SQL tạo bảng:**
 ```sql
 CREATE TABLE Lich_Su_Thue (
@@ -303,7 +383,36 @@ CREATE TABLE Lich_Su_Thue (
 );
 ```
 
-### 3.6. Bảng `Cau_Hinh_He_Thong` (System Settings)
+### 3.8. Bảng `Bao_Duong` (Maintenance Records)
+*   **Mã SQL tạo bảng:**
+```sql
+CREATE TABLE Bao_Duong (
+    MaBaoDuong VARCHAR(15) PRIMARY KEY,
+    MaXe VARCHAR(10) NOT NULL,
+    NgayBaoDuong DATETIME NOT NULL,
+    ChiPhi DECIMAL(15,0) NOT NULL,
+    ChiTietBaoDuong TEXT NOT NULL,
+    DaHoanThanh BOOLEAN NOT NULL DEFAULT FALSE,
+    
+    FOREIGN KEY (MaXe) REFERENCES Xe_May(MaXe)
+);
+```
+
+### 3.9. Bảng `Danh_Gia` (Reviews/Ratings)
+*   **Mã SQL tạo bảng:**
+```sql
+CREATE TABLE Danh_Gia (
+    MaDanhGia VARCHAR(15) PRIMARY KEY,
+    MaBooking VARCHAR(15) NOT NULL UNIQUE,
+    DiemDanhGia INT NOT NULL CHECK (DiemDanhGia BETWEEN 1 AND 5),
+    NoiDung TEXT NULL,
+    NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (MaBooking) REFERENCES Hop_Dong_Booking(MaBooking)
+);
+```
+
+### 3.10. Bảng `Cau_Hinh_He_Thong` (System Settings)
 *   **Mã SQL tạo bảng:**
 ```sql
 CREATE TABLE Cau_Hinh_He_Thong (
@@ -326,6 +435,8 @@ CREATE TABLE Cau_Hinh_He_Thong (
 1.  **Ràng buộc khóa ngoại (Foreign Key Constraints):**
     *   Mọi đơn thuê (`Hop_Dong_Booking`) bắt buộc phải tham chiếu đến một Khách hàng (`Khach_Hang_GPLX`) và một Xe máy (`Xe_May`) hợp lệ trong hệ thống.
     *   Mã nhân viên giao (`MaNhanVienGiao`) và mã nhân viên nhận (`MaNhanVienNhan`) nếu khác `NULL` phải tồn tại trong bảng `Nhan_Vien`.
+    *   Nhóm xe và loại xe (động) được liên kết qua khóa ngoại tới bảng `DM_NhomXe`, `DM_LoaiXe`.
+    *   Các trạng thái tĩnh (Booking, GPLX, Xe, Vai Trò, Thanh Toán) đã được chuẩn hóa thành VARCHAR (lưu trữ Enum trực tiếp thay vì FK) để tối ưu hóa hiệu năng, giảm JOINs.
 2.  **Ràng buộc Unique (Sự duy nhất):**
     *   `BienSo`, `SoKhung`, `SoMay` của `Xe_May` bắt buộc không được phép trùng lặp.
     *   `Email`, `SoDienThoai`, `CCCD`, `SoGPLX` của `Khach_Hang_GPLX` bắt buộc duy nhất toàn cục.

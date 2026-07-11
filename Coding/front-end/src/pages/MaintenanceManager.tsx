@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   Box, Typography, Paper, CircularProgress, Button,
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Alert, Chip
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Alert
 } from '@mui/material';
 import api from '../services/api';
 import type { Maintenance } from '../types';
@@ -114,10 +114,11 @@ export default function MaintenanceManager() {
                   <Button
                     size="small"
                     variant="contained"
-                    color="success"
+                    color={r.DaHoanThanh ? "inherit" : "success"}
                     onClick={() => handleComplete(r.MaBaoDuong)}
+                    disabled={r.DaHoanThanh}
                   >
-                    ✅ Hoàn thành & Trả xe
+                    {r.DaHoanThanh ? '✔️ Đã xong' : '✅ Hoàn thành & Trả xe'}
                   </Button>
                 </TableCell>
               </TableRow>

@@ -4,7 +4,7 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
-from app.api.deps import get_current_admin, get_current_user, get_session
+from app.api.deps import get_current_admin, get_current_user, get_session, get_current_staff
 from app.models import (
     HangGPLXEnum,
     KhachHangGPLX,
@@ -73,7 +73,7 @@ def update_user_gplx(
 @router.get("/", response_model=List[KhachHangGPLX])
 def list_users(
     db: Session = Depends(get_session),
-    current_admin: NhanVien = Depends(get_current_admin),
+    current_admin: NhanVien = Depends(get_current_staff),
 ) -> Any:
     return db.exec(select(KhachHangGPLX)).all()
 
@@ -122,9 +122,9 @@ def unblacklist_user(
 def approve_gplx(
     ma_kh: str,
     db: Session = Depends(get_session),
-    current_admin: NhanVien = Depends(get_current_admin),
+    current_staff: NhanVien = Depends(get_current_staff),
 ) -> Any:
-    """Admin phê duyệt bằng lái xe của khách hàng."""
+    """Admin/Staff phê duyệt bằng lái xe của khách hàng."""
     user = db.get(KhachHangGPLX, ma_kh)
     if not user:
         raise HTTPException(status_code=404, detail="Không tìm thấy khách hàng")
@@ -137,7 +137,7 @@ def approve_gplx(
     db.commit()
 
     with open("be-log.md", "a") as f:
-        f.write(f"\n- **{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}**: PUT /api/users/{ma_kh}/gplx/approve -> Admin phê duyệt GPLX\n")
+        f.write(f"\n- **{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}**: PUT /api/users/{ma_kh}/gplx/approve -> Nhân viên/Admin phê duyệt GPLX\n")
     return {"message": "Đã phê duyệt GPLX thành công", "TrangThaiGPLX": "Da_Xac_Thuc"}
 
 
@@ -146,9 +146,9 @@ def reject_gplx(
     ma_kh: str,
     ly_do: str = "Bằng lái không hợp lệ",
     db: Session = Depends(get_session),
-    current_admin: NhanVien = Depends(get_current_admin),
+    current_staff: NhanVien = Depends(get_current_staff),
 ) -> Any:
-    """Admin từ chối bằng lái xe của khách hàng (ảnh mờ, sai thông tin...)."""
+    """Admin/Staff từ chối bằng lái xe của khách hàng."""
     user = db.get(KhachHangGPLX, ma_kh)
     if not user:
         raise HTTPException(status_code=404, detail="Không tìm thấy khách hàng")

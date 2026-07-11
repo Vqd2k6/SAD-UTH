@@ -18,6 +18,7 @@ const Search = () => {
   const [bgIndex, setBgIndex] = useState(0);
   
   // Filter state
+  const [searchText, setSearchText] = useState<string>('');
   const [filterLoaiXe, setFilterLoaiXe] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<string>('default');
 
@@ -38,8 +39,21 @@ const Search = () => {
       try {
         const res = await api.get('/motorbikes/all');
         const availableBikes = res.data.filter((b: Motorbike) => b.TrangThaiXe === 'San_Sang');
-        setBikes(availableBikes);
-        setFilteredBikes(availableBikes);
+        
+        // Fetch rating summaries
+        const bikesWithRatings = await Promise.all(
+          availableBikes.map(async (bike: Motorbike) => {
+            try {
+              const summaryRes = await api.get(`/ratings/motorbike/${bike.MaXe}/summary`);
+              return { ...bike, ratingSummary: summaryRes.data };
+            } catch (err) {
+              return bike;
+            }
+          })
+        );
+        
+        setBikes(bikesWithRatings);
+        setFilteredBikes(bikesWithRatings);
       } catch (error) {
         console.error('Error fetching initial bikes:', error);
       } finally {
@@ -53,9 +67,19 @@ const Search = () => {
   useEffect(() => {
     let result = [...bikes];
 
-    // Filter
+    // Filter by type
     if (filterLoaiXe !== 'all') {
       result = result.filter(b => b.LoaiXe === filterLoaiXe);
+    }
+    
+    // Filter by search text
+    if (searchText.trim() !== '') {
+      const lowerSearch = searchText.toLowerCase();
+      result = result.filter(b => 
+        b.TenXe.toLowerCase().includes(lowerSearch) || 
+        b.HangXe.toLowerCase().includes(lowerSearch) || 
+        b.BienSo.toLowerCase().includes(lowerSearch)
+      );
     }
 
     // Sort
@@ -66,7 +90,7 @@ const Search = () => {
     }
 
     setFilteredBikes(result);
-  }, [filterLoaiXe, sortOrder, bikes]);
+  }, [filterLoaiXe, sortOrder, searchText, bikes]);
 
   const handleViewDetail = (id: string) => {
     navigate(`/motorbikes/${id}`);
@@ -130,6 +154,16 @@ const Search = () => {
             />
           </Box>
           
+          <Box className="w-full md:w-auto flex-1 md:px-4">
+             <input
+                type="text"
+                placeholder="Tìm tên xe, hãng, biển số..."
+                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+             />
+          </Box>
+          
           <Box className="w-full md:w-48">
             <FormControl fullWidth size="small">
               <InputLabel id="sort-label">Sắp xếp</InputLabel>
@@ -172,9 +206,11 @@ const Search = () => {
                       ⚡
                     </span>
                   </Box>
-                  <Box className="absolute bottom-0 right-0 bg-orange-500 text-white text-xs font-bold px-3 py-1 rounded-tl-xl shadow-sm">
-                    Giảm 10% - Chuyến đầu
-                  </Box>
+                  {bike.ratingSummary && bike.ratingSummary.total_rentals >= 10 && (
+                    <Box className="absolute bottom-0 right-0 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-tl-xl shadow-sm">
+                      🔥 Xe Hot
+                    </Box>
+                  )}
                 </Box>
                 
                 <CardContent className="flex-grow flex flex-col p-4">
@@ -200,9 +236,25 @@ const Search = () => {
                   <Box className="flex justify-between items-end mt-auto">
                     <Box className="flex items-center gap-1">
                       <span className="text-yellow-500 text-sm">★</span>
-                      <span className="text-gray-700 text-xs font-medium">5.0</span>
-                      <span className="text-gray-400 text-xs mx-1">•</span>
-                      <span className="text-green-600 text-xs">10+ chuyến</span>
+                      <span className="text-gray-700 text-xs font-medium">
+                        {bike.ratingSummary && bike.ratingSummary.avg_rating > 0 
+                          ? bike.ratingSummary.avg_rating.toFixed(1) 
+                          : 'Mới'}
+                      </span>
+                      {bike.ratingSummary && bike.ratingSummary.total_rentals > 0 && (
+                        <>
+                          <span className="text-gray-400 text-xs mx-1">•</span>
+                          <span className="text-green-600 text-xs">
+                            {bike.ratingSummary.total_rentals >= 100 
+                              ? '100+ chuyến' 
+                              : bike.ratingSummary.total_rentals >= 10 
+                                ? '10+ chuyến' 
+                                : bike.ratingSummary.total_rentals >= 5 
+                                  ? '5+ chuyến' 
+                                  : `${bike.ratingSummary.total_rentals} chuyến`}
+                          </span>
+                        </>
+                      )}
                     </Box>
                     <Box className="text-right">
                       <Typography className="text-gray-400 text-xs line-through block">

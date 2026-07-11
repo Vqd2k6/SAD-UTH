@@ -10,6 +10,7 @@ import BuildIcon from '@mui/icons-material/Build';
 import ListAltIcon from '@mui/icons-material/ListAlt';
 import BadgeIcon from '@mui/icons-material/Badge';
 import SettingsIcon from '@mui/icons-material/Settings';
+import FactCheckIcon from '@mui/icons-material/FactCheck';
 
 const drawerWidth = 240;
 
@@ -95,6 +96,12 @@ const AdminLayout: React.FC = () => {
                     <ListItemText primary="Bảo Dưỡng" />
                   </ListItemButton>
                 </ListItem>
+                <ListItem disablePadding>
+                  <ListItemButton component={Link} to="/admin/gplx-review">
+                    <ListItemIcon><FactCheckIcon /></ListItemIcon>
+                    <ListItemText primary="Duyệt GPLX" />
+                  </ListItemButton>
+                </ListItem>
               </>
             )}
 
@@ -110,6 +117,12 @@ const AdminLayout: React.FC = () => {
                   <ListItemButton component={Link} to="/admin/customers">
                     <ListItemIcon><PeopleIcon /></ListItemIcon>
                     <ListItemText primary="Khách Hàng" />
+                  </ListItemButton>
+                </ListItem>
+                <ListItem disablePadding>
+                  <ListItemButton component={Link} to="/admin/gplx-review">
+                    <ListItemIcon><FactCheckIcon /></ListItemIcon>
+                    <ListItemText primary="Duyệt GPLX" />
                   </ListItemButton>
                 </ListItem>
                 <ListItem disablePadding>

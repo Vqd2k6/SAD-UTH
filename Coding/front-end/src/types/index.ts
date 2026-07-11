@@ -18,7 +18,7 @@ export interface User {
 export interface Motorbike {
   MaXe: string;
   BienSo: string;
-  LoaiXe: 'Xe_So' | 'Xe_Ga' | 'Xe_Con' | 'Xe_Dien';
+  LoaiXe: 'Xe_So' | 'Xe_Ga' | 'Xe_Con_Tay' | 'Xe_PKL' | 'Xe_Dien';
   PhanKhoi: number;
   NhomXe: 'Nhom_50cc_Dien' | 'Nhom_A1' | 'Nhom_A2_PKL';
   HangXe: string;
@@ -30,9 +30,10 @@ export interface Motorbike {
   SoMuBaoHiem?: number;
   CoAoMua?: boolean;
   DonGiaNgay: number;
-  TrangThaiXe: 'San_Sang' | 'Dang_Thue' | 'Dang_Bao_Duong' | 'Dang_Sua_Chua';
+  TrangThaiXe: 'San_Sang' | 'Dang_Thue' | 'Dang_Bao_Duong' | 'Dang_Sua_Chua' | 'KHOA_TAM_15M';
   HinhAnhXe: string | null;
   ODOHienTai: number;
+  ratingSummary?: { avg_rating: number; total_rentals: number };
 }
 
 export interface Booking {
@@ -63,6 +64,8 @@ export interface Booking {
   PhiMatPhuKien: number;
   TongThanhToan: number;
   DanhGiaSao: number | null;
+  NgayTao: string;
+  NgayCapNhat?: string;
 }
 
 export interface AuthResponse {
@@ -83,10 +86,13 @@ export interface Maintenance {
   NgayBaoDuong: string;
   ChiPhi: number;
   ChiTietBaoDuong: string;
+  DaHoanThanh: boolean;
 }
 
 export interface DashboardStats {
   total_revenue: number;
+  total_maintenance_cost: number;
+  net_revenue: number;
   revenue_week: number;
   revenue_month: number;
   bookings_week: number;
@@ -95,6 +101,7 @@ export interface DashboardStats {
   active_rentals: number;
   motorbikes_in_maintenance: number;
   available_motorbikes: number;
+  recent_bookings: Booking[];
 }
 
 export interface Staff {

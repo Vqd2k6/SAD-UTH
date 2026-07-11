@@ -129,6 +129,31 @@ export default function MotorbikeDetail() {
         </div>
       </Paper>
 
+      {/* Regulations and Compensation Section */}
+      <Paper className="p-6 mb-6">
+        <Typography variant="h5" className="font-bold mb-4">Quy định & Phụ kiện đi kèm</Typography>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <Box>
+            <Typography variant="h6" className="font-semibold text-blue-800 mb-2">🏍️ Quy định sử dụng</Typography>
+            <ul className="list-disc pl-5 text-gray-700">
+              <li>Chỉ sử dụng xe đúng mục đích, không dùng để đua xe, chở hàng cấm.</li>
+              <li>Tuân thủ luật giao thông đường bộ Việt Nam.</li>
+              <li>Trường hợp trả trễ: Phạt theo quy định hệ thống (50k/giờ đối với xe PKL, 30k/giờ với xe thường).</li>
+              <li>Gian lận GPLX: Tịch thu 100% tiền cọc và đưa vào danh sách đen.</li>
+            </ul>
+          </Box>
+          <Box>
+            <Typography variant="h6" className="font-semibold text-red-800 mb-2">⚠️ Bảng phí đền bù (Tham khảo)</Typography>
+            <ul className="list-disc pl-5 text-gray-700">
+              <li>Làm mất mũ bảo hiểm: <strong>150.000 VNĐ / chiếc</strong></li>
+              <li>Làm mất áo mưa (nếu có mượn): <strong>50.000 VNĐ / chiếc</strong></li>
+              <li>Trầy xước nhẹ: Tùy mức độ (50k - 200k).</li>
+              <li>Hư hỏng nặng / Mất xe: Đền bù theo giá trị hiện tại của xe.</li>
+            </ul>
+          </Box>
+        </div>
+      </Paper>
+
       <Typography variant="h5" className="font-bold mb-4">Đánh giá từ khách hàng</Typography>
       {ratings.length === 0 ? (
         <Typography color="textSecondary">Chưa có đánh giá nào cho xe này.</Typography>

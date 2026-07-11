@@ -19,6 +19,7 @@ import StaffWorklist from './pages/StaffWorklist';
 import CustomerManager from './pages/CustomerManager';
 import StaffManager from './pages/StaffManager';
 import ConfigManager from './pages/ConfigManager';
+import StaffGPLXReview from './pages/StaffGPLXReview';
 
 const Home = () => <Navigate to="/search" replace />;
 
@@ -51,6 +52,7 @@ function App() {
             <Route path="check-in" element={<AdminCheckIn />} />
             <Route path="check-out" element={<AdminCheckOut />} />
             <Route path="customers" element={<CustomerManager />} />
+            <Route path="gplx-review" element={<StaffGPLXReview />} />
             <Route path="staff" element={<StaffManager />} />
             <Route path="config" element={<ConfigManager />} />
           </Route>

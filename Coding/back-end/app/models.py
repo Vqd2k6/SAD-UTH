@@ -297,3 +297,4 @@ class BaoDuong(SQLModel, table=True):
     NgayBaoDuong: datetime
     ChiPhi: float
     ChiTietBaoDuong: str
+    DaHoanThanh: bool = Field(default=False)

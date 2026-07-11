@@ -6,7 +6,7 @@ from sqlalchemy import func
 from sqlmodel import Session, select
 
 from app.api.deps import get_current_admin, get_session
-from app.models import HopDongBooking, NhanVien, TrangThaiXeEnum, TrangThaiBookingEnum, XeMay
+from app.models import HopDongBooking, NhanVien, TrangThaiXeEnum, TrangThaiBookingEnum, XeMay, BaoDuong
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
@@ -15,7 +15,7 @@ def get_statistics(
     db: Session = Depends(get_session),
     current_admin: NhanVien = Depends(get_current_admin),
 ) -> Any:
-    completed_statuses = [TrangThaiBookingEnum.Dang_Quyet_Toan, TrangThaiBookingEnum.Hoan_Tat]
+    completed_statuses = [TrangThaiBookingEnum.Dang_Quyet_Toan, TrangThaiBookingEnum.Hoan_Tat, TrangThaiBookingEnum.Khong_Den_Nhan_Xe]
     now = datetime.utcnow()
     week_start = (now - timedelta(days=now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
@@ -62,8 +62,21 @@ def get_statistics(
         XeMay.TrangThaiXe == TrangThaiXeEnum.Dang_Bao_Duong
     )).first() or 0
 
+    # Maintenance cost
+    stmt_maintenance = select(func.sum(BaoDuong.ChiPhi))
+    total_maintenance_cost = db.exec(stmt_maintenance).first() or 0
+    
+    # Net revenue
+    net_revenue = total_revenue - total_maintenance_cost
+
+    # Recent bookings
+    stmt_recent_bookings = select(HopDongBooking).order_by(HopDongBooking.NgayTao.desc()).limit(10)
+    recent_bookings = db.exec(stmt_recent_bookings).all()
+
     return {
         "total_revenue": total_revenue,
+        "total_maintenance_cost": total_maintenance_cost,
+        "net_revenue": net_revenue,
         "revenue_week": revenue_week,
         "revenue_month": revenue_month,
         "bookings_week": bookings_week,
@@ -72,4 +85,5 @@ def get_statistics(
         "active_rentals": active_rentals,
         "motorbikes_in_maintenance": maintenance_bikes,
         "available_motorbikes": total_bikes - active_rentals - maintenance_bikes,
+        "recent_bookings": recent_bookings,
     }

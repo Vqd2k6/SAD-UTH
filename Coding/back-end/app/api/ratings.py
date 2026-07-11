@@ -39,6 +39,11 @@ def create_rating(
         NgayTao=datetime.utcnow()
     )
     db.add(rating)
+    
+    # Update Booking record to reflect the rating
+    booking.DanhGiaSao = rating_in.DiemDanhGia
+    booking.NoiDungDanhGia = rating_in.NoiDung
+    
     db.commit()
     db.refresh(rating)
 
@@ -54,3 +59,26 @@ def get_motorbike_ratings(
 ) -> Any:
     stmt = select(DanhGia).join(HopDongBooking).where(HopDongBooking.MaXe == ma_xe)
     return db.exec(stmt).all()
+
+from sqlalchemy import func
+
+@router.get("/motorbike/{ma_xe}/summary")
+def get_motorbike_rating_summary(
+    ma_xe: str,
+    db: Session = Depends(get_session)
+) -> Any:
+    # Lấy rating trung bình
+    stmt_rating = select(func.avg(DanhGia.DiemDanhGia)).join(HopDongBooking).where(HopDongBooking.MaXe == ma_xe)
+    avg_rating = db.exec(stmt_rating).first()
+
+    # Lấy tổng số chuyến đã hoàn thành
+    stmt_rentals = select(func.count(HopDongBooking.MaBooking)).where(
+        HopDongBooking.MaXe == ma_xe,
+        HopDongBooking.TrangThaiBooking.in_([TrangThaiBookingEnum.Hoan_Tat, TrangThaiBookingEnum.Dang_Quyet_Toan])
+    )
+    total_rentals = db.exec(stmt_rentals).first()
+
+    return {
+        "avg_rating": round(float(avg_rating), 1) if avg_rating else 0.0,
+        "total_rentals": total_rentals or 0
+    }

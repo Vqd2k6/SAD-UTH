@@ -18,6 +18,7 @@ from app.models import (
     TrangThaiXeEnum,
     VaiTroEnum,
     XeMay,
+    KhachHangGPLX
 )
 from app.schemas import CheckInSchema, CheckOutSchema, StaffCreate, StaffUpdate
 
@@ -58,14 +59,39 @@ def booking_check_in(
     # Handle GPLX fraud
     xe = db.get(XeMay, booking.MaXe)
     if check_in_data.KhachGianLanGPLX:
+        user = db.get(KhachHangGPLX, booking.MaKhachHang)
+        if user:
+            user.TrangThaiBlacklist = True
+            user.LyDoBlacklist = "Gian lận GPLX tại cửa hàng"
+        
+        xe.TrangThaiXe = TrangThaiXeEnum.San_Sang
         booking.TrangThaiBooking = TrangThaiBookingEnum.Khong_Den_Nhan_Xe
         booking.GhiChu = "Nhân viên phát hiện gian lận GPLX lúc Check-in. Xử lý như No-show (Phạt 100% cọc)."
+        booking.TongThanhToan = booking.TienCoc # Tịch thu cọc làm doanh thu
+        
+        # Tạo lịch sử thuê vi phạm
+        import uuid
+        ma_lich_su = f"LS{uuid.uuid4().hex[:6].upper()}"
+        lich_su = LichSuThue(
+            MaLichSu=ma_lich_su,
+            MaBooking=booking.MaBooking,
+            MaKhachHang=booking.MaKhachHang,
+            MaXe=xe.MaXe,
+            BienSoXe=xe.BienSo,
+            ThoiGianNhan=booking.ThoiGianNhan,
+            ThoiGianTra=datetime.utcnow(),
+            TongTienThanhToan=booking.TienCoc,
+            DanhDauViPham=True,
+            GhiChuNoiBo="Gian lận GPLX"
+        )
+        db.add(lich_su)
         db.commit()
+        
         with open("be-log.md", "a") as f:
             f.write(
-                f"\n- **{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}**: POST /api/staff/bookings/{ma_booking}/check-in -> KH gian lận GPLX, phạt 100% cọc\n"
+                f"\n- **{datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')}**: POST /api/staff/bookings/{ma_booking}/check-in -> KH gian lận GPLX, blacklist KH, giải phóng xe, phạt 100% cọc\n"
             )
-        return {"message": "Đã hủy đơn do gian lận GPLX, phạt 100% cọc"}
+        return {"message": "Đã hủy đơn do gian lận GPLX, blacklist khách hàng, giải phóng xe, phạt 100% cọc"}
 
     # Proceed with check-in
     booking.ODONhan = check_in_data.ODONhan
@@ -108,6 +134,11 @@ def booking_check_out(
         )
 
     xe = db.get(XeMay, booking.MaXe)
+
+    if booking.ODONhan is not None and check_out_data.ODOTra < booking.ODONhan:
+        raise HTTPException(
+            status_code=400, detail=f"ODO trả ({check_out_data.ODOTra}) không thể nhỏ hơn ODO nhận ({booking.ODONhan})"
+        )
 
     # Late fee calculation
     thoi_gian_tre = datetime.utcnow() - booking.ThoiGianTra
@@ -191,7 +222,14 @@ def booking_check_out(
 
     return {
         "message": "Check-out thành công",
+        "TongTienThue": booking.TongTienThue,
+        "TongTienGiaHan": booking.TongTienGiaHan,
+        "PhiTreHan": phi_phat_tre_han,
+        "PhiMatMu": Decimal(max(0, so_mu_mat) * 150000) if so_mu_mat > 0 else Decimal(0),
+        "PhiMatAoMua": Decimal(50000) if (booking.CoAoMuaGiao and not check_out_data.CoAoMuaTra) else Decimal(0),
+        "PhiDenBuHuHai": phi_den_bu_hu_hai,
         "TongQuyetToan": tong_quyet_toan,
+        "TienCocDaDong": booking.TienCoc,
         "SoTienCanThuThemHoacHoanTra": tong_thanh_toan,
     }
 
