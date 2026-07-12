@@ -1,206 +1,245 @@
 # TÀI LIỆU THIẾT KẾ: SƠ ĐỒ LỚP CHI TIẾT (DOMAIN MODEL)
 
-Tài liệu này mô tả sơ đồ lớp lĩnh vực nghiệp vụ (Domain Model / Conceptual Class Diagram) của hệ thống cho thuê xe máy. Sơ đồ tập trung biểu diễn các thực thể thông tin trong thế giới thực, các thuộc tính nghiệp vụ chính và mối liên kết giữa các thực thể, hoàn toàn loại bỏ các yếu tố cài đặt công nghệ như lớp điều phối (Controllers) và các phương thức xử lý kỹ thuật.
-
+Tài liệu này mô tả sơ đồ lớp lĩnh vực nghiệp vụ của hệ thống cho thuê xe máy. Sơ đồ tập trung biểu diễn các thực thể thông tin trong thế giới thực, các thuộc tính, các phương thức xử lý kỹ thuật nghiệp vụ chính và mối liên kết giữa các thực thể
 ---
 
-## 1. SƠ ĐỒ LỚP TỔNG QUAN (DOMAIN MODEL)
+## 1. SƠ ĐỒ LỚP TỔNG QUAN
 
 ```mermaid
 classDiagram
     direction TB
 
     %% ============================================================
-    %% CÁC LỚP NGƯỜI DÙNG (ACTOR ENTITIES)
+    %% CÁC ENUMERATION (KIỂU LIỆT KÊ TRẠNG THÁI)
     %% ============================================================
-    class NguoiDung {
-        <<Abstract>>
-        HoTen
-        Email
-        SoDienThoai
-        MatKhau
-        NgayTao
+    class DriverLicenseStatus {
+        <<enumeration>>
+        Pending
+        Verified
+        Rejected
+    }
+    
+    class AccountStatus {
+        <<enumeration>>
+        Active
+        Deleted
     }
 
-    class KhachHang {
-        MaKhachHang
-        CCCD
-        DiaChi
-        LuaChonGPLX
-        HangGPLX
-        SoGPLX
-        NgayCapGPLX
-        NgayHetHanGPLX
-        AnhGPLXMatTruoc
-        AnhGPLXMatSau
-        TrangThaiGPLX
-        NhomXeDuocThue
-        TrangThaiBlacklist
-        LyDoBlacklist
+    class MotorcycleStatus {
+        <<enumeration>>
+        Available
+        Rented
+        Maintenance
     }
 
-    class NhanVien {
-        MaNhanVien
-        VaiTro
-        TrangThaiTaiKhoan
-        NgayTao
+    class MotorbikeType {
+        <<enumeration>>
+        Scooter
+        Underbone
+        Manual
+        LargeDisplacement
+    }
+
+    class BookingStatus {
+        <<enumeration>>
+        PendingDeposit
+        DepositPaid
+        Rented
+        Overdue
+        Completed
+        Cancelled
+    }
+
+    class PaymentStatus {
+        <<enumeration>>
+        Pending
+        Success
+        Failed
+    }
+
+    %% ============================================================
+    %% CÁC LỚP NGƯỜI DÙNG VÀ KẾ THỪA
+    %% ============================================================
+    class User {
+        - userID: String
+        - fullName: String
+        - email: String
+        - phone: String
+        - passwords: String
+        - address: String
+        + login(): Boolean
+        + logOut(): Void
+        + resetPasswords(): void
+        + updateProfile(): void
+    }
+
+    class Customer {
+        - customerID: String
+        - nationalIDCard: String
+        - driverLicenseNumber: String
+        - driverLicenseFrontImage : String
+        - driverLicenseBackImage : String
+        - status: DriverLicenseStatus
+        - allowedMotorbikeGroup: String
+        - isBlacklisted: boolean
+        - blacklistReason: String
+        + searchMotorbike(pickupTime: datetime, returnTime: datetime, motorbikeType: MotorbikeType): List~Motorbike~
+        + rentalMortorbike(): Booking
+        + cancelRentalMotorbike(): void
+        + viewInfoBooking(): List~Booking~
+    }
+
+    class Employee {
+        - employeeID: String
+        - status: AccountStatus
+        - createdAt: Datetime
+        + motorbikePickup(pickupTime: datetime): void
+        + motorbikeReturn(pickupReturn: datetime): void
+        + manageBooking(): void
+        + manageMotorBike(): void
     }
 
     class Admin {
-        %% Kế thừa từ NhanVien, không có thuộc tính riêng biệt ở mức khái niệm
+        + manageAccount(): void
+        + statisticalReport(): void
     }
-
-    NguoiDung <|-- KhachHang
-    NguoiDung <|-- NhanVien
-    NhanVien <|-- Admin
 
     %% ============================================================
     %% CÁC LỚP THỰC THỂ NGHIỆP VỤ (DOMAIN ENTITIES)
     %% ============================================================
-
-    class XeMay {
-        MaXe
-        BienSo
-        LoaiXe
-        PhanKhoi
-        NhomXe
-        HangXe
-        TenXe
-        SoKhung
-        SoMay
-        DoiXe
-        MucTieuThuXang
-        SoMuBaoHiem
-        CoAoMua
-        DonGiaNgay
-        TrangThaiXe
-        ODOHienTai
-        NgayTao
+    class Review {
+        - reviewID: String
+        - customerID: String
+        - rating: Int
+        - comment: String
+        - createdAt: datetime
     }
 
-    class HopDongBooking {
-        MaBooking
-        MaKhachHang
-        MaXe
-        ThoiGianNhan
-        ThoiGianTra
-        ThoiGianTraGoc
-        ThoiGianTraThucTe
-        SoNgayThue
-        TrangThaiBooking
-        DonGiaApDung
-        TongTienThue
-        TienCoc
-        PhuongThucCoc
-        MaGiaoDichCoc
-        TrangThaiThanhToanCoc
-        SoLanGiaHan
-        TongTienGiaHan
-        CoTraSom
-        ODONhan
-        ODOTra
-        MucXangNhan
-        MucXangTra
-        PhiDenBuHuHai
-        PhiPhatTreHan
-        PhiMatPhuKien
-        TongThanhToan
-        DanhGiaSao
-        NgayTao
+    class Motorbike {
+        - motorbikeID: String
+        - licensePlate: String
+        - v.i.n: String
+        - engineNumber: String
+        - engineDisplacement: Int
+        - motorbikeGroup: String
+        - brand: String
+        - modelName: String
+        - motorbikeType: MotorbikeType
+        - engineDisplacement: Int
+        - motorbikeImage: String
+        - modelYear: Int
+        - fuelConsumption: Decimal
+        - helmetCount: Int
+        - hasRaincoat: boolean
+        - dailyRate: Decimal 
+        - status: MotorcycleStatus
+        - currentOdometer: Int
+        - createdAt: Datetime
+        - updatedAt: Datetime
+
+        + updateStatus(status: MotorcycleStatus): void
+        + updateODO(currentOdometer: Int): void
     }
 
-    class HoaDonQuyetToan {
-        MaHoaDon
-        MaBooking
-        TongTienThue
-        TongTienGiaHan
-        PhiTreHan
-        PhiMatMu
-        PhiMatAoMua
-        PhiDenBuHuHai
-        TongQuyetToan
-        TienCocDaDong
-        SoTienCanThuThemHoacHoanTra
-        NgayTao
+    class Booking {
+        - bookingID: String
+        - customerID: String
+        - motorbikeID: String
+        - pickupTime: datetime
+        - returnTime: datetime
+        - originalReturnTime: datetime
+        - actualReturnTime: datetime
+        - rentalDays: Int
+        - status: BookingStatus
+        - appliedRate: Decimal
+        - totalRentalFee: Decimal
+        - depositAmount: Decimal
+        - depositMethod: String
+        - depositTransactionID: String
+        - depositStatus: PaymentStatus
+        - extensionCount: Int
+        - totalExtensionFee: Decimal
+        - isReturnedEarly: boolean
+        - pickupOdometer: Int
+        - returnOdometer: Int
+        - pickupFuelLevel: Int
+        - returnFuelLevel: Int
+        - damagePenalty: Decimal
+        - lateFeePenalty: Decimal
+        - accessoryLossPenalty: Decimal
+        - totalPayment: Decimal
+        - ratingStar: Int
+        - createdAt: datetime
+        
+        + calculateTotal(): decimal
+}
+
+    class Payment {
+        - paymentID: String
+        - bookingID: String
+        - transactionID: String
+        - paymentMethod: String
+        - totalPrice: Decimal
+        - status: PaymentStatus
+        - paymentDate: datetime
+        + processPayment(): void
     }
 
-    class BienBanGiaoNhan {
-        MaBienBan
-        MaBooking
-        LoaiBienBan
-        ThoiGianGiaoNhan
-        ODOGiaoNhan
-        MucXangGiaoNhan
-        AnhNgoaiQuan
-        SoMuBaoHiemGiaoNhan
-        CoAoMuaGiaoNhan
-        MaNhanVienThucHien
-        NgayTao
+    class BookingHistory {
+        - historyID: String
+        - customerID: String
+        - motorbikeID: String
+        - licensePlate: String
+        - pickupTime: datetime
+        - returnTime: datetime
+        - totalPayment: decimal
+        - hasViolation: boolean
+        - createdAt: datetime
     }
 
-    class BaoDuong {
-        MaBaoDuong
-        MaXe
-        NgayBaoDuong
-        ChiPhi
-        ChiTietBaoDuong
-        DaHoanThanh
+    class PenaltyReport {
+        - penaltyReportID: String
+        - lateFeePerHour: Decimal
+        - accessoryLossPenalty: Decimal
+        - damagePenalty: Decimal
+        - trafficViolation: Decimal
+        - createdAt: datetime
+        + hasViolation(): boolean
     }
 
-    class DanhGia {
-        MaDanhGia
-        MaBooking
-        DiemDanhGia
-        NoiDung
-        NgayTao
-    }
-
-    class ThanhToan {
-        MaGiaoDich
-        MaBooking
-        SoTien
-        LoaiGiaoDich
-        PhuongThuc
-        TrangThaiGiaoDich
-        ThoiGianGiaoDich
-    }
-
-    class LichSuThue {
-        MaLichSu
-        BienSoXe
-        ThoiGianNhan
-        ThoiGianTra
-        TongTienThanhToan
-        GhiChuNoiBo
-        DanhDauViPham
-        NgayTao
-    }
-
-    class CauHinhHeThong {
-        MaCauHinh
-        SoLanGiaHanToiDa
-        DonGiaPhatXeThuong_Gio
-        DonGiaPhatXePKL_Gio
-        PhatMatMuBaoHiem
-        PhatMatAoMua
-        PhanTramTangGiaLe
-        NgayCapNhat
+    class Maintenance {
+        - maintenanceID: String
+        - motorbikeID: String
+        - maintenanceDate: datetime
+        - cost: Decimal
+        - maintenanceDetails: String
+        - isCompleted: boolean
+        
+        + markAsCompleted(): void
     }
 
     %% ============================================================
-    %% MỐI QUAN HỆ GIỮA CÁC THỰC THỂ (DOMAIN RELATIONSHIPS)
+    %% MỐI QUAN HỆ GIỮA CÁC THỰC THỂ (RELATIONSHIPS)
     %% ============================================================
     
-    KhachHang "1" -- "0..*" HopDongBooking : đăng ký
-    XeMay "1" -- "0..*" HopDongBooking : được thuê
-    XeMay "1" -- "0..*" BaoDuong : được bảo dưỡng
-    NhanVien "1" -- "0..*" BienBanGiaoNhan : lập
-    HopDongBooking "1" -- "0..1" HoaDonQuyetToan : đi kèm với
-    HopDongBooking "1" -- "0..2" BienBanGiaoNhan : có biên bản (nhận/trả)
-    HopDongBooking "1" -- "0..*" ThanhToan : có giao dịch
-    HopDongBooking "1" -- "0..1" LichSuThue : lưu vết thành
-    HopDongBooking "1" -- "0..1" DanhGia : nhận đánh giá từ
-    CauHinhHeThong "1" -- "0..*" HopDongBooking : cung cấp quy tắc cho
+    %% Quan hệ Kế thừa (Inheritance)
+    User <|-- Customer
+    User <|-- Employee
+    Employee <|-- Admin
+
+    %% Quan hệ Kết hợp (Association)
+    Customer "1" -- "0..*" Review
+    Customer "1" -- "0..*" Booking
+    Motorbike "1" -- "0..*" Booking
+    Employee "1" -- "0..*" Booking
+    Motorbike "1" -- "0..*" Maintenance
+    Employee "1" -- "0..*" Maintenance
+    
+    %% Quan hệ Bao hàm (Composition - Hình thoi đen)
+    Booking "1" *-- "0..*" Payment
+    Booking "1" *-- "0..*" BookingHistory
+    Booking "1" *-- "0..1" PenaltyReport
+
 ```
 
 ---
@@ -209,17 +248,17 @@ classDiagram
 
 | Class Entity | Kho dữ liệu (Database Table) | Ghi chú |
 |---|---|---|
-| `XeMay` | D1 — Xe_May | Lưu giữ thông tin phương tiện trong kho xe. |
-| `HopDongBooking` | D2 — Hop_Dong_Booking | Lưu giữ thông tin giao dịch đặt thuê xe của khách. |
-| `HoaDonQuyetToan` | D10 — Hoa_Don_Quyet_Toan | Dữ liệu tính toán chi phí thực tế tại thời điểm trả xe. |
-| `BienBanGiaoNhan` | D11 — Bien_Ban_Giao_Nhan | Biên bản ghi nhận tình trạng xe khi giao hoặc nhận xe thực tế. |
-| `KhachHang` | D3 — Khach_Hang_GPLX | Chứa hồ sơ cá nhân và trạng thái bằng lái xe của khách hàng. |
-| `LichSuThue` | D4 — Lich_Su_Thue | Bản ghi phi cấu trúc lưu giữ dữ liệu thuê xe phục vụ thống kê lịch sử. |
-| `CauHinhHeThong` | D5 — Cau_Hinh_He_Thong | Bản ghi tham chiếu các quy tắc phạt và hệ số tăng giá toàn cục. |
-| `NhanVien` | D6 — Nhan_Vien | Thông tin tài khoản nhân viên của cửa hàng. |
-| `BaoDuong` | D7 — Bao_Duong | Nhật ký ghi nhận hoạt động bảo dưỡng sửa chữa xe máy. |
-| `DanhGia` | D8 — Danh_Gia | Phản hồi điểm số và ý kiến đánh giá từ khách hàng. |
-| `ThanhToan` | E4 — Payment | Giao dịch tài chính (cọc, gia hạn, quyết toán, hoàn cọc). |
+| `User` | *(Lớp trừu tượng)* | Không có bảng vật lý độc lập, dữ liệu được phân bổ hoặc dùng chung cho các lớp con. |
+| `Customer` | D3 — Khach_Hang | Chứa hồ sơ cá nhân cơ bản, thông tin giấy phép lái xe và trạng thái vi phạm (Blacklist). |
+| `Employee` | D6 — Nhan_Vien | Thông tin tài khoản nhân viên vận hành của cửa hàng. |
+| `Admin` | D6 — Nhan_Vien | Dùng chung bảng với `Employee` (phân biệt thông qua trường phân quyền/vai trò). |
+| `Motorbike` | D1 — Xe_May | Lưu giữ thông tin chi tiết về phương tiện, phân khối, thiết bị đi kèm và trạng thái hiện tại. |
+| `Booking` | D2 — Hop_Dong_Booking | Lưu giữ thông tin giao dịch đặt thuê xe của khách xuyên suốt vòng đời. |
+| `Payment` | E4 — Payment | Ghi nhận chi tiết các giao dịch tài chính (thanh toán cọc, quyết toán). |
+| `Review` | D8 — Danh_Gia | Phản hồi điểm số và ý kiến đánh giá từ khách hàng. |
+| `BookingHistory` | D4 — Lich_Su_Thue | Bản ghi tĩnh lưu giữ dữ liệu thuê xe đã hoàn tất phục vụ thống kê và tra cứu nhanh. |
+| `PenaltyReport` | D12 — Phieu_Phat | Lưu trữ chi tiết các khoản phạt phát sinh (trễ giờ, mất phụ kiện, hư hỏng, vi phạm giao thông). |
+| `Maintenance` | D7 — Bao_Duong | Nhật ký ghi nhận hoạt động bảo dưỡng, chi phí và trạng thái sửa chữa xe máy. |
 
 ---
 
@@ -227,77 +266,71 @@ classDiagram
 
 ### 3.1. Các lớp Người dùng (Actor Entities)
 
-**a) Lớp `KhachHang` (Customer)**
-- **Mô tả:** Đại diện cho khách hàng sử dụng dịch vụ thuê xe máy. Lớp này quản lý hồ sơ thông tin cá nhân và thông tin giấy phép lái xe để phân loại nhóm xe được phép đặt.
+**a) Lớp `User` (Người dùng)**
+- **Mô tả:** Lớp trừu tượng (Abstract) cung cấp nền tảng thông tin định danh và bảo mật cơ bản cho mọi đối tượng tương tác với hệ thống.
 - **Trách nhiệm chính:**
-  - Khai báo thông tin cá nhân cơ bản và cập nhật hình ảnh Giấy phép lái xe (GPLX).
-  - Yêu cầu và theo dõi trạng thái các đơn đặt xe, gia hạn, trả xe sớm hoặc hủy đơn thuê.
+  - Lưu trữ thông tin cá nhân cốt lõi (ID, Họ tên, Email, SĐT, Mật khẩu, Địa chỉ).
+  - Cung cấp các hành động chung: Đăng nhập (`login`), Đăng xuất (`logOut`), Đặt lại mật khẩu (`resetPasswords`) và Cập nhật hồ sơ (`updateProfile`).
 
-**b) Lớp `NhanVien` (Staff)**
-- **Mô tả:** Đại diện cho nhân viên vận hành tại tiệm xe máy.
+**b) Lớp `Customer` (Khách hàng)**
+- **Mô tả:** Kế thừa từ `User`. Đại diện cho khách hàng sử dụng dịch vụ thuê xe. Quản lý thêm dữ liệu về Giấy phép lái xe (GPLX) và điểm tín nhiệm.
 - **Trách nhiệm chính:**
-  - Kiểm tra điều kiện bàn giao xe thực tế và xác nhận Biên bản giao nhận xe (Check-in).
-  - Tiếp nhận xe khi trả, ghi nhận hư hỏng thực tế và tạo Biên bản nhận lại xe (Check-out).
-  - Hỗ trợ duyệt nhanh ảnh GPLX do khách hàng tải lên.
-  - Cập nhật thông tin bảo dưỡng định kỳ cho phương tiện.
+  - Lưu trữ trạng thái xác thực GPLX và kiểm soát danh sách đen (`isBlacklisted`, `blacklistReason`).
+  - Thực hiện các hành động nghiệp vụ: Tìm kiếm xe trống (`searchMotorbike`), Đặt thuê xe (`rentalMortorbike`), Hủy đơn (`cancelRentalMotorbike`) và Xem danh sách đơn thuê (`viewInfoBooking`).
 
-**c) Lớp `Admin`**
-- **Mô tả:** Đại diện cho quản trị viên hệ thống (kế thừa từ `NhanVien`).
+**c) Lớp `Employee` (Nhân viên)**
+- **Mô tả:** Kế thừa từ `User`. Đại diện cho nhân viên vận hành trực tiếp tại tiệm xe.
 - **Trách nhiệm chính:**
-  - Quản lý danh mục phương tiện trong kho xe máy.
-  - Quản lý hồ sơ và cấp tài khoản nhân viên tiệm xe.
-  - Cập nhật các thông số cấu hình biểu phí phạt và hệ số tăng giá lễ tết của hệ thống.
-  - Đưa khách hàng vi phạm nghiêm trọng vào danh sách đen (Blacklist).
+  - Quản lý trạng thái tài khoản làm việc (`AccountStatus`).
+  - Thực hiện các nghiệp vụ thực tế: Xử lý giao xe cho khách (`motorbikePickup`), Nhận lại xe (`motorbikeReturn`), Quản lý tổng quan các đơn đặt xe (`manageBooking`) và Quản lý tình trạng xe máy (`manageMotorBike`).
+
+**d) Lớp `Admin` (Quản trị viên)**
+- **Mô tả:** Kế thừa từ `Employee`. Đại diện cho cấp quản lý cao nhất của hệ thống.
+- **Trách nhiệm chính:**
+  - Cung cấp đặc quyền: Quản lý tài khoản toàn hệ thống (`manageAccount`) và Xuất báo cáo thống kê doanh thu/hoạt động (`statisticalReport`).
 
 ---
 
 ### 3.2. Các lớp Thực thể Nghiệp vụ (Domain/Entity Classes)
 
-**a) Lớp `XeMay` (Motorcycle)**
+**a) Lớp `Motorbike` (Xe máy)**
 - **Mô tả:** Đại diện cho một phương tiện xe máy cụ thể trong kho xe của tiệm.
 - **Trách nhiệm chính:**
-  - Quản lý thông tin đăng ký pháp lý của xe (biển số, số khung, số máy) và trạng thái hiện tại (sẵn sàng, đang thuê, đang bảo dưỡng, khóa tạm thời).
-  - Quản lý trang thiết bị đi kèm (số lượng mũ bảo hiểm, áo mưa) và chỉ số ODO thực tế.
+  - Quản lý định danh phương tiện (Biển số, Số khung, Số máy, Đời xe, Phân khối).
+  - Quản lý trang thiết bị đi kèm (số lượng mũ bảo hiểm, áo mưa) và mức tiêu hao nhiên liệu.
+  - Cung cấp hàm để tự động cập nhật trạng thái xe (`updateStatus`) và số Kilomet đã đi (`updateODO`).
 
-**b) Lớp `HopDongBooking` (Booking Contract)**
-- **Mô tả:** Thực thể cốt lõi ghi nhận một giao dịch thuê xe cụ thể xuyên suốt vòng đời từ khi đặt cọc đến khi hoàn tất quyết toán.
+**b) Lớp `Booking` (Hợp đồng Thuê xe)**
+- **Mô tả:** Thực thể cốt lõi (Trung tâm) liên kết Khách hàng, Xe máy và Nhân viên phụ trách trong một giao dịch thuê xe cụ thể.
 - **Trách nhiệm chính:**
-  - Liên kết chặt chẽ thông tin khách hàng thuê xe, phương tiện được thuê, thời gian thuê và giá trị hợp đồng.
-  - Theo dõi trạng thái tiến trình của hợp đồng (Chờ thanh toán cọc, Chờ nhận xe, Đang thuê, Quá hạn, Chờ quyết toán, Hoàn tất hoặc Đã hủy).
+  - Theo dõi mốc thời gian (nhận xe, trả dự kiến, trả thực tế) và thông số kỹ thuật lúc giao nhận (ODO, mức xăng).
+  - Quản lý các loại phí phức tạp: Tiền cọc, Phí gia hạn, Phí đền bù, Phí trễ hạn.
+  - Cung cấp hàm tính toán tổng chi phí cuối cùng của hợp đồng (`calculateTotal`).
 
-**c) Lớp `HoaDonQuyetToan` (Financial Settlement)**
-- **Mô tả:** Thực thể ghi nhận thông tin tài chính chi tiết tại thời điểm quyết toán thanh lý hợp đồng.
+**c) Lớp `Payment` (Thanh toán)**
+- **Mô tả:** Ghi nhận thông tin một giao dịch tài chính phát sinh trong vòng đời của `Booking` (có quan hệ Composition với Booking).
 - **Trách nhiệm chính:**
-  - Ghi nhận chi tiết doanh thu thực tế, tiền cọc đã đóng, và phụ thu phát sinh (phạt trễ giờ, đền bù mất phụ kiện bảo hiểm/áo mưa, đền bù hư hỏng ngoại quan).
-  - Xác định tổng số tiền cuối cùng cần phải thu thêm từ khách hàng hoặc hoàn trả lại cho khách hàng.
+  - Ghi nhận mã giao dịch, số tiền, phương thức thanh toán và trạng thái từ cổng thanh toán (Pending/Success/Failed).
+  - Xử lý tiến trình thanh toán thực tế (`processPayment`).
 
-**d) Lớp `BienBanGiaoNhan` (Handover Record)**
-- **Mô tả:** Tài liệu lưu trữ tình trạng vật lý thực tế của xe máy tại các thời điểm chuyển giao quyền sở hữu xe (giao xe cho khách hoặc nhận lại xe từ khách).
+**d) Lớp `Review` (Đánh giá)**
+- **Mô tả:** Ý kiến đóng góp và phản hồi từ phía `Customer` sau khi kết thúc chuyến đi.
 - **Trách nhiệm chính:**
-  - Ghi nhận ODO thực tế, mức xăng trong bình, tình trạng hư hỏng ngoại quan bằng hình ảnh tại thời điểm giao/nhận xe.
-  - Ghi nhận số lượng mũ bảo hiểm và tình trạng áo mưa thực tế được chuyển giao.
+  - Lưu giữ điểm số đánh giá (rating) và nội dung bình luận (comment) của khách hàng.
 
-**e) Lớp `BaoDuong` (Maintenance)**
-- **Mô tả:** Thực thể ghi nhận một hoạt động bảo trì, bảo dưỡng định kỳ hoặc sửa chữa đột xuất của phương tiện.
+**e) Lớp `BookingHistory` (Lịch sử thuê xe)**
+- **Mô tả:** Bản lưu trữ tĩnh (Snapshot) của các đơn thuê đã hoàn thành (có quan hệ Composition với Booking).
 - **Trách nhiệm chính:**
-  - Ghi nhận thời gian, tổng chi phí thực tế và chi tiết các hạng mục phụ tùng thay thế/sửa chữa của xe máy.
+  - Tóm tắt dữ liệu cốt lõi (Thời gian, Tổng tiền, Biển số xe) và đánh dấu xem chuyến đi đó có phát sinh vi phạm hay không (`hasViolation`) để truy vấn nhanh.
 
-**f) Lớp `DanhGia` (Review)**
-- **Mô tả:** Ý kiến đóng góp và phản hồi từ phía khách hàng sau khi kết thúc chuyến đi.
+**f) Lớp `PenaltyReport` (Biên bản vi phạm/Phiếu phạt)**
+- **Mô tả:** Hồ sơ chi tiết lưu trữ các khoản phạt phát sinh (có quan hệ Composition với Booking).
 - **Trách nhiệm chính:**
-  - Lưu giữ điểm số đánh giá (sao) và nội dung ý kiến đóng góp của khách hàng dành cho một mã đơn đặt xe cụ thể.
+  - Bóc tách minh bạch các loại phí phạt: Phạt trễ giờ (`lateFeePerHour`), Phạt mất phụ kiện (`accessoryLossPenalty`), Phạt hư hỏng (`damagePenalty`) và Vi phạm luật giao thông (`trafficViolation`).
+  - Kiểm tra xem biên bản này có thực sự chứa vi phạm nào không (`hasViolation`).
 
-**g) Lớp `ThanhToan` (Payment)**
-- **Mô tả:** Ghi nhận thông tin một giao dịch tài chính phát sinh trong vòng đời hợp đồng.
+**g) Lớp `Maintenance` (Bảo dưỡng)**
+- **Mô tả:** Thực thể ghi nhận một hoạt động bảo trì, sửa chữa định kỳ hoặc đột xuất của `Motorbike`.
 - **Trách nhiệm chính:**
-  - Ghi nhận mã giao dịch, số tiền chuyển khoản/tiền mặt, mục đích thanh toán (đặt cọc, gia hạn, quyết toán, hoàn tiền cọc) và trạng thái giao dịch từ phía cổng thanh toán.
-
-**h) Lớp `LichSuThue` (Rental History)**
-- **Mô tả:** Bản lưu trữ tĩnh đóng vai trò như một Snapshot của đơn thuê đã hoàn thành để phục vụ tra cứu nhanh mà không cần truy vấn ngược cơ sở dữ liệu lớn.
-- **Trách nhiệm chính:**
-  - Lưu trữ tổng tiền thuê, khoảng thời gian thực tế, biển số xe và đánh dấu khách hàng có vi phạm quy định (nếu có) để phục vụ chấm điểm tín nhiệm khách hàng.
-
-**i) Lớp `CauHinhHeThong` (System Settings)**
-- **Mô tả:** Chứa các hằng số và cấu hình định giá toàn cục do quản trị viên thiết lập.
-- **Trách nhiệm chính:**
-  - Cung cấp các thông số biểu phí phạt (phạt trả trễ theo giờ cho xe thường, phạt trả trễ cho xe phân khối lớn, phạt mất phụ kiện) làm căn cứ tính toán cho hóa đơn quyết toán.
+  - Ghi nhận thời gian, chi phí (`cost`), chi tiết các hạng mục thay thế (`maintenanceDetails`).
+  - Cung cấp hàm để chuyển trạng thái phiếu bảo dưỡng thành đã hoàn tất (`markAsCompleted`).
