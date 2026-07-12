@@ -1,161 +1,139 @@
-# TÀI LIỆU ĐẶC TẢ GIAO DIỆN NGƯỜI DÙNG (UI SPECIFICATIONS)
+# TÀI LIỆU ĐẶC TẢ GIAO DIỆN NGƯỜI DÙNG (UI/UX SPECIFICATIONS)
 
-Dựa trên các bản phác thảo (wireframes) ban đầu, tài liệu này chuẩn hóa và đặc tả chi tiết giao diện người dùng (UI) cho ứng dụng di động **SmartRental**.
-
----
-
-## 1. TỔNG QUAN LUỒNG TRẢI NGHIỆM (USER FLOW)
-
-Ứng dụng được chia làm 2 phân hệ giao diện chính:
-1. **Phân hệ Khách hàng (Customer App):** 
-   Đăng nhập $\rightarrow$ Tìm kiếm xe $\rightarrow$ Xem chi tiết $\rightarrow$ Đặt xe $\rightarrow$ Thanh toán $\rightarrow$ Quản lý lịch sử thuê & Hồ sơ cá nhân.
-2. **Phân hệ Nhân viên (Staff Dashboard):** 
-   Dashboard quản lý đơn $\rightarrow$ Thực hiện Check-in (Bàn giao xe) $\rightarrow$ Thực hiện Check-out (Nhận lại xe & Quyết toán).
+Tài liệu này đặc tả chi tiết cấu trúc, luồng hoạt động và các thành phần giao diện của ứng dụng **SmartRental** cho cả 3 vai trò (Roles) tương ứng với mã nguồn thực tế: **Khách hàng (Customer)**, **Nhân viên (Staff)** và **Quản trị viên (Admin)**.
 
 ---
 
-## 2. ĐẶC TẢ CHI TIẾT CÁC MÀN HÌNH (SCREENS)
+## 1. PHÂN HỆ KHÁCH HÀNG (CUSTOMER APP)
 
-### 2.1. Nhóm Màn hình Xác thực & Trang chủ
+Được thiết kế dưới dạng ứng dụng di động tối ưu hiển thị, tập trung vào trải nghiệm đặt xe mượt mà và cá nhân hóa.
 
-#### Screen 1: Đăng Nhập (Login)
-*Màn hình chào mừng và xác thực người dùng.*
-- **Header:** Đăng Nhập / Chào mừng quay trở lại
-- **Form inputs:**
-  - `Tên đăng nhập / Email`
-  - `Mật khẩu`
-- **Controls:**
-  - Checkbox: `Ghi nhớ mật khẩu`
-  - Nút bấm chính: `[ ĐĂNG NHẬP ]`
-  - Nút điều hướng: `Đăng ký tài khoản mới` | `Quên mật khẩu`
+### 1.1. Màn hình Đăng ký / Đăng nhập (Register / Login)
+- **Mục đích:** Xác thực danh tính khách hàng trước khi sử dụng hệ thống.
+- **Thành phần giao diện:**
+  - *Đăng ký (`Register.tsx`):* Họ tên (yêu cầu $\ge 2$ ký tự), Email (regex kiểm tra định dạng), Số điện thoại (10 chữ số bắt đầu bằng `0`), Mật khẩu ($\ge 6$ ký tự), CCCD (12 chữ số) và Hạng bằng lái xe khai báo (A1, A2, Không có).
+  - *Đăng nhập (`Login.tsx`):* Nhập Email/Số điện thoại và Mật khẩu. Có nút điều hướng đăng ký tài khoản mới.
+- **Ràng buộc UI (Validation):** Chặn submit và báo lỗi đỏ ngay tại form nếu nhập sai định dạng.
 
-#### Screen 2: Tìm kiếm & Lọc (Home / Search)
-*Trang chủ mặc định sau khi đăng nhập, giúp khách hàng tìm xe nhanh.*
-- **Thanh tìm kiếm (Search Bar):** Nhập tên xe hoặc biển số.
-- **Bộ lọc nhanh (Quick Filters):**
-  - **Thương hiệu:** Nút chọn `[Honda]`, `[Yamaha]`, `[Suzuki]`...
-  - **Phân loại xe:** Các Tab/Chip `[Xe Số]`, `[Xe Ga]`, `[Xe Côn]` để lọc danh sách bên dưới.
+### 1.2. Màn hình Tìm kiếm & Lọc xe (Search & Filter)
+- **Mục đích:** Giúp khách hàng tìm kiếm xe máy phù hợp theo nhu cầu và thời gian.
+- **Thành phần giao diện:**
+  - *Thanh tìm kiếm:* Tìm theo tên xe hoặc hãng xe.
+  - *Bộ lọc phân loại:* Tabs/Chips lọc nhanh: Xe Ga, Xe Số, Xe Côn, Xe phân khối lớn (PKL).
+  - *Danh sách xe:* Hiển thị dưới dạng thẻ (Card) bao gồm hình ảnh xe, tên xe, phân khối (cc), đơn giá/ngày và trạng thái xe (`San_Sang`, `Dang_Thue`, `Dang_Bao_Duong`).
+  - *Bộ lọc thời gian:* Chọn ngày nhận và trả dự kiến để lọc các xe còn trống.
 
-#### Screen 3: Kết quả Tìm kiếm (Search Results)
-*Hiển thị danh sách xe thỏa mãn điều kiện.*
-- **Giao diện:** Dạng danh sách (List View) hoặc Dạng thẻ (Card View).
-- **Thành phần trên mỗi Thẻ xe (Vehicle Card):**
-  - Hình ảnh xe (Thumbnail).
-  - Tên xe: `Honda Air Blade 125`
-  - Phân loại: `Xe Ga`
-  - Đơn giá: `150.000đ / ngày`
-  - Nút hành động: `[ Xem chi tiết ]`
-- **Bottom Navigation (Thanh điều hướng dưới):** `🏠 Home` | `📄 Đặt thuê` | `👤 Cá nhân`
+### 1.3. Màn hình Chi tiết Xe & Đặt xe (Motorbike Detail)
+- **Mục đích:** Xem thông số kỹ thuật chi tiết của xe, nhận xét từ khách khác và tiến hành đặt xe.
+- **Thành phần giao diện:**
+  - *Thông tin xe:* Hình ảnh xe lớn, Hãng xe, Dòng xe, Phân khối, ODO hiện tại và giá thuê ngày.
+  - *Quy định & Bảng phí đền bù:* Hiển thị rõ các quy định sử dụng, mức phạt trễ hạn, và đền bù nếu làm mất mũ bảo hiểm/áo mưa.
+  - *Khối đặt xe:* Ô nhập ngày giờ nhận/trả xe (Datetime-local). Nút bấm `[ Xác nhận Đặt xe ]`.
+  - *Danh sách đánh giá:* Hiển thị danh sách đánh giá từ các khách hàng trước (số sao và nội dung).
+- **Ràng buộc UI (Validation):** Cấm chọn thời gian nhận trong quá khứ và thời gian trả trước thời gian nhận.
 
----
+### 1.4. Màn hình Quản lý Đơn đặt & Lịch sử Thuê (My Bookings)
+- **Mục đích:** Theo dõi trạng thái đơn đặt xe hiện tại, thanh toán cọc và thực hiện các yêu cầu phát sinh.
+- **Thành phần giao diện:**
+  - *Danh sách đơn:* Phân chia theo trạng thái (Chờ thanh toán cọc, Chờ nhận xe, Đang thuê, Hoàn tất, Đã hủy).
+  - *Chi tiết đơn:* Hiển thị mã đơn (`Booking ID`), biển số xe, tổng tiền, tiền cọc.
+  - *Nút hành động theo ngữ cảnh:*
+    - Nút `[ Thanh toán cọc ]` (chuyển qua giao diện mô phỏng Payment Gateway).
+    - Nút `[ Hủy đơn ]` (chỉ khả dụng khi chưa nhận xe, kèm thông báo về tỷ lệ hoàn cọc).
+    - Nút `[ Yêu cầu trả sớm ]` / `[ Yêu cầu gia hạn ]` (khi đang trong quá trình thuê xe).
+    - Nút `[ Đánh giá chuyến đi ]` (khi đơn đã hoàn tất).
 
-### 2.2. Nhóm Màn hình Đặt xe & Thanh toán
-
-#### Screen 4: Chi tiết Xe (Vehicle Details)
-*Hiển thị đầy đủ thông số kỹ thuật và tình trạng xe để khách ra quyết định.*
-- **Header:** Nút Back `< Chi tiết xe`
-- **Hình ảnh:** Carousel ảnh xe chất lượng cao.
-- **Thông tin nổi bật:** 
-  - Tên xe, Phân loại, Giá ngày.
-  - Điểm đánh giá: `⭐ 4.8 / 5`
-- **Thông số kỹ thuật:**
-  - Màu sắc: `Đen` | Năm sản xuất: `2024` | ODO hiện tại | Mức tiêu hao nhiên liệu.
-- **Mô tả:** Đoạn văn ngắn giới thiệu tình trạng xe.
-- **Nút hành động cố định (Sticky Button):** `[ ĐẶT XE NGAY ]`
-
-#### Screen 5: Khởi tạo Booking (Booking Form)
-*Thiết lập thời gian và tùy chọn giao nhận.*
-- **Header:** Nút Back `< Đặt xe`
-- **Tóm tắt xe:** `Honda Air Blade 125 - 150.000đ/ngày`
-- **Form nhập liệu:**
-  - `Ngày nhận (Pick-up Date & Time)`
-  - `Ngày trả (Drop-off Date & Time)`
-  - Dropdown: `Phương thức giao nhận (Tại cửa hàng / Giao tận nơi)`
-  - Textarea: `Ghi chú cho nhân viên`
-- **Nút hành động:** `[ CHUYỂN ĐẾN THANH TOÁN ]`
-
-#### Screen 6: Thanh Toán (Checkout / Payment)
-*Chốt chi phí và chọn phương thức thanh toán.*
-- **Header:** Nút Back `< Thanh toán`
-- **Hóa đơn tạm tính (Summary):**
-  - Xe: `Honda Air Blade 125`
-  - Thời gian thuê: `2 ngày`
-  - Tổng tiền: `300.000đ` (Có thể hiển thị thêm dòng Phí cọc 30%).
-- **Lựa chọn thanh toán (Radio Buttons):**
-  - `( ) Tiền mặt`
-  - `(•) Chuyển khoản ngân hàng`
-  - `( ) Ví điện tử (MoMo/VNPAY)`
-- **Nút hành động:** `[ XÁC NHẬN THANH TOÁN ]`
-
-#### Screen 7: Xác nhận Thành công (Booking Success)
-*Màn hình thông báo trạng thái giao dịch.*
-- **Visual:** Icon Checkmark lớn (✔️) màu xanh lá.
-- **Tiêu đề:** `Cảm ơn bạn đã đặt xe!`
-- **Chi tiết đơn hàng:**
-  - Mã đơn: `#BK-10293`
-  - Xe: `Honda Air Blade 125`
-  - Nhận: `01/01/2024` - Trả: `03/01/2024`
-  - Đã thanh toán: `300.000đ`
-- **Nút hành động:** `[ Về Trang Chủ ]` hoặc `[ Xem đơn đặt ]`
+### 1.5. Màn hình Hồ sơ & Xác thực GPLX (Profile)
+- **Mục đích:** Quản lý thông tin tài khoản và tải lên hình ảnh GPLX để được cấp quyền thuê xe.
+- **Thành phần giao diện:**
+  - *Thông tin cá nhân:* Sửa Họ tên, SĐT, Email, CCCD, Địa chỉ.
+  - *Cập nhật GPLX:* Chọn Hạng GPLX (A1/A2), nhập Số GPLX (12 chữ số) và nút upload ảnh Mặt trước / Mặt sau GPLX.
+  - *Trạng thái hồ sơ:* Hiển thị trạng thái duyệt GPLX (`Khong_Dang_Ky`, `Da_Upload` - Chờ duyệt, `Da_Xac_Thuc`, `Tu_Choi`).
 
 ---
 
-### 2.3. Nhóm Màn hình Quản lý Cá nhân
+## 2. PHÂN HỆ NHÂN VIÊN (STAFF DASHBOARD)
 
-#### Screen 8: Lịch sử Thuê xe (Rental History)
-*Nơi khách hàng theo dõi các chuyến đi.*
-- **Header:** `Lịch sử thuê`
-- **Tab Control:** `[ Đã đặt ]` | `[ Đang thuê ]` | `[ Lịch sử ]`
-- **Thẻ đơn hàng (Order Card):**
-  - Mã đơn, Tên xe, Thời gian thuê.
-  - Trạng thái bằng màu sắc: `Đang chờ` (Vàng), `Đang thuê` (Xanh), `Hoàn thành` (Xám).
-  - Nút phụ: `Yêu cầu gia hạn` (nếu đang thuê).
+Được tối ưu giao diện web-responsive, phục vụ các tác vụ xử lý trực tiếp tại quầy và thẩm định hồ sơ của khách.
 
-#### Screen 9: Hồ sơ (Profile)
-*Quản lý thông tin tài khoản.*
-- **Header:** `Hồ sơ cá nhân`
-- **Avatar & Thông tin cơ bản:** 
-  - Ảnh đại diện, Họ tên (`Nguyễn Văn A`).
-  - SĐT, Email.
-- **Menu chức năng:**
-  - `Quản lý GPLX` (Tải lên / Xét duyệt).
-  - `Cập nhật mật khẩu`.
-  - `Cài đặt thông báo`.
-- **Nút hành động:** `[ Đăng xuất ]` (Màu đỏ).
+### 2.1. Màn hình Danh sách công việc (Staff Worklist / Dashboard)
+- **Mục đích:** Trung tâm điều phối công việc hàng ngày của nhân viên cửa hàng.
+- **Thành phần giao diện:**
+  - Chia làm 2 danh sách rõ ràng:
+    - *Danh sách nhận xe (Check-in):* Các đơn đặt xe có trạng thái `Cho_Nhan_Xe` chuẩn bị đến giờ giao.
+    - *Danh sách trả xe (Check-out):* Các đơn đặt xe đang trạng thái `Dang_Thue` hoặc `Qua_Han` cần thu hồi.
+  - Nút hành động nhanh: `[ Bàn giao (Check-in) ]` và `[ Nhận lại xe (Check-out) ]`.
 
----
+### 2.2. Màn hình Nghiệp vụ Giao xe (Check-in)
+- **Mục đích:** Ghi nhận hiện trạng xe thực tế lúc giao cho khách hàng và xác thực bằng lái vật lý.
+- **Thành phần giao diện:**
+  - Nhập mã đơn đặt xe (`Booking ID`).
+  - Ô nhập chỉ số ODO hiện tại của xe (cấm nhập số âm).
+  - Chọn mức xăng thực tế khi bàn giao (Đầy, 3/4, 1/2, 1/4, Gần hết).
+  - Nhập số lượng mũ bảo hiểm giao (mặc định là 2, giới hạn từ 0 - 2).
+  - Tùy chọn tích chọn `[ Có áo mưa ]`.
+  - Khối kiểm tra GPLX: Tích chọn `[ Phát hiện Khách Gian Lận GPLX ]` nếu khách cố tình mang GPLX giả hoặc không đúng thông tin. Hệ thống sẽ tự động hủy đơn, phạt 100% cọc và đưa khách hàng vào Blacklist.
+  - Nút bấm `[ Xác Nhận Check-in ]`.
 
-### 2.4. Phân hệ Nhân viên (Staff / Operation)
+### 2.3. Màn hình Nghiệp vụ Nhận xe & Quyết toán (Check-out)
+- **Mục đích:** Ghi nhận hiện trạng xe khi khách trả xe, tự động tính toán biểu phí phát sinh và xuất hóa đơn quyết toán.
+- **Thành phần giao diện:**
+  - Nhập mã đơn đặt xe (`Booking ID`).
+  - Ô nhập chỉ số ODO trả xe (chặn nhập nhỏ hơn ODO lúc nhận xe).
+  - Chọn mức xăng thực tế lúc thu hồi.
+  - Chọn số mũ bảo hiểm thu lại và tích chọn trạng thái thu lại áo mưa.
+  - Khối chi phí đền bù: Nhập số tiền phạt hư hại phát sinh (`PhiDenBuHuHai`) và ô bắt buộc nhập lý do phạt (`LyDoPhat`) nếu tiền đền bù $> 0$.
+  - *Hóa đơn quyết toán tự động:* Sau khi submit, hệ thống hiển thị bảng tính tiền chi tiết gồm: Tiền thuê gốc, phí trễ hạn (nếu có), phí đền bù phụ kiện mất (nếu thiếu mũ/áo mưa), phí đền bù hư hại xe. Hiển thị số tiền khách cần đóng thêm hoặc số tiền cửa hàng hoàn trả lại cho khách.
 
-#### Screen 10: Staff Dashboard
-*Trung tâm điều phối công việc hàng ngày của nhân viên tại quầy.*
-- **Header:** `Dashboard Quản lý`
-- **Tab Control:** `[ Cần Giao (Check-in) ]` | `[ Cần Thu (Check-out) ]`
-- **Danh sách Task:**
-  - Hiển thị danh sách khách hàng chuẩn bị tới nhận xe hoặc trả xe.
-  - Mỗi item có nút: `[ Tiến hành Check-in ]` hoặc `[ Tiến hành Check-out ]`.
-
-#### Screen 11: Form Bàn Giao / Thu Hồi (Check-in / Check-out Form)
-*Màn hình nghiệp vụ chính của nhân viên để ghi nhận thực tế.*
-- **Header:** `Biên bản Check-in` (hoặc Check-out)
-- **Thông tin Hợp đồng:** Mã đơn, Khách hàng, Tên xe, Biển số.
-- **Form nhập liệu thực tế (Bắt buộc):**
-  - `ODO hiện tại` (Nhập số km).
-  - `Mức xăng` (Chọn: E, 1/4, 1/2, 3/4, F).
-  - `Tình trạng ngoại quan` (Ghi chú vết xước, móp).
-  - `Ảnh chụp minh chứng` (Nút mở Camera chụp 4 góc xe).
-  - `Phụ kiện kèm theo` (Số Mũ bảo hiểm, Áo mưa).
-- **Nút hành động:** `[ XÁC NHẬN BÀN GIAO ]` / `[ TẠO QUYẾT TOÁN ]`
+### 2.4. Màn hình Duyệt GPLX Khách hàng (Staff GPLX Review)
+- **Mục đích:** Nhân viên thẩm định hình ảnh bằng lái xe của khách hàng gửi lên hệ thống.
+- **Thành phần giao diện:**
+  - Danh sách khách hàng đang chờ duyệt bằng lái (`Da_Upload`).
+  - Bảng so sánh thông tin: Họ tên, Số GPLX, ảnh chụp mặt trước và mặt sau bằng lái của khách hàng.
+  - Nút bấm duyệt nhanh: `[ Phê duyệt (Xác thực) ]` hoặc `[ Từ chối ]`. Nếu Từ chối, nhân viên phải nhập lý do để gửi thông báo cho khách hàng cập nhật lại.
 
 ---
 
-## 3. ĐỀ XUẤT NÂNG CẤP (UI/UX IMPROVEMENTS)
+## 3. PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN DASHBOARD)
 
-Dựa trên wireframe thô, để sản phẩm chuyên nghiệp hơn khi đưa vào lập trình (đặc biệt nếu dùng React Native / Flutter), nhóm nên bổ sung các yếu tố sau:
-1. **Empty States:** Cần thiết kế màn hình khi khách chưa có đơn thuê nào (Lịch sử trống) hoặc tìm kiếm không ra kết quả.
-2. **Micro-interactions:** Thêm hiệu ứng loading khi bấm thanh toán, hiệu ứng transition mượt mà khi vuốt xem ảnh xe ở màn hình Chi tiết.
-3. **Màu sắc & Typography:** 
-   - Primary Color: Xanh dương đậm (Tin cậy, công nghệ).
-   - Secondary Color: Cam (Nổi bật các nút Call-to-action như Đặt Xe).
-   - Font chữ: Inter hoặc Roboto để dễ đọc các thông số số liệu.
-4. **Giao diện chụp ảnh (Camera UI):** Ở màn hình 11 (Check-in), cần có Overlay hướng dẫn nhân viên chụp đúng các góc: Đầu xe, Đuôi xe, 2 Cạnh bên, Bảng đồng hồ ODO.
+Giao diện quản trị nâng cao (Desktop-first), cho phép quản lý toàn diện tài nguyên, biểu phí và nhân sự của hệ thống.
+
+### 3.1. Màn hình Báo cáo Thống kê (Admin Dashboard)
+- **Mục đích:** Cung cấp cái nhìn toàn cảnh về tình hình kinh doanh của cửa hàng.
+- **Thành phần giao diện:**
+  - Thẻ thông số tổng hợp (KPI Cards): Tổng doanh thu, Chi phí bảo dưỡng, Doanh thu thuần, Tổng số đầu xe, Lượng xe đang cho thuê, Lượng xe đang bảo dưỡng.
+  - Biểu đồ đường/cột biểu diễn xu hướng doanh thu theo tuần/tháng.
+  - Danh sách 10 đơn đặt xe mới nhất.
+
+### 3.2. Màn hình Quản lý Phương tiện (Motorbike Manager)
+- **Mục đích:** Quản lý danh mục xe máy trong cửa hàng (thêm mới, chỉnh sửa thông tin xe, cập nhật trạng thái).
+- **Thành phần giao diện:**
+  - Bảng danh sách xe máy: Mã xe, Biển số, Hãng xe, Dòng xe, Phân khối, Nhóm bằng lái yêu cầu (A1/A2), Đơn giá ngày và Trạng thái (`San_Sang`, `Dang_Thue`, `Dang_Bao_Duong`).
+  - Form thêm/sửa xe: Nhập chi tiết biển số, số khung, số máy, phân khối, giá thuê ngày, và upload ảnh xe.
+
+### 3.3. Màn hình Quản lý Khách hàng & Blacklist (Customer Manager)
+- **Mục đích:** Giám sát danh sách tài khoản khách hàng, lịch sử thuê xe và quản lý danh sách đen.
+- **Thành phần giao diện:**
+  - Danh sách khách hàng: ID, Họ tên, SĐT, Email, Nhóm xe được thuê, Trạng thái bằng lái.
+  - Nút hành động nhanh: `[ Khóa tài khoản ]` hoặc `[ Đưa vào Blacklist ]`. Khi đưa vào Blacklist, yêu cầu nhập lý do vi phạm (ví dụ: phá hỏng xe, nợ tiền quyết toán, gian lận bằng lái).
+
+### 3.4. Màn hình Quản lý Nhân viên (Staff Manager)
+- **Mục đích:** Cấp tài khoản và phân quyền cho nhân viên cửa hàng.
+- **Thành phần giao diện:**
+  - Danh sách nhân viên hiện tại gồm: Mã nhân viên, Họ tên, Email, Số điện thoại và Vai trò (Nhân viên, Admin).
+  - Nút thêm mới nhân viên: Điền Họ tên, Email, SĐT, lựa chọn vai trò phân quyền và nhập mật khẩu khởi tạo ban đầu.
+
+### 3.5. Màn hình Quản lý Bảo dưỡng (Maintenance Manager)
+- **Mục đích:** Ghi nhận lịch trình bảo dưỡng định kỳ và chi phí sửa chữa phương tiện.
+- **Thành phần giao diện:**
+  - Danh sách xe đang bảo dưỡng.
+  - Nút `[ Tạo phiếu bảo dưỡng ]`: Chọn xe máy cần bảo dưỡng, chọn ngày bảo dưỡng, nhập chi phí sửa chữa (cấm nhập số âm) và chi tiết các hạng mục bảo trì.
+
+### 3.6. Màn hình Thiết lập Cấu hình Hệ thống (Config Manager)
+- **Mục đích:** Điều chỉnh các thông số cấu hình biểu phí phạt và chính sách tăng giá.
+- **Thành phần giao diện:**
+  - *Số lần gia hạn tối đa:* Giới hạn số lần khách được tự gia hạn đơn trên App.
+  - *Đơn giá phạt trễ hạn theo giờ:* Phân biệt mức phạt xe thường (ví dụ: 30.000đ/giờ) và xe PKL (ví dụ: 50.000đ/giờ).
+  - *Đơn giá đền bù phụ kiện:* Phí đền bù làm mất mũ bảo hiểm hoặc làm mất áo mưa.
+  - *Hệ số tăng giá ngày lễ:* Tỷ lệ tăng giá tự động áp dụng vào các dịp lễ Tết (ví dụ: tăng 10% - 20%).
+  - Nút lưu cấu hình và cập nhật tức thì lên hệ thống tính toán.

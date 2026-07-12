@@ -41,6 +41,20 @@ export default function MotorbikeDetail() {
       setBookingError('Vui lòng chọn thời gian nhận và trả xe');
       return;
     }
+
+    const nhanDate = new Date(thoiGianNhan);
+    const traDate = new Date(thoiGianTra);
+    const now = new Date();
+
+    if (nhanDate < now) {
+      setBookingError('Thời gian nhận xe không được nằm trong quá khứ');
+      return;
+    }
+
+    if (traDate <= nhanDate) {
+      setBookingError('Thời gian trả xe phải sau thời gian nhận xe');
+      return;
+    }
     
     try {
       setBookingError('');

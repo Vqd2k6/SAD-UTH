@@ -38,6 +38,36 @@ export default function Profile() {
   };
 
   const handleUpdateProfile = async () => {
+    setProfileMessage('');
+    
+    // Validate name
+    if (hoTen.trim().length < 2) {
+      setProfileMessage('Họ tên phải từ 2 đến 100 ký tự');
+      return;
+    }
+    // Validate phone
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(soDienThoai.trim())) {
+      setProfileMessage('Số điện thoại phải gồm 10 chữ số bắt đầu bằng 0');
+      return;
+    }
+    // Validate email
+    if (email.trim()) {
+      const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+      if (!emailRegex.test(email.trim())) {
+        setProfileMessage('Email không đúng định dạng');
+        return;
+      }
+    }
+    // Validate CCCD
+    if (cccd.trim()) {
+      const cccdRegex = /^\d{12}$/;
+      if (!cccdRegex.test(cccd.trim())) {
+        setProfileMessage('CCCD phải gồm đúng 12 chữ số');
+        return;
+      }
+    }
+
     try {
       await api.put('/users/me', {
         HoTen: hoTen,
@@ -70,10 +100,19 @@ export default function Profile() {
   };
 
   const handleUpdateGPLX = async () => {
+    setMessage('');
     if (!hangGPLX || !soGPLX || !anhMatTruoc || !anhMatSau) {
       setMessage('Vui lòng điền đủ thông tin và upload đầy đủ ảnh');
       return;
     }
+
+    // Validate SoGPLX
+    const gplxRegex = /^\d{12}$/;
+    if (!gplxRegex.test(soGPLX.trim())) {
+      setMessage('Số GPLX phải gồm đúng 12 chữ số');
+      return;
+    }
+
     try {
       await api.put('/users/me/gplx', {
         HangGPLXKhaiBao: hangGPLX,

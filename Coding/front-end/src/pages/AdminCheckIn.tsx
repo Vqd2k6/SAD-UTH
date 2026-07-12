@@ -26,14 +26,27 @@ const AdminCheckIn: React.FC = () => {
     e.preventDefault();
     if (!maBooking) return;
     
+    // Validate ODO
+    const odo = Number(checkInData.ODONhan);
+    if (isNaN(odo) || odo < 0) {
+      setError('Chỉ số ODO nhận không được âm');
+      return;
+    }
+    // Validate Helmet count
+    const helmets = Number(checkInData.SoMuBaoHiemGiao);
+    if (isNaN(helmets) || helmets < 0 || helmets > 2) {
+      setError('Số mũ bảo hiểm bàn giao phải từ 0 đến 2');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
     try {
       const res = await api.post(`/staff/bookings/${maBooking}/check-in`, {
         ...checkInData,
-        ODONhan: Number(checkInData.ODONhan),
-        SoMuBaoHiemGiao: Number(checkInData.SoMuBaoHiemGiao)
+        ODONhan: odo,
+        SoMuBaoHiemGiao: helmets
       });
       setSuccess(res.data.message);
     } catch (err: any) {

@@ -28,6 +28,30 @@ const AdminCheckOut: React.FC = () => {
     e.preventDefault();
     if (!maBooking) return;
     
+    // Validate ODO
+    const odo = Number(checkOutData.ODOTra);
+    if (isNaN(odo) || odo < 0) {
+      setError('Chỉ số ODO trả không được âm');
+      return;
+    }
+    // Validate Helmet count
+    const helmets = Number(checkOutData.SoMuBaoHiemTra);
+    if (isNaN(helmets) || helmets < 0 || helmets > 2) {
+      setError('Số mũ bảo hiểm thu về phải từ 0 đến 2');
+      return;
+    }
+    // Validate Damage fee
+    const damageFee = Number(checkOutData.PhiDenBuHuHai);
+    if (isNaN(damageFee) || damageFee < 0) {
+      setError('Phí đền bù hư hại không được âm');
+      return;
+    }
+    // Validate Reason if fee > 0
+    if (damageFee > 0 && !checkOutData.LyDoPhat.trim()) {
+      setError('Vui lòng nhập lý do đền bù hư hại');
+      return;
+    }
+
     setLoading(true);
     setError('');
     setSuccess('');
@@ -35,9 +59,9 @@ const AdminCheckOut: React.FC = () => {
     try {
       const res = await api.post(`/staff/bookings/${maBooking}/check-out`, {
         ...checkOutData,
-        ODOTra: Number(checkOutData.ODOTra),
-        SoMuBaoHiemTra: Number(checkOutData.SoMuBaoHiemTra),
-        PhiDenBuHuHai: Number(checkOutData.PhiDenBuHuHai)
+        ODOTra: odo,
+        SoMuBaoHiemTra: helmets,
+        PhiDenBuHuHai: damageFee
       });
       setSuccess(res.data.message);
       setResult(res.data);

@@ -24,21 +24,21 @@ def get_statistics(
     stmt_revenue = select(func.sum(HopDongBooking.TongThanhToan)).where(
         HopDongBooking.TrangThaiBooking.in_(completed_statuses)
     )
-    total_revenue = db.exec(stmt_revenue).first() or 0
+    total_revenue = float(db.exec(stmt_revenue).first() or 0)
 
     # Revenue this week
     stmt_week = select(func.sum(HopDongBooking.TongThanhToan)).where(
         HopDongBooking.TrangThaiBooking.in_(completed_statuses),
         HopDongBooking.NgayCapNhat >= week_start,
     )
-    revenue_week = db.exec(stmt_week).first() or 0
+    revenue_week = float(db.exec(stmt_week).first() or 0)
 
     # Revenue this month
     stmt_month = select(func.sum(HopDongBooking.TongThanhToan)).where(
         HopDongBooking.TrangThaiBooking.in_(completed_statuses),
         HopDongBooking.NgayCapNhat >= month_start,
     )
-    revenue_month = db.exec(stmt_month).first() or 0
+    revenue_month = float(db.exec(stmt_month).first() or 0)
 
     # Bookings this week
     stmt_bookings_week = select(func.count(HopDongBooking.MaBooking)).where(
@@ -64,7 +64,7 @@ def get_statistics(
 
     # Maintenance cost
     stmt_maintenance = select(func.sum(BaoDuong.ChiPhi))
-    total_maintenance_cost = db.exec(stmt_maintenance).first() or 0
+    total_maintenance_cost = float(db.exec(stmt_maintenance).first() or 0)
     
     # Net revenue
     net_revenue = total_revenue - total_maintenance_cost

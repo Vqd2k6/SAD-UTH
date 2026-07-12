@@ -3,7 +3,7 @@ import urllib.parse
 import json
 
 data = urllib.parse.urlencode({"username": "admin@kthp.com", "password": "admin123"}).encode("utf-8")
-req = urllib.request.Request("http://localhost:8000/api/auth/login", data=data)
+req = urllib.request.Request("http://localhost:8000/api/auth/login/admin", data=data)
 with urllib.request.urlopen(req) as response:
     res = json.loads(response.read().decode())
     token = res.get("access_token")

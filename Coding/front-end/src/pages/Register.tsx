@@ -23,8 +23,46 @@ const Register: React.FC = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
+    
+    // Validate name
+    if (formData.HoTen.trim().length < 2) {
+      setError('Họ tên phải từ 2 đến 100 ký tự');
+      return;
+    }
+    // Validate phone
+    const phoneRegex = /^0\d{9}$/;
+    if (!phoneRegex.test(formData.SoDienThoai.trim())) {
+      setError('Số điện thoại phải gồm 10 chữ số bắt đầu bằng 0');
+      return;
+    }
+    // Validate email
+    if (formData.Email.trim()) {
+      const emailRegex = /^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$/;
+      if (!emailRegex.test(formData.Email.trim())) {
+        setError('Email không đúng định dạng');
+        return;
+      }
+    }
+    // Validate password
+    if (formData.MatKhau.length < 6) {
+      setError('Mật khẩu phải chứa ít nhất 6 ký tự');
+      return;
+    }
+    if (formData.MatKhau.length > 72) {
+      setError('Mật khẩu không được vượt quá 72 ký tự');
+      return;
+    }
+    // Validate CCCD
+    if (formData.CCCD.trim()) {
+      const cccdRegex = /^\d{12}$/;
+      if (!cccdRegex.test(formData.CCCD.trim())) {
+        setError('CCCD phải gồm đúng 12 chữ số');
+        return;
+      }
+    }
+
+    setLoading(true);
     
     // Convert 'Khong' to null for API
     const submitData = {

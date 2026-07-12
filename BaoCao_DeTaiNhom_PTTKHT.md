@@ -17,7 +17,9 @@
 
 5. [CHƯƠNG 5: PHÂN TÍCH & THIẾT KẾ HƯỚNG ĐỐI TƯỢNG (CLASS & SEQUENCE DIAGRAMS)](#chương-5-phân-tích--thiết-kế-hướng-đối-tượng-class--sequence-diagrams)
 
-6. [CHƯƠNG 6: ĐÁNH GIÁ & TỔNG KẾT (FEEDBACK & EVALUATION)](#chương-6-đánh-giá--tổng-kết-feedback--evaluation)
+6. [CHƯƠNG 6: GIAO DIỆN NGƯỜI DÙNG & KIẾN TRÚC HỆ THỐNG (UI & SYSTEM ARCHITECTURE)](#chương-6-giao-diện-người-dùng--kiến-trúc-hệ-thống-ui--system-architecture)
+
+7. [CHƯƠNG 7: ĐÁNH GIÁ & TỔNG KẾT (FEEDBACK & EVALUATION)](#chương-7-đánh-giá--tổng-kết-feedback--evaluation)
 
 
 ---
@@ -4042,7 +4044,299 @@ sequenceDiagram
 ---
 
 
-# CHƯƠNG 6: ĐÁNH GIÁ & TỔNG KẾT (FEEDBACK & EVALUATION)
+# CHƯƠNG 6: GIAO DIỆN NGƯỜI DÙNG & KIẾN TRÚC HỆ THỐNG (UI & SYSTEM ARCHITECTURE)
+
+
+Chương này trình bày chi tiết đặc tả giao diện (UI) của 3 vai trò trong hệ thống và kiến trúc kỹ thuật chi tiết của hệ thống SmartRental.
+
+
+Tài liệu này đặc tả chi tiết cấu trúc, luồng hoạt động và các thành phần giao diện của ứng dụng **SmartRental** cho cả 3 vai trò (Roles) tương ứng với mã nguồn thực tế: **Khách hàng (Customer)**, **Nhân viên (Staff)** và **Quản trị viên (Admin)**.
+
+---
+
+## 1. PHÂN HỆ KHÁCH HÀNG (CUSTOMER APP)
+
+Được thiết kế dưới dạng ứng dụng di động tối ưu hiển thị, tập trung vào trải nghiệm đặt xe mượt mà và cá nhân hóa.
+
+### 1.1. Màn hình Đăng ký / Đăng nhập (Register / Login)
+- **Mục đích:** Xác thực danh tính khách hàng trước khi sử dụng hệ thống.
+- **Thành phần giao diện:**
+  - *Đăng ký (`Register.tsx`):* Họ tên (yêu cầu $\ge 2$ ký tự), Email (regex kiểm tra định dạng), Số điện thoại (10 chữ số bắt đầu bằng `0`), Mật khẩu ($\ge 6$ ký tự), CCCD (12 chữ số) và Hạng bằng lái xe khai báo (A1, A2, Không có).
+  - *Đăng nhập (`Login.tsx`):* Nhập Email/Số điện thoại và Mật khẩu. Có nút điều hướng đăng ký tài khoản mới.
+- **Ràng buộc UI (Validation):** Chặn submit và báo lỗi đỏ ngay tại form nếu nhập sai định dạng.
+
+### 1.2. Màn hình Tìm kiếm & Lọc xe (Search & Filter)
+- **Mục đích:** Giúp khách hàng tìm kiếm xe máy phù hợp theo nhu cầu và thời gian.
+- **Thành phần giao diện:**
+  - *Thanh tìm kiếm:* Tìm theo tên xe hoặc hãng xe.
+  - *Bộ lọc phân loại:* Tabs/Chips lọc nhanh: Xe Ga, Xe Số, Xe Côn, Xe phân khối lớn (PKL).
+  - *Danh sách xe:* Hiển thị dưới dạng thẻ (Card) bao gồm hình ảnh xe, tên xe, phân khối (cc), đơn giá/ngày và trạng thái xe (`San_Sang`, `Dang_Thue`, `Dang_Bao_Duong`).
+  - *Bộ lọc thời gian:* Chọn ngày nhận và trả dự kiến để lọc các xe còn trống.
+
+### 1.3. Màn hình Chi tiết Xe & Đặt xe (Motorbike Detail)
+- **Mục đích:** Xem thông số kỹ thuật chi tiết của xe, nhận xét từ khách khác và tiến hành đặt xe.
+- **Thành phần giao diện:**
+  - *Thông tin xe:* Hình ảnh xe lớn, Hãng xe, Dòng xe, Phân khối, ODO hiện tại và giá thuê ngày.
+  - *Quy định & Bảng phí đền bù:* Hiển thị rõ các quy định sử dụng, mức phạt trễ hạn, và đền bù nếu làm mất mũ bảo hiểm/áo mưa.
+  - *Khối đặt xe:* Ô nhập ngày giờ nhận/trả xe (Datetime-local). Nút bấm `[ Xác nhận Đặt xe ]`.
+  - *Danh sách đánh giá:* Hiển thị danh sách đánh giá từ các khách hàng trước (số sao và nội dung).
+- **Ràng buộc UI (Validation):** Cấm chọn thời gian nhận trong quá khứ và thời gian trả trước thời gian nhận.
+
+### 1.4. Màn hình Quản lý Đơn đặt & Lịch sử Thuê (My Bookings)
+- **Mục đích:** Theo dõi trạng thái đơn đặt xe hiện tại, thanh toán cọc và thực hiện các yêu cầu phát sinh.
+- **Thành phần giao diện:**
+  - *Danh sách đơn:* Phân chia theo trạng thái (Chờ thanh toán cọc, Chờ nhận xe, Đang thuê, Hoàn tất, Đã hủy).
+  - *Chi tiết đơn:* Hiển thị mã đơn (`Booking ID`), biển số xe, tổng tiền, tiền cọc.
+  - *Nút hành động theo ngữ cảnh:*
+    - Nút `[ Thanh toán cọc ]` (chuyển qua giao diện mô phỏng Payment Gateway).
+    - Nút `[ Hủy đơn ]` (chỉ khả dụng khi chưa nhận xe, kèm thông báo về tỷ lệ hoàn cọc).
+    - Nút `[ Yêu cầu trả sớm ]` / `[ Yêu cầu gia hạn ]` (khi đang trong quá trình thuê xe).
+    - Nút `[ Đánh giá chuyến đi ]` (khi đơn đã hoàn tất).
+
+### 1.5. Màn hình Hồ sơ & Xác thực GPLX (Profile)
+- **Mục đích:** Quản lý thông tin tài khoản và tải lên hình ảnh GPLX để được cấp quyền thuê xe.
+- **Thành phần giao diện:**
+  - *Thông tin cá nhân:* Sửa Họ tên, SĐT, Email, CCCD, Địa chỉ.
+  - *Cập nhật GPLX:* Chọn Hạng GPLX (A1/A2), nhập Số GPLX (12 chữ số) và nút upload ảnh Mặt trước / Mặt sau GPLX.
+  - *Trạng thái hồ sơ:* Hiển thị trạng thái duyệt GPLX (`Khong_Dang_Ky`, `Da_Upload` - Chờ duyệt, `Da_Xac_Thuc`, `Tu_Choi`).
+
+---
+
+## 2. PHÂN HỆ NHÂN VIÊN (STAFF DASHBOARD)
+
+Được tối ưu giao diện web-responsive, phục vụ các tác vụ xử lý trực tiếp tại quầy và thẩm định hồ sơ của khách.
+
+### 2.1. Màn hình Danh sách công việc (Staff Worklist / Dashboard)
+- **Mục đích:** Trung tâm điều phối công việc hàng ngày của nhân viên cửa hàng.
+- **Thành phần giao diện:**
+  - Chia làm 2 danh sách rõ ràng:
+    - *Danh sách nhận xe (Check-in):* Các đơn đặt xe có trạng thái `Cho_Nhan_Xe` chuẩn bị đến giờ giao.
+    - *Danh sách trả xe (Check-out):* Các đơn đặt xe đang trạng thái `Dang_Thue` hoặc `Qua_Han` cần thu hồi.
+  - Nút hành động nhanh: `[ Bàn giao (Check-in) ]` và `[ Nhận lại xe (Check-out) ]`.
+
+### 2.2. Màn hình Nghiệp vụ Giao xe (Check-in)
+- **Mục đích:** Ghi nhận hiện trạng xe thực tế lúc giao cho khách hàng và xác thực bằng lái vật lý.
+- **Thành phần giao diện:**
+  - Nhập mã đơn đặt xe (`Booking ID`).
+  - Ô nhập chỉ số ODO hiện tại của xe (cấm nhập số âm).
+  - Chọn mức xăng thực tế khi bàn giao (Đầy, 3/4, 1/2, 1/4, Gần hết).
+  - Nhập số lượng mũ bảo hiểm giao (mặc định là 2, giới hạn từ 0 - 2).
+  - Tùy chọn tích chọn `[ Có áo mưa ]`.
+  - Khối kiểm tra GPLX: Tích chọn `[ Phát hiện Khách Gian Lận GPLX ]` nếu khách cố tình mang GPLX giả hoặc không đúng thông tin. Hệ thống sẽ tự động hủy đơn, phạt 100% cọc và đưa khách hàng vào Blacklist.
+  - Nút bấm `[ Xác Nhận Check-in ]`.
+
+### 2.3. Màn hình Nghiệp vụ Nhận xe & Quyết toán (Check-out)
+- **Mục đích:** Ghi nhận hiện trạng xe khi khách trả xe, tự động tính toán biểu phí phát sinh và xuất hóa đơn quyết toán.
+- **Thành phần giao diện:**
+  - Nhập mã đơn đặt xe (`Booking ID`).
+  - Ô nhập chỉ số ODO trả xe (chặn nhập nhỏ hơn ODO lúc nhận xe).
+  - Chọn mức xăng thực tế lúc thu hồi.
+  - Chọn số mũ bảo hiểm thu lại và tích chọn trạng thái thu lại áo mưa.
+  - Khối chi phí đền bù: Nhập số tiền phạt hư hại phát sinh (`PhiDenBuHuHai`) và ô bắt buộc nhập lý do phạt (`LyDoPhat`) nếu tiền đền bù $> 0$.
+  - *Hóa đơn quyết toán tự động:* Sau khi submit, hệ thống hiển thị bảng tính tiền chi tiết gồm: Tiền thuê gốc, phí trễ hạn (nếu có), phí đền bù phụ kiện mất (nếu thiếu mũ/áo mưa), phí đền bù hư hại xe. Hiển thị số tiền khách cần đóng thêm hoặc số tiền cửa hàng hoàn trả lại cho khách.
+
+### 2.4. Màn hình Duyệt GPLX Khách hàng (Staff GPLX Review)
+- **Mục đích:** Nhân viên thẩm định hình ảnh bằng lái xe của khách hàng gửi lên hệ thống.
+- **Thành phần giao diện:**
+  - Danh sách khách hàng đang chờ duyệt bằng lái (`Da_Upload`).
+  - Bảng so sánh thông tin: Họ tên, Số GPLX, ảnh chụp mặt trước và mặt sau bằng lái của khách hàng.
+  - Nút bấm duyệt nhanh: `[ Phê duyệt (Xác thực) ]` hoặc `[ Từ chối ]`. Nếu Từ chối, nhân viên phải nhập lý do để gửi thông báo cho khách hàng cập nhật lại.
+
+---
+
+## 3. PHÂN HỆ QUẢN TRỊ VIÊN (ADMIN DASHBOARD)
+
+Giao diện quản trị nâng cao (Desktop-first), cho phép quản lý toàn diện tài nguyên, biểu phí và nhân sự của hệ thống.
+
+### 3.1. Màn hình Báo cáo Thống kê (Admin Dashboard)
+- **Mục đích:** Cung cấp cái nhìn toàn cảnh về tình hình kinh doanh của cửa hàng.
+- **Thành phần giao diện:**
+  - Thẻ thông số tổng hợp (KPI Cards): Tổng doanh thu, Chi phí bảo dưỡng, Doanh thu thuần, Tổng số đầu xe, Lượng xe đang cho thuê, Lượng xe đang bảo dưỡng.
+  - Biểu đồ đường/cột biểu diễn xu hướng doanh thu theo tuần/tháng.
+  - Danh sách 10 đơn đặt xe mới nhất.
+
+### 3.2. Màn hình Quản lý Phương tiện (Motorbike Manager)
+- **Mục đích:** Quản lý danh mục xe máy trong cửa hàng (thêm mới, chỉnh sửa thông tin xe, cập nhật trạng thái).
+- **Thành phần giao diện:**
+  - Bảng danh sách xe máy: Mã xe, Biển số, Hãng xe, Dòng xe, Phân khối, Nhóm bằng lái yêu cầu (A1/A2), Đơn giá ngày và Trạng thái (`San_Sang`, `Dang_Thue`, `Dang_Bao_Duong`).
+  - Form thêm/sửa xe: Nhập chi tiết biển số, số khung, số máy, phân khối, giá thuê ngày, và upload ảnh xe.
+
+### 3.3. Màn hình Quản lý Khách hàng & Blacklist (Customer Manager)
+- **Mục đích:** Giám sát danh sách tài khoản khách hàng, lịch sử thuê xe và quản lý danh sách đen.
+- **Thành phần giao diện:**
+  - Danh sách khách hàng: ID, Họ tên, SĐT, Email, Nhóm xe được thuê, Trạng thái bằng lái.
+  - Nút hành động nhanh: `[ Khóa tài khoản ]` hoặc `[ Đưa vào Blacklist ]`. Khi đưa vào Blacklist, yêu cầu nhập lý do vi phạm (ví dụ: phá hỏng xe, nợ tiền quyết toán, gian lận bằng lái).
+
+### 3.4. Màn hình Quản lý Nhân viên (Staff Manager)
+- **Mục đích:** Cấp tài khoản và phân quyền cho nhân viên cửa hàng.
+- **Thành phần giao diện:**
+  - Danh sách nhân viên hiện tại gồm: Mã nhân viên, Họ tên, Email, Số điện thoại và Vai trò (Nhân viên, Admin).
+  - Nút thêm mới nhân viên: Điền Họ tên, Email, SĐT, lựa chọn vai trò phân quyền và nhập mật khẩu khởi tạo ban đầu.
+
+### 3.5. Màn hình Quản lý Bảo dưỡng (Maintenance Manager)
+- **Mục đích:** Ghi nhận lịch trình bảo dưỡng định kỳ và chi phí sửa chữa phương tiện.
+- **Thành phần giao diện:**
+  - Danh sách xe đang bảo dưỡng.
+  - Nút `[ Tạo phiếu bảo dưỡng ]`: Chọn xe máy cần bảo dưỡng, chọn ngày bảo dưỡng, nhập chi phí sửa chữa (cấm nhập số âm) và chi tiết các hạng mục bảo trì.
+
+### 3.6. Màn hình Thiết lập Cấu hình Hệ thống (Config Manager)
+- **Mục đích:** Điều chỉnh các thông số cấu hình biểu phí phạt và chính sách tăng giá.
+- **Thành phần giao diện:**
+  - *Số lần gia hạn tối đa:* Giới hạn số lần khách được tự gia hạn đơn trên App.
+  - *Đơn giá phạt trễ hạn theo giờ:* Phân biệt mức phạt xe thường (ví dụ: 30.000đ/giờ) và xe PKL (ví dụ: 50.000đ/giờ).
+  - *Đơn giá đền bù phụ kiện:* Phí đền bù làm mất mũ bảo hiểm hoặc làm mất áo mưa.
+  - *Hệ số tăng giá ngày lễ:* Tỷ lệ tăng giá tự động áp dụng vào các dịp lễ Tết (ví dụ: tăng 10% - 20%).
+  - Nút lưu cấu hình và cập nhật tức thì lên hệ thống tính toán.
+
+
+---
+
+
+Tài liệu này mô tả chi tiết kiến trúc phần mềm, cấu trúc thư mục, các công nghệ sử dụng và các cơ chế bảo mật/tối ưu hóa của hệ thống cho thuê xe máy **SmartRental**.
+
+---
+
+## 1. TỔNG QUAN KIẾN TRÚC (ARCHITECTURE OVERVIEW)
+
+Hệ thống được thiết kế theo mô hình **Client-Server** truyền thống, chia tách độc lập phần giao diện (Frontend) và phần xử lý logic/cơ sở dữ liệu (Backend) thông qua chuẩn giao tiếp **RESTful API**.
+
+```mermaid
+graph TD
+    subgraph Client ["Client Side (Frontend)"]
+        FE[React Single Page Application]
+        Router[React Router v7]
+        AxiosClient[Axios API Client with JWT Interceptor]
+        UI[Material-UI & TailwindCSS]
+    end
+
+    subgraph Server ["Server Side (Backend)"]
+        API[FastAPI Router]
+        Security[JWT Auth & Password Hashing]
+        Pydantic[Pydantic Input Validation]
+        ORM[SQLModel / SQLAlchemy ORM]
+    end
+
+    subgraph DB ["Database Layer"]
+        Postgres[(PostgreSQL Database)]
+    end
+
+    FE <--> |JSON / HTTPS| API
+    API <--> ORM
+    ORM <--> Postgres
+```
+
+---
+
+## 2. CÔNG NGHỆ & THƯ VIỆN SỬ DỤNG (TECHNOLOGY STACK)
+
+### 2.1. Phân hệ Giao diện (Frontend)
+- **Core Framework:** React 19 & TypeScript (đảm bảo tính chặt chẽ về mặt kiểu dữ liệu ở Client).
+- **Build Tool:** Vite 8 (tối ưu tốc độ dev server và đóng gói sản phẩm).
+- **Styling:** TailwindCSS (cho bố cục linh hoạt và tiện dụng) phối hợp với Material-UI (MUI v9) để cung cấp các component giao diện đồng bộ, chuyên nghiệp.
+- **Routing:** React Router v7 để quản lý chuyển trang Single Page App và phân quyền truy cập router.
+- **HTTP Client:** Axios (cấu hình interceptor để tự động chèn JWT token vào header `Authorization`).
+
+### 2.2. Phân hệ Máy chủ (Backend)
+- **Core Framework:** FastAPI (Python 3.9+) - mang lại hiệu năng cao nhờ hỗ trợ non-blocking Asynchronous (async/await) và tự động tạo tài liệu OpenAPI (Swagger).
+- **ORM & Validation:** SQLModel (kết hợp sức mạnh của SQLAlchemy ORM để truy vấn DB và Pydantic v2 để tự động xác thực/kiểm duyệt dữ liệu đầu vào).
+- **Database:** PostgreSQL (hệ quản trị cơ sở dữ liệu quan hệ mạnh mẽ, đảm bảo tính toàn vẹn dữ liệu ACID).
+- **Database Driver:** `psycopg2` kết nối trực tiếp với Postgres.
+
+---
+
+## 3. CẤU TRÚC THƯ MỤC DỰ ÁN (FOLDER STRUCTURE)
+
+### 3.1. Cấu trúc Backend (`Coding/back-end/`)
+```text
+back-end/
+├── app/
+│   ├── api/                  # Các router định nghĩa API Endpoints
+│   │   ├── auth.py           # Xác thực, đăng ký, đăng nhập
+│   │   ├── bookings.py       # Quản lý đặt xe của khách hàng
+│   │   ├── config.py         # Thiết lập biểu phí của Admin
+│   │   ├── dashboard.py      # Thống kê số liệu doanh thu Admin
+│   │   ├── deps.py           # Dependency Injection (Auth, Database Session)
+│   │   ├── motorbikes.py     # Quản lý danh mục xe máy
+│   │   ├── ratings.py        # Quản lý đánh giá sao
+│   │   └── staff.py          # Nghiệp vụ của Staff (Check-in, Check-out, Duyệt GPLX)
+│   ├── core/
+│   │   └── security.py       # Hash mật khẩu (Bcrypt) và sinh JWT Token
+│   ├── database.py           # Thiết lập kết nối engine và session PostgreSQL
+│   ├── models.py             # Định nghĩa Database Models (SQLModel)
+│   ├── schemas.py            # Định nghĩa Pydantic Schemas & Validators
+│   └── main.py               # Khởi tạo ứng dụng FastAPI và thiết lập CORS
+├── fix_enum.py               # Script di trú (migration) cập nhật Enum PostgreSQL
+├── test_api.py               # Script test tích hợp API tự động
+└── requirements.txt          # Khai báo các thư viện Python cần dùng
+```
+
+### 3.2. Cấu trúc Frontend (`Coding/front-end/`)
+```text
+front-end/
+├── src/
+│   ├── components/           # Các component UI tái sử dụng (Navbar, ProtectedRoute)
+│   ├── pages/                # Các trang giao diện ứng với 3 vai trò
+│   │   ├── Login.tsx         # Trang đăng nhập chung cho cả 3 vai trò
+│   │   ├── Register.tsx      # Form đăng ký của Khách hàng
+│   │   ├── Search.tsx        # Trang chủ tìm kiếm và lọc xe của Khách
+│   │   ├── MotorbikeDetail.tsx # Chi tiết xe và form đặt xe
+│   │   ├── Profile.tsx       # Cập nhật thông tin và upload GPLX của Khách
+│   │   ├── MyBookings.tsx    # Danh sách đơn hàng, thanh toán cọc và đánh giá
+│   │   ├── StaffWorklist.tsx # Danh sách việc cần giao/nhận của Nhân viên
+│   │   ├── AdminCheckIn.tsx  # Giao diện bàn giao xe (Check-in)
+│   │   ├── AdminCheckOut.tsx # Giao diện nhận lại xe & quyết toán (Check-out)
+│   │   ├── StaffGPLXReview.tsx # Giao diện nhân viên duyệt GPLX
+│   │   ├── AdminDashboard.tsx # Báo cáo số liệu doanh thu trực quan cho Admin
+│   │   ├── MotorbikeManager.tsx # Admin quản lý danh sách xe máy
+│   │   ├── CustomerManager.tsx  # Admin quản lý khách hàng & Blacklist
+│   │   ├── StaffManager.tsx     # Admin quản lý nhân viên cửa hàng
+│   │   ├── MaintenanceManager.tsx # Admin quản lý lịch trình bảo dưỡng xe
+│   │   └── ConfigManager.tsx    # Admin cấu hình biểu phí phạt hệ thống
+│   ├── services/
+│   │   └── api.ts            # Khởi tạo Axios instance & gắn JWT token tự động
+│   ├── App.tsx               # Cấu hình Routing và phân quyền route
+│   ├── index.css             # Thiết lập CSS nền tảng (Tailwind)
+│   └── main.tsx              # Điểm khởi chạy ứng dụng React
+```
+
+---
+
+## 4. CƠ CHẾ BẢO MẬT & PHÂN QUYỀN (SECURITY & AUTHORIZATION)
+
+### 4.1. Mã hóa mật khẩu (Password Hashing)
+Hệ thống sử dụng thuật toán **Bcrypt** để băm mật khẩu khách hàng và nhân viên trước khi lưu xuống cơ sở dữ liệu. Mật khẩu lưu trữ dưới dạng text băm một chiều không thể giải mã ngược, ngăn ngừa rò rỉ thông tin ngay cả khi cơ sở dữ liệu bị truy cập trái phép.
+
+### 4.2. Xác thực và phân quyền dựa trên Token (JWT Authentication)
+- Sau khi đăng nhập thành công, máy chủ sinh ra một chuỗi **JWT Token** (chứa thông tin mã định danh và vai trò của tài khoản) có thời hạn hiệu lực.
+- Frontend lưu token này vào `localStorage` và tự động đính kèm vào tiêu đề `Authorization: Bearer <Token>` trong tất cả các request gửi đến Backend.
+- Backend sử dụng cơ chế **Dependency Injection** của FastAPI để xác thực chữ ký token và kiểm tra quyền truy cập (Authorization) cho từng endpoint:
+  - `@router.post` đặt xe $\to$ Yêu cầu quyền `Khach_Hang`.
+  - `@router.post` check-in/check-out $\to$ Yêu cầu quyền `Nhan_Vien` hoặc `Admin`.
+  - `@router.put` cấu hình hệ thống $\to$ Bắt buộc quyền `Admin`.
+
+---
+
+## 5. CƠ CHẾ TỐI ƯU HÓA DỮ LIỆU & TRANSACTION
+
+### 5.1. Chống lỗi Race-Condition khi đặt xe trùng lịch (Row-Level Locking)
+Để giải quyết bài toán hai khách hàng đặt cùng một chiếc xe máy tại cùng một khoảng thời gian trùng nhau:
+- Backend thực hiện khóa dòng dữ liệu của chiếc xe máy đó trong cơ sở dữ liệu thông qua chỉ thị `with_for_update()` trong SQL:
+  ```python
+  stmt_xe = select(XeMay).where(XeMay.MaXe == booking_in.MaXe).with_for_update()
+  ```
+- Tiến trình đặt xe thứ hai sẽ bị chặn lại cho đến khi transaction của tiến trình thứ nhất hoàn tất. Lúc này hệ thống kiểm tra lại lịch trùng và từ chối đặt xe thứ hai một cách an toàn.
+
+### 5.2. Chuẩn hóa cơ sở dữ liệu (Database Normalization)
+Cơ sở dữ liệu được thiết kế đạt chuẩn **3NF**:
+- Các thuộc tính trùng lặp được tách thành các bảng danh mục tham chiếu (ví dụ: `DM_LoaiXe`, `DM_NhomXe`).
+- Các chi phí phạt và hóa đơn phát sinh được tách thành bảng riêng biệt (`Hoa_Don_Quyet_Toan`), liên kết thông qua khóa ngoại (`MaBooking`).
+- Sử dụng các chỉ mục (Indexes) trên các cột được truy vấn thường xuyên như biển số xe (`BienSoXe`) và thời gian nhận/trả để tối ưu hóa tốc độ tìm kiếm phương tiện.
+
+
+---
+
+
+# CHƯƠNG 7: ĐÁNH GIÁ & TỔNG KẾT (FEEDBACK & EVALUATION)
 
 
 Chương này tổng kết các phản biện về mặt kiến trúc hệ thống, các cải tiến thực hiện dựa trên ý kiến đóng góp và định hướng phát triển tương lai.

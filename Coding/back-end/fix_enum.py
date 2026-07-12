@@ -15,6 +15,11 @@ def fix():
             print("Added Tu_Choi")
         except Exception as e:
             print("Already exists or error:", e)
+        try:
+            conn.execute(text("ALTER TYPE trangthaibookingenum ADD VALUE 'Khong_Den_Nhan_Xe'"))
+            print("Added Khong_Den_Nhan_Xe")
+        except Exception as e:
+            print("Already exists or error:", e)
 
 if __name__ == "__main__":
     fix()
