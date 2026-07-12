@@ -50,8 +50,8 @@
 | `MaKhachHang` | VARCHAR(10) | **FK** → D3.MaKhachHang, NOT NULL | Khách hàng đặt xe |
 | `MaXe` | VARCHAR(10) | **FK** → D1.MaXe, NOT NULL | Xe máy được đặt |
 | `ThoiGianNhan` | DATETIME | NOT NULL | Thời gian hẹn nhận xe |
-| `ThoiGianTra` | DATETIME | NOT NULL | Thời gian hẹn trả xe (cập nhật khi gia hạn) |
-| `ThoiGianTraGoc` | DATETIME | NOT NULL | Thời gian trả xe ban đầu (không thay đổi khi gia hạn) |
+| `ThoiGianTra` | DATETIME | NOT NULL, CHECK (ThoiGianTra > ThoiGianNhan) | Thời gian hẹn trả xe (cập nhật khi gia hạn) |
+| `ThoiGianTraGoc` | DATETIME | NOT NULL, CHECK (ThoiGianTraGoc >= ThoiGianNhan) | Thời gian trả xe ban đầu (không thay đổi khi gia hạn) |
 | `SoNgayThue` | INT | NOT NULL | Tổng số ngày thuê (bao gồm gia hạn) |
 | `SoNgayThueGoc` | INT | NOT NULL | Số ngày thuê ban đầu |
 | `TrangThaiBooking`| VARCHAR(20) | ENUM(Cho_Thanh_Toan_Coc, Cho_Nhan_Xe, Dang_Thue,...) | Mặc định `Cho_Thanh_Toan_Coc` |
@@ -70,22 +70,22 @@
 |------------|--------------|-----------|-------|
 | `MaHoaDon` | VARCHAR(15) | **PK**, NOT NULL, UNIQUE | Mã hóa đơn |
 | `MaBooking` | VARCHAR(15) | **FK** → D2.MaBooking, UNIQUE | Đơn booking gốc |
-| `DonGiaApDung` | DECIMAL(12,0) | NOT NULL | Đơn giá ngày áp dụng (đã tính Dynamic Pricing) |
-| `TongTienThue` | DECIMAL(15,0) | NOT NULL | Tổng tiền thuê gốc (chưa phụ phí/giảm giá) |
-| `PhanTramGiamGia` | DECIMAL(4,1) | DEFAULT `0` | % giảm giá thuê dài ngày |
-| `TienGiamGia` | DECIMAL(15,0) | DEFAULT `0` | Số tiền giảm giá (VND) |
-| `PhanTramTangGia` | DECIMAL(4,1) | DEFAULT `0` | % tăng giá Dynamic Pricing |
-| `TienTangGia` | DECIMAL(15,0) | DEFAULT `0` | Số tiền tăng giá Dynamic Pricing (VND) |
-| `TienCoc` | DECIMAL(15,0) | NOT NULL | Tiền đặt cọc khách đã thanh toán |
+| `DonGiaApDung` | DECIMAL(12,0) | NOT NULL, CHECK (DonGiaApDung >= 0) | Đơn giá ngày áp dụng (đã tính Dynamic Pricing) |
+| `TongTienThue` | DECIMAL(15,0) | NOT NULL, CHECK (TongTienThue >= 0) | Tổng tiền thuê gốc (chưa phụ phí/giảm giá) |
+| `PhanTramGiamGia` | DECIMAL(4,1) | DEFAULT `0`, CHECK (PhanTramGiamGia >= 0) | % giảm giá thuê dài ngày |
+| `TienGiamGia` | DECIMAL(15,0) | DEFAULT `0`, CHECK (TienGiamGia >= 0) | Số tiền giảm giá (VND) |
+| `PhanTramTangGia` | DECIMAL(4,1) | DEFAULT `0`, CHECK (PhanTramTangGia >= 0) | % tăng giá Dynamic Pricing |
+| `TienTangGia` | DECIMAL(15,0) | DEFAULT `0`, CHECK (TienTangGia >= 0) | Số tiền tăng giá Dynamic Pricing (VND) |
+| `TienCoc` | DECIMAL(15,0) | NOT NULL, CHECK (TienCoc >= 0) | Tiền đặt cọc khách đã thanh toán |
 | `PhuongThucCoc` | VARCHAR(20) | ENUM(Chuyen_Khoan, Tien_Mat, Vi_Dien_Tu) | Phương thức thanh toán cọc |
 | `MaGiaoDichCoc` | VARCHAR(100)| NULL | ID giao dịch từ Payment Gateway |
 | `TrangThaiThanhToanCoc`| VARCHAR(20) | ENUM(PENDING, SUCCESS, FAILED, REFUNDED) | Mặc định `PENDING` |
-| `TongTienGiaHan` | DECIMAL(15,0) | DEFAULT `0` | Tổng tiền gia hạn phải trả thêm |
-| `PhiPhatTreHan` | DECIMAL(15,0) | DEFAULT `0` | Phí phạt trễ hạn (VND) |
-| `PhiDenBuHuHai` | DECIMAL(15,0) | DEFAULT `0` | Tổng phí đền bù hư hại linh kiện |
-| `PhiMatPhuKien` | DECIMAL(15,0) | DEFAULT `0` | Phí mất mũ bảo hiểm, áo mưa |
+| `TongTienGiaHan` | DECIMAL(15,0) | DEFAULT `0`, CHECK (TongTienGiaHan >= 0) | Tổng tiền gia hạn phải trả thêm |
+| `PhiPhatTreHan` | DECIMAL(15,0) | DEFAULT `0`, CHECK (PhiPhatTreHan >= 0) | Phí phạt trễ hạn (VND) |
+| `PhiDenBuHuHai` | DECIMAL(15,0) | DEFAULT `0`, CHECK (PhiDenBuHuHai >= 0) | Tổng phí đền bù hư hại linh kiện |
+| `PhiMatPhuKien` | DECIMAL(15,0) | DEFAULT `0`, CHECK (PhiMatPhuKien >= 0) | Phí mất mũ bảo hiểm, áo mưa |
 | `LyDoPhat` | TEXT | NULL | Ghi chú lý do đền bù hư hại/phạt |
-| `TongThanhToan` | DECIMAL(15,0) | NOT NULL | Tổng thu cuối cùng của hóa đơn |
+| `TongThanhToan` | DECIMAL(15,0) | NOT NULL, CHECK (TongThanhToan >= 0) | Tổng thu cuối cùng của hóa đơn |
 | `NgayTao` | DATETIME | NOT NULL | Ngày xuất hóa đơn |
 
 ---
@@ -129,7 +129,7 @@
 | `HangGPLX` | VARCHAR(20) | ENUM(A1, A2, Khac) | Hạng bằng lái (VD: A1, A2) |
 | `SoGPLX` | VARCHAR(12) | UNIQUE, NULL | Số giấy phép lái xe |
 | `NgayCapGPLX` | DATE | NULL | Ngày cấp GPLX |
-| `NgayHetHanGPLX` | DATE | NULL | Ngày hết hạn GPLX |
+| `NgayHetHanGPLX` | DATE | NULL, CHECK (NgayHetHanGPLX > NgayCapGPLX) | Ngày hết hạn GPLX |
 | `AnhGPLXMatTruoc` | TEXT | NULL | URL ảnh mặt trước GPLX |
 | `AnhGPLXMatSau` | TEXT | NULL | URL ảnh mặt sau GPLX |
 | `TrangThaiGPLX` | VARCHAR(20) | ENUM(Khong_Dang_Ky, Da_Upload, Hop_Le, Tu_Choi) | `Khong_Dang_Ky` hoặc `Da_Upload` |
@@ -197,7 +197,7 @@
 | `MaBaoDuong` | VARCHAR(15) | **PK**, NOT NULL, UNIQUE | Mã lịch bảo dưỡng |
 | `MaXe` | VARCHAR(10) | **FK** → D1.MaXe, NOT NULL | Xe thực hiện bảo dưỡng |
 | `NgayBaoDuong` | DATETIME | NOT NULL | Ngày tiến hành bảo dưỡng |
-| `ChiPhi` | DECIMAL(15,0) | NOT NULL | Chi phí thực tế thanh toán cho bảo dưỡng |
+| `ChiPhi` | DECIMAL(15,0) | NOT NULL, CHECK (ChiPhi >= 0) | Chi phí thực tế thanh toán cho bảo dưỡng |
 | `ChiTietBaoDuong` | TEXT | NOT NULL | Chi tiết nội dung công việc bảo dưỡng |
 | `DaHoanThanh` | BOOLEAN | NOT NULL, DEFAULT `FALSE` | Đã bảo dưỡng xong hay chưa. Hoàn thành sẽ đưa xe về `San_Sang` |
 

@@ -2426,7 +2426,235 @@ graph TD
 Nhằm lưu trữ thông tin lâu dài cho các thực thể đã xác định, Chương 4 trình bày thiết kế cơ sở dữ liệu vật lý (ERD) cùng Từ điển dữ liệu (Data Dictionary) để chuẩn hóa cấu trúc dữ liệu.
 
 
-## 1. SƠ ĐỒ ERD VẬT LÝ (PHYSICAL ERD DIAGRAM)
+Tài liệu này trình bày thiết kế cơ sở dữ liệu của Hệ thống Quản lý và Cho thuê xe máy Thông minh qua 3 cấp độ: Khái niệm (Conceptual), Logic (Logical), và Vật lý (Physical).
+
+---
+
+## 1. SƠ ĐỒ ERD MỨC KHÁI NIỆM (CONCEPTUAL ERD)
+
+Sơ đồ ở mức khái niệm rất tổng quát, chỉ hiển thị **Tên các thực thể (Entity)** và **Mối quan hệ nghiệp vụ chính (Relationship)** giữa chúng. Sơ đồ này không chứa khóa chính (PK), khóa ngoại (FK) hay bất kỳ thuộc tính chi tiết nào, giúp người xem dễ dàng nắm bắt bức tranh toàn cảnh của hệ thống.
+
+```mermaid
+erDiagram
+    Khach_Hang_GPLX ||--o{ Hop_Dong_Booking : "thuc hien"
+    Xe_May ||--o{ Hop_Dong_Booking : "duoc thue"
+    
+    Hop_Dong_Booking ||--o| Hoa_Don_Quyet_Toan : "quyet toan"
+    Hop_Dong_Booking ||--o| Bien_Ban_Giao_Nhan : "giao nhan"
+    Hop_Dong_Booking ||--o| Danh_Gia : "co"
+    Hop_Dong_Booking ||--o| Lich_Su_Thue : "luu vet"
+    
+    Nhan_Vien ||--o{ Bien_Ban_Giao_Nhan : "ban giao"
+    Nhan_Vien ||--o{ Bien_Ban_Giao_Nhan : "tiep nhan"
+    
+    Xe_May ||--o{ Bao_Duong : "bao duong"
+    
+    DM_LoaiXe ||--o{ Xe_May : "phan loai"
+    DM_NhomXe ||--o{ Xe_May : "thuoc nhom"
+    DM_NhomXe ||--o{ Khach_Hang_GPLX : "nhom xe thue"
+```
+
+---
+
+## 2. SƠ ĐỒ ERD MỨC LOGIC (LOGICAL ERD)
+
+Sơ đồ ở mức logic chi tiết hơn, thể hiện **Tên thực thể**, **Mối quan hệ**, và **Tất cả các thuộc tính** thuộc thực thể đó, bao gồm ký hiệu Khóa chính (PK) và Khóa ngoại (FK). Kiểu dữ liệu ở đây được trừu tượng hóa thành các kiểu logic độc lập với DBMS (như String, Integer, Decimal, DateTime, Boolean, Text, Date).
+
+```mermaid
+erDiagram
+    Khach_Hang_GPLX {
+        String MaKhachHang PK
+        String HoTen
+        String Email
+        String SoDienThoai
+        String CCCD
+        String DiaChi
+        String MatKhau
+        Boolean CoGPLX
+        String HangGPLX
+        String SoGPLX
+        Date NgayCapGPLX
+        Date NgayHetHanGPLX
+        Text AnhGPLXMatTruoc
+        Text AnhGPLXMatSau
+        String TrangThaiGPLX
+        String MaNhomXeDuocThue FK
+        Boolean TrangThaiBlacklist
+        Text LyDoBlacklist
+        DateTime NgayTao
+        DateTime NgayCapNhat
+    }
+
+    Xe_May {
+        String MaXe PK
+        String BienSo
+        String SoKhung
+        String SoMay
+        String HangXe
+        String TenXe
+        String MaLoaiXe FK
+        Integer PhanKhoi
+        String MaNhomXe FK
+        Integer DoiXe
+        Text HinhAnhXe
+        String TrangThaiXe
+        Decimal MucTieuThuXang
+        Integer SoMuBaoHiem
+        Boolean CoAoMua
+        Decimal DonGiaNgay
+        Integer ODOHienTai
+        DateTime NgayTao
+        DateTime NgayCapNhat
+    }
+
+    Hop_Dong_Booking {
+        String MaBooking PK
+        String MaKhachHang FK
+        String MaXe FK
+        DateTime ThoiGianNhan
+        DateTime ThoiGianTra
+        DateTime ThoiGianTraGoc
+        Integer SoNgayThue
+        Integer SoNgayThueGoc
+        String TrangThaiBooking
+        Integer SoLanGiaHan
+        Boolean CoTraSom
+        DateTime ThoiGianYeuCauTraSom
+        Text GhiChu
+        DateTime NgayTao
+        DateTime NgayCapNhat
+    }
+
+    Hoa_Don_Quyet_Toan {
+        String MaHoaDon PK
+        String MaBooking FK
+        Decimal DonGiaApDung
+        Decimal TongTienThue
+        Decimal PhanTramGiamGia
+        Decimal TienGiamGia
+        Decimal PhanTramTangGia
+        Decimal TienTangGia
+        Decimal TienCoc
+        String PhuongThucCoc
+        String MaGiaoDichCoc
+        String TrangThaiThanhToanCoc
+        Decimal TongTienGiaHan
+        Decimal PhiPhatTreHan
+        Decimal PhiDenBuHuHai
+        Decimal PhiMatPhuKien
+        Text LyDoPhat
+        Decimal TongThanhToan
+        DateTime NgayTao
+    }
+
+    Bien_Ban_Giao_Nhan {
+        String MaBienBan PK
+        String MaBooking FK
+        DateTime ThoiGianTraThucTe
+        Integer ODONhan
+        Integer ODOTra
+        String MucXangNhan
+        String MucXangTra
+        Text AnhNgoaiQuanNhan
+        Text AnhNgoaiQuanTra
+        Integer SoMuBaoHiemGiao
+        Integer SoMuBaoHiemTra
+        Boolean CoAoMuaGiao
+        Boolean CoAoMuaTra
+        String MaNhanVienGiao FK
+        String MaNhanVienNhan FK
+        DateTime NgayTao
+        DateTime NgayCapNhat
+    }
+
+    Nhan_Vien {
+        String MaNhanVien PK
+        String HoTen
+        String Email
+        String SoDienThoai
+        String VaiTro
+        Boolean TrangThaiTaiKhoan
+        String MatKhau
+        DateTime NgayTao
+    }
+
+    Bao_Duong {
+        String MaBaoDuong PK
+        String MaXe FK
+        DateTime NgayBaoDuong
+        Decimal ChiPhi
+        Text ChiTietBaoDuong
+        Boolean DaHoanThanh
+    }
+
+    Danh_Gia {
+        String MaDanhGia PK
+        String MaBooking FK
+        Integer DiemDanhGia
+        Text NoiDung
+        DateTime NgayTao
+    }
+
+    Lich_Su_Thue {
+        String MaLichSu PK
+        String MaBooking FK
+        String MaKhachHang FK
+        String MaXe FK
+        String BienSoXe
+        DateTime ThoiGianNhan
+        DateTime ThoiGianTra
+        Decimal TongTienThanhToan
+        Text GhiChuNoiBo
+        Boolean DanhDauViPham
+        DateTime NgayTao
+    }
+
+    Cau_Hinh_He_Thong {
+        String MaCauHinh PK
+        Integer SoLanGiaHanToiDa
+        Decimal DonGiaPhatXeThuong_Gio
+        Decimal DonGiaPhatXePKL_Gio
+        Decimal PhatMatMuBaoHiem
+        Decimal PhatMatAoMua
+        Decimal PhanTramTangGiaLe
+        DateTime NgayTao
+        DateTime NgayCapNhat
+    }
+
+    DM_LoaiXe {
+        String MaLoaiXe PK
+    }
+
+    DM_NhomXe {
+        String MaNhomXe PK
+    }
+
+    %% === RELATIONSHIPS ===
+    Khach_Hang_GPLX ||--o{ Hop_Dong_Booking : "thuc hien"
+    Xe_May ||--o{ Hop_Dong_Booking : "duoc thue"
+    
+    Hop_Dong_Booking ||--o| Hoa_Don_Quyet_Toan : "quyet toan"
+    Hop_Dong_Booking ||--o| Bien_Ban_Giao_Nhan : "giao nhan"
+    
+    Nhan_Vien ||--o{ Bien_Ban_Giao_Nhan : "giao xe (MaNhanVienGiao)"
+    Nhan_Vien ||--o{ Bien_Ban_Giao_Nhan : "nhan xe (MaNhanVienNhan)"
+    
+    Hop_Dong_Booking ||--o| Lich_Su_Thue : "luu vet"
+    Hop_Dong_Booking ||--o| Danh_Gia : "co danh gia"
+    Khach_Hang_GPLX ||--o{ Lich_Su_Thue : "co lich su"
+    Xe_May ||--o{ Lich_Su_Thue : "co lich su"
+    Xe_May ||--o{ Bao_Duong : "duoc bao duong"
+
+    DM_LoaiXe ||--o{ Xe_May : "loai xe"
+    DM_NhomXe ||--o{ Xe_May : "nhom xe"
+    DM_NhomXe ||--o{ Khach_Hang_GPLX : "nhom xe thue"
+```
+
+---
+
+## 3. SƠ ĐỒ ERD MỨC VẬT LÝ (PHYSICAL ERD)
+
+Sơ đồ ở mức vật lý cực kỳ chi tiết, dùng trực tiếp để sinh mã và triển khai cơ sở dữ liệu thật. Sơ đồ chứa đầy đủ **Tên thực thể**, **Các khóa chính (PK) / Khóa ngoại (FK) / Ràng buộc (UK)**, và **Kiểu dữ liệu vật lý chính xác** tương thích với hệ quản trị CSDL (ví dụ: varchar, nvarchar, decimal, datetime, int, boolean).
 
 ```mermaid
 erDiagram
@@ -2616,11 +2844,12 @@ erDiagram
     %% === LOOKUP RELATIONSHIPS ===
     DM_LoaiXe ||--o{ Xe_May : "loai xe"
     DM_NhomXe ||--o{ Xe_May : "nhom xe"
+    DM_NhomXe ||--o{ Khach_Hang_GPLX : "nhom xe thue"
 ```
 
 ---
 
-## 2. QUY ĐỊNH KÝ HIỆU & KIỂU DỮ LIỆU VẬT LÝ (SQL SCHEMA)
+## 4. QUY ĐỊNH KÝ HIỆU & KIỂU DỮ LIỆU VẬT LÝ (SQL SCHEMA)
 
 - `varchar_XX` $\to$ `VARCHAR(XX)`
 - `nvarchar_XX` $\to$ `NVARCHAR(XX)`
@@ -2686,7 +2915,8 @@ CREATE TABLE Khach_Hang_GPLX (
     LyDoBlacklist TEXT NULL,
     NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (MaNhomXeDuocThue) REFERENCES DM_NhomXe(MaNhomXe)
+    FOREIGN KEY (MaNhomXeDuocThue) REFERENCES DM_NhomXe(MaNhomXe),
+    CONSTRAINT chk_NgayGPLX CHECK (NgayHetHanGPLX > NgayCapGPLX)
 );
 ```
 
@@ -2726,7 +2956,9 @@ CREATE TABLE Hop_Dong_Booking (
     NgayCapNhat DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (MaKhachHang) REFERENCES Khach_Hang_GPLX(MaKhachHang),
-    FOREIGN KEY (MaXe) REFERENCES Xe_May(MaXe)
+    FOREIGN KEY (MaXe) REFERENCES Xe_May(MaXe),
+    CONSTRAINT chk_ThoiGianThue CHECK (ThoiGianTra > ThoiGianNhan),
+    CONSTRAINT chk_ThoiGianTraGoc CHECK (ThoiGianTraGoc >= ThoiGianNhan)
 );
 ```
 
@@ -2736,22 +2968,22 @@ CREATE TABLE Hop_Dong_Booking (
 CREATE TABLE Hoa_Don_Quyet_Toan (
     MaHoaDon VARCHAR(15) PRIMARY KEY,
     MaBooking VARCHAR(15) NOT NULL UNIQUE,
-    DonGiaApDung DECIMAL(12,0) NOT NULL,
-    TongTienThue DECIMAL(15,0) NOT NULL,
+    DonGiaApDung DECIMAL(12,0) NOT NULL CHECK (DonGiaApDung >= 0),
+    TongTienThue DECIMAL(15,0) NOT NULL CHECK (TongTienThue >= 0),
     PhanTramGiamGia DECIMAL(4,1) DEFAULT 0 CHECK (PhanTramGiamGia >= 0),
-    TienGiamGia DECIMAL(15,0) DEFAULT 0,
+    TienGiamGia DECIMAL(15,0) DEFAULT 0 CHECK (TienGiamGia >= 0),
     PhanTramTangGia DECIMAL(4,1) DEFAULT 0 CHECK (PhanTramTangGia >= 0),
-    TienTangGia DECIMAL(15,0) DEFAULT 0,
-    TienCoc DECIMAL(15,0) NOT NULL,
+    TienTangGia DECIMAL(15,0) DEFAULT 0 CHECK (TienTangGia >= 0),
+    TienCoc DECIMAL(15,0) NOT NULL CHECK (TienCoc >= 0),
     PhuongThucCoc VARCHAR(20) NOT NULL,
     MaGiaoDichCoc VARCHAR(100) NULL,
     TrangThaiThanhToanCoc VARCHAR(20) NOT NULL DEFAULT 'PENDING',
-    TongTienGiaHan DECIMAL(15,0) DEFAULT 0,
-    PhiPhatTreHan DECIMAL(15,0) DEFAULT 0,
-    PhiDenBuHuHai DECIMAL(15,0) DEFAULT 0,
-    PhiMatPhuKien DECIMAL(15,0) DEFAULT 0,
+    TongTienGiaHan DECIMAL(15,0) DEFAULT 0 CHECK (TongTienGiaHan >= 0),
+    PhiPhatTreHan DECIMAL(15,0) DEFAULT 0 CHECK (PhiPhatTreHan >= 0),
+    PhiDenBuHuHai DECIMAL(15,0) DEFAULT 0 CHECK (PhiDenBuHuHai >= 0),
+    PhiMatPhuKien DECIMAL(15,0) DEFAULT 0 CHECK (PhiMatPhuKien >= 0),
     LyDoPhat TEXT NULL,
-    TongThanhToan DECIMAL(15,0) NOT NULL,
+    TongThanhToan DECIMAL(15,0) NOT NULL CHECK (TongThanhToan >= 0),
     NgayTao DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (MaBooking) REFERENCES Hop_Dong_Booking(MaBooking)
@@ -2815,7 +3047,7 @@ CREATE TABLE Bao_Duong (
     MaBaoDuong VARCHAR(15) PRIMARY KEY,
     MaXe VARCHAR(10) NOT NULL,
     NgayBaoDuong DATETIME NOT NULL,
-    ChiPhi DECIMAL(15,0) NOT NULL,
+    ChiPhi DECIMAL(15,0) NOT NULL CHECK (ChiPhi >= 0),
     ChiTietBaoDuong TEXT NOT NULL,
     DaHoanThanh BOOLEAN NOT NULL DEFAULT FALSE,
     
@@ -2925,8 +3157,8 @@ Dưới đây là phần định nghĩa chi tiết cho các trường dữ liệ
 | `MaKhachHang` | VARCHAR(10) | **FK** → D3.MaKhachHang, NOT NULL | Khách hàng đặt xe |
 | `MaXe` | VARCHAR(10) | **FK** → D1.MaXe, NOT NULL | Xe máy được đặt |
 | `ThoiGianNhan` | DATETIME | NOT NULL | Thời gian hẹn nhận xe |
-| `ThoiGianTra` | DATETIME | NOT NULL | Thời gian hẹn trả xe (cập nhật khi gia hạn) |
-| `ThoiGianTraGoc` | DATETIME | NOT NULL | Thời gian trả xe ban đầu (không thay đổi khi gia hạn) |
+| `ThoiGianTra` | DATETIME | NOT NULL, CHECK (ThoiGianTra > ThoiGianNhan) | Thời gian hẹn trả xe (cập nhật khi gia hạn) |
+| `ThoiGianTraGoc` | DATETIME | NOT NULL, CHECK (ThoiGianTraGoc >= ThoiGianNhan) | Thời gian trả xe ban đầu (không thay đổi khi gia hạn) |
 | `SoNgayThue` | INT | NOT NULL | Tổng số ngày thuê (bao gồm gia hạn) |
 | `SoNgayThueGoc` | INT | NOT NULL | Số ngày thuê ban đầu |
 | `TrangThaiBooking`| VARCHAR(20) | ENUM(Cho_Thanh_Toan_Coc, Cho_Nhan_Xe, Dang_Thue,...) | Mặc định `Cho_Thanh_Toan_Coc` |
@@ -2945,22 +3177,22 @@ Dưới đây là phần định nghĩa chi tiết cho các trường dữ liệ
 |------------|--------------|-----------|-------|
 | `MaHoaDon` | VARCHAR(15) | **PK**, NOT NULL, UNIQUE | Mã hóa đơn |
 | `MaBooking` | VARCHAR(15) | **FK** → D2.MaBooking, UNIQUE | Đơn booking gốc |
-| `DonGiaApDung` | DECIMAL(12,0) | NOT NULL | Đơn giá ngày áp dụng (đã tính Dynamic Pricing) |
-| `TongTienThue` | DECIMAL(15,0) | NOT NULL | Tổng tiền thuê gốc (chưa phụ phí/giảm giá) |
-| `PhanTramGiamGia` | DECIMAL(4,1) | DEFAULT `0` | % giảm giá thuê dài ngày |
-| `TienGiamGia` | DECIMAL(15,0) | DEFAULT `0` | Số tiền giảm giá (VND) |
-| `PhanTramTangGia` | DECIMAL(4,1) | DEFAULT `0` | % tăng giá Dynamic Pricing |
-| `TienTangGia` | DECIMAL(15,0) | DEFAULT `0` | Số tiền tăng giá Dynamic Pricing (VND) |
-| `TienCoc` | DECIMAL(15,0) | NOT NULL | Tiền đặt cọc khách đã thanh toán |
+| `DonGiaApDung` | DECIMAL(12,0) | NOT NULL, CHECK (DonGiaApDung >= 0) | Đơn giá ngày áp dụng (đã tính Dynamic Pricing) |
+| `TongTienThue` | DECIMAL(15,0) | NOT NULL, CHECK (TongTienThue >= 0) | Tổng tiền thuê gốc (chưa phụ phí/giảm giá) |
+| `PhanTramGiamGia` | DECIMAL(4,1) | DEFAULT `0`, CHECK (PhanTramGiamGia >= 0) | % giảm giá thuê dài ngày |
+| `TienGiamGia` | DECIMAL(15,0) | DEFAULT `0`, CHECK (TienGiamGia >= 0) | Số tiền giảm giá (VND) |
+| `PhanTramTangGia` | DECIMAL(4,1) | DEFAULT `0`, CHECK (PhanTramTangGia >= 0) | % tăng giá Dynamic Pricing |
+| `TienTangGia` | DECIMAL(15,0) | DEFAULT `0`, CHECK (TienTangGia >= 0) | Số tiền tăng giá Dynamic Pricing (VND) |
+| `TienCoc` | DECIMAL(15,0) | NOT NULL, CHECK (TienCoc >= 0) | Tiền đặt cọc khách đã thanh toán |
 | `PhuongThucCoc` | VARCHAR(20) | ENUM(Chuyen_Khoan, Tien_Mat, Vi_Dien_Tu) | Phương thức thanh toán cọc |
 | `MaGiaoDichCoc` | VARCHAR(100)| NULL | ID giao dịch từ Payment Gateway |
 | `TrangThaiThanhToanCoc`| VARCHAR(20) | ENUM(PENDING, SUCCESS, FAILED, REFUNDED) | Mặc định `PENDING` |
-| `TongTienGiaHan` | DECIMAL(15,0) | DEFAULT `0` | Tổng tiền gia hạn phải trả thêm |
-| `PhiPhatTreHan` | DECIMAL(15,0) | DEFAULT `0` | Phí phạt trễ hạn (VND) |
-| `PhiDenBuHuHai` | DECIMAL(15,0) | DEFAULT `0` | Tổng phí đền bù hư hại linh kiện |
-| `PhiMatPhuKien` | DECIMAL(15,0) | DEFAULT `0` | Phí mất mũ bảo hiểm, áo mưa |
+| `TongTienGiaHan` | DECIMAL(15,0) | DEFAULT `0`, CHECK (TongTienGiaHan >= 0) | Tổng tiền gia hạn phải trả thêm |
+| `PhiPhatTreHan` | DECIMAL(15,0) | DEFAULT `0`, CHECK (PhiPhatTreHan >= 0) | Phí phạt trễ hạn (VND) |
+| `PhiDenBuHuHai` | DECIMAL(15,0) | DEFAULT `0`, CHECK (PhiDenBuHuHai >= 0) | Tổng phí đền bù hư hại linh kiện |
+| `PhiMatPhuKien` | DECIMAL(15,0) | DEFAULT `0`, CHECK (PhiMatPhuKien >= 0) | Phí mất mũ bảo hiểm, áo mưa |
 | `LyDoPhat` | TEXT | NULL | Ghi chú lý do đền bù hư hại/phạt |
-| `TongThanhToan` | DECIMAL(15,0) | NOT NULL | Tổng thu cuối cùng của hóa đơn |
+| `TongThanhToan` | DECIMAL(15,0) | NOT NULL, CHECK (TongThanhToan >= 0) | Tổng thu cuối cùng của hóa đơn |
 | `NgayTao` | DATETIME | NOT NULL | Ngày xuất hóa đơn |
 
 ---
@@ -3004,7 +3236,7 @@ Dưới đây là phần định nghĩa chi tiết cho các trường dữ liệ
 | `HangGPLX` | VARCHAR(20) | ENUM(A1, A2, Khac) | Hạng bằng lái (VD: A1, A2) |
 | `SoGPLX` | VARCHAR(12) | UNIQUE, NULL | Số giấy phép lái xe |
 | `NgayCapGPLX` | DATE | NULL | Ngày cấp GPLX |
-| `NgayHetHanGPLX` | DATE | NULL | Ngày hết hạn GPLX |
+| `NgayHetHanGPLX` | DATE | NULL, CHECK (NgayHetHanGPLX > NgayCapGPLX) | Ngày hết hạn GPLX |
 | `AnhGPLXMatTruoc` | TEXT | NULL | URL ảnh mặt trước GPLX |
 | `AnhGPLXMatSau` | TEXT | NULL | URL ảnh mặt sau GPLX |
 | `TrangThaiGPLX` | VARCHAR(20) | ENUM(Khong_Dang_Ky, Da_Upload, Hop_Le, Tu_Choi) | `Khong_Dang_Ky` hoặc `Da_Upload` |
@@ -3072,7 +3304,7 @@ Dưới đây là phần định nghĩa chi tiết cho các trường dữ liệ
 | `MaBaoDuong` | VARCHAR(15) | **PK**, NOT NULL, UNIQUE | Mã lịch bảo dưỡng |
 | `MaXe` | VARCHAR(10) | **FK** → D1.MaXe, NOT NULL | Xe thực hiện bảo dưỡng |
 | `NgayBaoDuong` | DATETIME | NOT NULL | Ngày tiến hành bảo dưỡng |
-| `ChiPhi` | DECIMAL(15,0) | NOT NULL | Chi phí thực tế thanh toán cho bảo dưỡng |
+| `ChiPhi` | DECIMAL(15,0) | NOT NULL, CHECK (ChiPhi >= 0) | Chi phí thực tế thanh toán cho bảo dưỡng |
 | `ChiTietBaoDuong` | TEXT | NOT NULL | Chi tiết nội dung công việc bảo dưỡng |
 | `DaHoanThanh` | BOOLEAN | NOT NULL, DEFAULT `FALSE` | Đã bảo dưỡng xong hay chưa. Hoàn thành sẽ đưa xe về `San_Sang` |
 
@@ -3483,7 +3715,6 @@ classDiagram
         - brand: String
         - modelName: String
         - motorbikeType: MotorbikeType
-        - engineDisplacement: Int
         - motorbikeImage: String
         - modelYear: Int
         - fuelConsumption: Decimal
