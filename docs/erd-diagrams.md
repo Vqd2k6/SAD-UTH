@@ -126,10 +126,9 @@ erDiagram
         text GhiChuNoiBo
         boolean DanhDauViPham
         datetime NgayTao
-        
         %% Indexes
-        Index idx_BienSoXe(BienSoXe)
-        Index idx_ThoiGian(ThoiGianNhan, ThoiGianTra)
+        %% Index: idx_BienSoXe(BienSoXe)
+        %% Index: idx_ThoiGian(ThoiGianNhan, ThoiGianTra)
     }
 
     Cau_Hinh_He_Thong {

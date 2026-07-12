@@ -16,7 +16,6 @@
 | **Nhân viên** (Staff) | `E2` | Primary Actor (Chính) | Xem danh sách công việc giao nhận, thực hiện quy trình bàn giao xe (Check-in), nhận lại xe (Check-out), kiểm tra tình trạng xe, ghi nhận đền bù hư hại và ghi chú vi phạm nội bộ. |
 | **Quản trị viên** (Admin) | `E3` | Primary Actor (Chính) | Tra cứu, hậu kiểm thông tin khách hàng và bằng lái, quản lý danh mục xe máy, tài khoản nhân viên, cấu hình thông số hệ thống, quản lý danh sách đen (Blacklist) và xem báo cáo thống kê. |
 | **Cổng thanh toán** (Payment Gateway) | `E4` | Supporting Actor (Hỗ trợ) | Hệ thống bên ngoài thực hiện xử lý các giao dịch thanh toán đặt cọc cọc, hoàn tiền cọc, hoặc thu phụ phí từ Khách hàng và phản hồi kết quả giao dịch về hệ thống. |
-| **Hệ thống thời gian** (Cron Job) | `E5` | Supporting Actor (Hỗ trợ) | Tự động kích hoạt các luồng công việc theo lịch trình như gửi thông báo nhắc nhở và hủy đơn đặt xe quá hạn thanh toán. |
 
 ---
 
@@ -30,7 +29,6 @@ graph LR
         E2["🧑‍💼 Nhân viên (E2)"]
         E3["👨‍💻 Admin (E3)"]
         E4["🏦 Cổng Thanh Toán (E4)"]
-        E5["⏱️ Cron Job (E5)"]
     end
 
     %% System Boundary
@@ -41,7 +39,7 @@ graph LR
         %% Customer Core
         UC_Reg("Đăng ký & Tải GPLX")
         UC_Book("Đặt xe trực tuyến")
-        UC_TripMgmt("Quản lý chuyến đi<br>(Hủy / Gia hạn / Trả sớm)")
+        UC_TripMgmt("Quản lý chuyến đi<br/>(Hủy / Gia hạn / Trả sớm)")
         UC_Rate("Đánh giá chuyến đi")
 
         %% Staff Core
@@ -53,12 +51,8 @@ graph LR
 
         %% Admin Core
         UC_ReviewCustomer("Xem hồ sơ khách hàng")
-        UC_SysAdmin("Quản trị hệ thống<br>(Xe máy, Nhân viên, Cấu hình, Blacklist)")
+        UC_SysAdmin("Quản trị hệ thống<br/>(Xe máy, Nhân viên, Cấu hình, Blacklist)")
         UC_Report("Xem báo cáo thống kê")
-        
-        %% Auto Core
-        UC_Remind("Gửi thông báo nhắc nhở")
-        UC_CancelAuto("Hủy đơn & Đánh dấu Không đến nhận")
     end
 
     %% Relationships - Customer
@@ -83,9 +77,6 @@ graph LR
     E3 --> UC_Report
     E3 --> UC_History
 
-    %% Relationships - Cron
-    E5 --> UC_Remind
-    E5 --> UC_CancelAuto
 
     %% Supporting Connections
     UC_Book --> E4
@@ -101,7 +92,6 @@ graph LR
 graph TB
     E1["👤 Khách hàng (E1)"]
     E4["🏦 Cổng Thanh Toán (E4)"]
-    E5["⏱️ Cron Job (E5)"]
 
     subgraph Customer_Boundary [Phân hệ Khách hàng]
         UC_Login("Đăng nhập Khách hàng")
@@ -118,9 +108,6 @@ graph TB
         UC_Extend("Yêu cầu Gia hạn")
         UC_Early("Yêu cầu Trả xe sớm")
         UC_Rate("Đánh giá chuyến đi")
-        
-        UC_Remind("Gửi thông báo nhắc nhở")
-        UC_CancelAuto("Hủy đơn quá hạn thanh toán")
     end
 
     %% Relationships
@@ -136,17 +123,14 @@ graph TB
     E1 --> UC_Rate
 
     %% Relationships between Use Cases
-    UC_Profile -.->|"<<extend>>"| UC_UpGPLX
-    UC_Book -.->|"<<include>>"| UC_Pay
-    UC_Extend -.->|"<<include>>"| UC_Pay
-    UC_Cancel -.->|"<<include>>"| UC_Pay
+    UC_Profile -.->|"&lt;&lt;extend&gt;&gt;"| UC_UpGPLX
+    UC_Book -.->|"&lt;&lt;include&gt;&gt;"| UC_Pay
+    UC_Extend -.->|"&lt;&lt;include&gt;&gt;"| UC_Pay
+    UC_Cancel -.->|"&lt;&lt;include&gt;&gt;"| UC_Pay
     
     %% Supporting Actor Connection
     UC_Pay --> E4
     
-    %% Cron Connections
-    E5 --> UC_Remind
-    E5 --> UC_CancelAuto
 ```
 
 ---
@@ -206,8 +190,8 @@ graph TB
     E3 --> UC_ApproveGPLX
 
     %% Relationships (Includes/Extends)
-    UC_Checkout -.->|"<<extend>>"| UC_Damage
-    UC_ManageStaff -.->|"<<extend>>"| UC_LockStaff
+    UC_Checkout -.->|"&lt;&lt;extend&gt;&gt;"| UC_Damage
+    UC_ManageStaff -.->|"&lt;&lt;extend&gt;&gt;"| UC_LockStaff
 
     %% Payments connection during checkout
     UC_Checkout --> E4

@@ -11,7 +11,6 @@
 | **E2** | Nhân viên cửa hàng (Staff) | Bàn giao xe, kiểm tra tình trạng xe khi trả, ghi nhận sự cố, lập hóa đơn phụ phí, tra cứu lịch sử thuê xe để xử lý phạt nguội ngoài hệ thống. Có quyền xét duyệt và từ chối ảnh GPLX tại cửa hàng. |
 | **E3** | Quản trị viên (Admin) | Quản lý danh mục xe máy, cấu hình giá thuê/phí phạt (Dynamic Pricing), quản lý tài khoản nhân viên, xem báo cáo doanh thu, quản lý Blacklist. |
 | **E4** | Cổng thanh toán (Payment Gateway) | Hệ thống thanh toán trực tuyến bên ngoài xử lý giao dịch đặt cọc, thanh toán gia hạn và hoàn tiền hủy đơn. |
-| **E5** | Hệ thống thời gian (Cron Job) | Tự động kích hoạt các tiến trình định kỳ theo lịch trình. |
 
 ---
 
@@ -227,15 +226,57 @@
 
 ## 3. CÁC DÒNG DỮ LIỆU (DATA FLOWS)
 
-*(Các dòng dữ liệu giữ nguyên ánh xạ với DFD như phiên bản cũ, bổ sung luồng tương ứng cho bảo dưỡng, báo cáo doanh thu và duyệt GPLX tại StaffUI).*
+Bảng dưới đây tài liệu hóa chi tiết các luồng dữ liệu (Data Flows) trao đổi giữa các Tác nhân ngoài (E), các Tiến trình xử lý (P) và các Kho dữ liệu (D) trong sơ đồ DFD của hệ thống:
 
-| Mã | Tên luồng | Nguồn | Đích | Chức năng mở rộng |
-|----|-----------|-------|------|-------------------|
-| F2.18 | `Quyết toán Không đến nhận xe` | P2.0 | D2 | Chuyển booking sang `Khong_Den_Nhan_Xe` nếu gian lận GPLX hoặc quá hạn nhận xe, tịch thu cọc. |
-| F4.19 | `Hoàn thành bảo dưỡng` | E2 (Staff) / E3 (Admin) | P4.0 | Cập nhật cờ `DaHoanThanh` trong D7 và cập nhật trạng thái xe D1 về `San_Sang`. |
-| F6.13 | `Truy xuất Báo cáo Lợi nhuận` | E3 (Admin) | P6.0 | Lấy Doanh thu (D2) trừ đi Chi phí bảo dưỡng (D7) để tính toán Doanh thu ròng. |
-
----
+| ID | Tên luồng dữ liệu | Mô tả chung | Nguồn | Đích | Loại luồng | Tên Cấu trúc Dữ liệu | Lưu lượng (Ước tính) | Ghi chú / Quy tắc nghiệp vụ |
+|:---|:---|:---|:---|:---|:---|:---|:---|:---|
+| **F1.1** | Yêu cầu đăng ký tài khoản | Chứa thông tin tài khoản mới cùng ảnh chụp GPLX của khách hàng để đăng ký thành viên. | E1: Khách hàng | P1.0: Đăng ký & Đăng nhập | User Input | DS_DangKyTK | 50/ngày | Yêu cầu kiểm tra trùng lắp Email/SĐT/CCCD/Số GPLX. |
+| **F1.2** | Thông tin đăng nhập | Nhập email/SĐT và mật khẩu để xác thực quyền truy cập vào ứng dụng. | E1: Khách hàng | P1.0: Đăng ký & Đăng nhập | User Input | DS_ThongTinDangNhap | 500/ngày | Kiểm tra khớp mật khẩu đã mã hóa. |
+| **F1.3** | Kết quả đăng nhập | Phản hồi thông báo đăng nhập thành công kèm Access Token hoặc báo lỗi tài khoản/mật khẩu. | P1.0: Đăng ký & Đăng nhập | E1: Khách hàng | System Output | DS_KetQuaDangNhap | 500/ngày | Trả về JWT token khi thành công. |
+| **F1.7** | Lưu thông tin khách hàng | Ghi thông tin tài khoản mới vào cơ sở dữ liệu. | P1.0: Đăng ký & Đăng nhập | D3: Khách hàng | Internal Write | DS_LuuThongTinKH | 50/ngày | Mặc định TrangThaiGPLX = 'Khong_Dang_Ky' và NhomXeDuocThue = 'Nhom_50cc_Dien'. |
+| **F1.8** | Đọc thông tin khách hàng | Truy vấn thông tin tài khoản phục vụ xác thực đăng nhập. | D3: Khách hàng | P1.0: Đăng ký & Đăng nhập | Internal Read | DS_DocThongTinKH | 500/ngày | Trích xuất email/SĐT và hash mật khẩu. |
+| **F1.9** | Yêu cầu đăng nhập quản trị | Nhập thông tin tài khoản nhân viên/admin để xác thực quyền quản trị. | E2: Nhân viên / E3: Admin | P1.0: Đăng ký & Đăng nhập | User Input | DS_ThongTinDangNhap | 20/ngày | Xác thực thông tin qua bảng nhân sự D6. |
+| **F1.10** | Kết quả đăng nhập quản trị | Phản hồi đăng nhập quản trị thành công và phân quyền vai trò. | P1.0: Đăng ký & Đăng nhập | E2: Nhân viên / E3: Admin | System Output | DS_KetQuaDangNhap | 20/ngày | Gắn vai trò (Staff/Admin) vào token. |
+| **F2.1** | Yêu cầu tìm kiếm xe | Khách lọc xe theo hãng, loại xe, phân khối, giá và thời gian thuê mong muốn. | E1: Khách hàng | P2.0: Đặt xe trực tuyến | User Input | DS_TimKiemXe | 1000/ngày | Thời gian nhận/trả phải lớn hơn thời điểm hiện tại. |
+| **F2.2** | Kết quả tìm kiếm xe | Hiển thị danh sách các xe máy phù hợp và ở trạng thái Sẵn sàng. | P2.0: Đặt xe trực tuyến | E1: Khách hàng | System Output | DS_KetQuaTimKiemXe | 1000/ngày | Tự động loại trừ xe bận lịch trong khoảng thời gian yêu cầu. |
+| **F2.6** | Yêu cầu đặt xe | Gửi yêu cầu đặt xe cụ thể cùng dịch vụ đi kèm trong khoảng thời gian xác định. | E1: Khách hàng | P2.0: Đặt xe trực tuyến | User Input | DS_YeuCauDatXe | 100/ngày | Khách hàng phải có GPLX được duyệt phù hợp với nhóm xe đã chọn (trừ nhóm <50cc). |
+| **F2.7** | Yêu cầu hủy đặt xe | Khách gửi yêu cầu hủy đơn đã đặt trước khi nhận xe. | E1: Khách hàng | P2.0: Đặt xe trực tuyến | User Input | DS_YeuCauHuyDatXe | 5/ngày | Áp dụng chính sách hoàn cọc (100%, 50%, hoặc 0%) theo thời gian hủy. |
+| **F2.8** | Thông báo khóa xe tạm | Hệ thống chuyển trạng thái xe sang khóa tạm 15 phút để chờ khách cọc. | P2.0: Đặt xe trực tuyến | E1: Khách hàng | System Output | DS_ThongBaoKhoaXeTam | 100/ngày | Cập nhật TrangThaiXe = 'KHOA_TAM_15M' trong D1. |
+| **F2.9** | Thanh toán đặt cọc | Khách thực hiện thanh toán tiền cọc qua cổng trực tuyến để giữ xe chính thức. | E1: Khách hàng | P2.0: Đặt xe trực tuyến | User Input | DS_ThanhToanOnline | 80/ngày | Tiền cọc tối thiểu theo TiLeDatCoc cấu hình (thường là 30%). |
+| **F2.12** | Thông báo đơn mới | Hệ thống gửi thông báo cho nhân viên chuẩn bị xe khi khách cọc thành công. | P2.0: Đặt xe trực tuyến | E2: Nhân viên | System Output | DS_ThongBaoDonMoi | 80/ngày | Chuyển trạng thái đơn sang 'Cho_Nhan_Xe'. |
+| **F2.13** | Thông báo nhắc nhở tự động | Hệ thống gửi cảnh báo trước giờ nhận/trả xe và khi quá hạn nhận xe. | P2.0: Đặt xe trực tuyến | E1: Khách hàng | System Output | DS_ThongBaoNhacNho | 240/ngày | Hệ thống tự động quét và kích hoạt gửi thông báo định kỳ. |
+| **F2.14** | Xác nhận đặt xe | Thông báo đặt xe thành công, mã Booking và hóa đơn cọc cho khách. | P2.0: Đặt xe trực tuyến | E1: Khách hàng | System Output | DS_XacNhanDatXe | 80/ngày | Ghi nhận đơn đặt chính thức vào D2. |
+| **F2.16** | Yêu cầu giao dịch trực tuyến | Hệ thống yêu cầu cổng thanh toán trừ cọc hoặc thực hiện hoàn cọc. | P2.0: Đặt xe trực tuyến | E4: Cổng thanh toán | System Output | DS_YeuCauGiaoDich | 85/ngày | Gửi mã Booking và số tiền cọc sang API cổng. |
+| **F2.17** | Kết quả giao dịch | Phản hồi từ cổng thanh toán về trạng thái giao dịch đặt cọc. | E4: Cổng thanh toán | P2.0: Đặt xe trực tuyến | User Input | DS_KetQuaGiaoDich | 85/ngày | Cập nhật MaGiaoDichCoc và TrangThaiThanhToanCoc trong D10. |
+| **F2.18** | Quyết toán Không đến nhận xe | Hệ thống tự động hủy đơn và phạt 100% cọc nếu khách không đến nhận sau 2 giờ. | P2.0: Đặt xe trực tuyến | D2: Hợp đồng Booking | Internal Write | DS_QuyetToanNoShow | 2/ngày | Chuyển TrangThaiBooking = 'Khong_Den_Nhan_Xe' và thu hồi cọc. |
+| **F3.1** | Yêu cầu gia hạn | Khách hàng gửi yêu cầu muốn thuê thêm X ngày/giờ trực tiếp trên ứng dụng. | E1: Khách hàng | P3.0: Gia hạn & Trả xe sớm | User Input | DS_YeuCauGiaHan | 10/ngày | Yêu cầu phải gửi trước giờ trả xe cũ ít nhất 2 giờ; số lần gia hạn <= 3. |
+| **F3.2** | Thanh toán gia hạn | Khách thực hiện thanh toán chi phí gia hạn phát sinh trực tuyến. | E1: Khách hàng | P3.0: Gia hạn & Trả xe sớm | User Input | DS_ThanhToanOnline | 8/ngày | Đơn giá thuê ngày mới tính theo giá động thực tế của ngày gia hạn. |
+| **F3.6** | Kết quả gia hạn | Phản hồi thông báo gia hạn thành công (cập nhật lịch) hoặc từ chối do trùng lịch xe. | P3.0: Gia hạn & Trả xe sớm | E1: Khách hàng | System Output | DS_KetQuaGiaHan | 10/ngày | Cập nhật ThoiGianTra mới vào D2 khi thành công. |
+| **F3.8** | Yêu cầu trả xe sớm | Khách hàng báo trước thời điểm muốn trả xe sớm qua app để cửa hàng chuẩn bị. | E1: Khách hàng | P3.0: Gia hạn & Trả xe sớm | User Input | DS_YeuCauTraXeSom | 3/ngày | Yêu cầu gửi trước thời điểm trả mong muốn ít nhất 1 giờ. |
+| **F3.10** | Thông báo trả sớm | Hệ thống thông báo cho nhân viên tại quầy chuẩn bị tiếp nhận xe trả sớm. | P3.0: Gia hạn & Trả xe sớm | E2: Nhân viên | System Output | DS_YeuCauTraXeSom | 3/ngày | Hiển thị thông báo trên màn hình điều phối của Staff. |
+| **F3.12** | Yêu cầu giao dịch gia hạn trực tuyến | Hệ thống yêu cầu cổng thanh toán trừ chi phí gia hạn của khách hàng. | P3.0: Gia hạn & Trả xe sớm | E4: Cổng thanh toán | System Output | DS_YeuCauGiaoDich | 8/ngày | Truyền mã Booking và chi phí gia hạn. |
+| **F3.13** | Kết quả giao dịch gia hạn | Phản hồi từ cổng thanh toán về trạng thái giao dịch gia hạn. | E4: Cổng thanh toán | P3.0: Gia hạn & Trả xe sớm | User Input | DS_KetQuaGiaoDich | 8/ngày | Cập nhật TongTienGiaHan trong D10. |
+| **F3.15** | Kết quả yêu cầu trả sớm | Xác nhận chấp nhận yêu cầu trả xe sớm và gợi ý mang xe đến cửa hàng bàn giao. | P3.0: Gia hạn & Trả xe sớm | E1: Khách hàng | System Output | DS_KetQuaTraSom | 3/ngày | Cập nhật cờ CoTraSom = TRUE và ThoiGianYeuCauTraSom trong D2. |
+| **F4.1** | Yêu cầu xem danh sách giao nhận | Nhân viên truy vấn danh sách công việc bàn giao/nghiệm thu xe trong ca làm việc. | E2: Nhân viên | P4.0: Giao nhận & Quyết toán | User Input | DS_TruyVanGiaoNhan | 10/ngày | Lọc theo ngày hiện tại và chi nhánh/cửa hàng. |
+| **F4.3** | Danh sách giao nhận trong ngày | Trả về danh sách đơn hàng chờ Check-in và Check-out trong ca trực. | P4.0: Giao nhận & Quyết toán | E2: Nhân viên | System Output | DS_DanhSachGiaoNhan | 10/ngày | Lấy dữ liệu từ kho D2. |
+| **F4.4** | Biên bản Check-in | Nhân viên nhập ODO giao, mức xăng giao, ảnh ngoại quan và phụ kiện giao thực tế. | E2: Nhân viên | P4.0: Giao nhận & Quyết toán | User Input | DS_BienBanCheckIn | 40/ngày | Ghi dữ liệu vào D11. Cập nhật TrangThaiXe = 'Dang_Thue' và TrangThaiBooking = 'Dang_Thue'. |
+| **F4.6** | Biên bản Check-out | Nhân viên nhập ODO nhận, xăng nhận, ảnh ngoại quan nhận, linh kiện hư hỏng/mất mát (nếu có). | E2: Nhân viên | P4.0: Giao nhận & Quyết toán | User Input | DS_BienBanCheckOut | 40/ngày | Ghi dữ liệu vào D11. Kiểm tra ODO trả >= ODO nhận. |
+| **F4.10** | Hóa đơn quyết toán | Xuất hóa đơn chi tiết (tiền thuê, giảm giá, phí phạt trễ giờ, đền bù) gửi cho khách. | P4.0: Giao nhận & Quyết toán | E1: Khách hàng | System Output | DS_HoaDonQuyetToan | 40/ngày | Ghi nhận hóa đơn chính thức vào D10 và giải phóng xe D1 về 'San_Sang'. |
+| **F4.14** | Đánh giá chuyến đi | Khách hàng gửi số sao đánh giá (1-5) và bình luận sau khi kết thúc hành trình. | E1: Khách hàng | P4.0: Giao nhận & Quyết toán | User Input | DS_DanhGiaChuyenDi | 30/ngày | Ghi nhận đánh giá vào D8. Giới hạn 1 đánh giá/Booking. |
+| **F4.17** | Yêu cầu giao dịch quyết toán trực tuyến | Hệ thống yêu cầu cổng thanh toán thu thêm phụ phí hoặc hoàn trả cọc thừa. | P4.0: Giao nhận & Quyết toán | E4: Cổng thanh toán | System Output | DS_YeuCauGiaoDich | 40/ngày | Trừ tiền phạt/đền bù hoặc hoàn trả tiền cọc thừa tự động qua API. |
+| **F4.18** | Kết quả giao dịch quyết toán | Phản hồi từ cổng thanh toán về trạng thái giao dịch quyết toán tài chính. | E4: Cổng thanh toán | P4.0: Giao nhận & Quyết toán | User Input | DS_KetQuaGiaoDich | 40/ngày | Cập nhật hóa đơn D10 sang hoàn tất. Nếu lỗi thanh toán, chuyển đơn sang 'CHO_HOAN_TIEN_THU_CONG'. |
+| **F4.19** | Hoàn thành bảo dưỡng | Nhân viên/Admin cập nhật trạng thái đã sửa chữa/bảo dưỡng xong cho xe máy bận. | E2: Nhân viên / E3: Admin | P4.0: Giao nhận & Quyết toán | User Input | DS_HoanThanhBaoDuong | 5/ngày | Cập nhật D7 (DaHoanThanh = TRUE) và đưa TrangThaiXe D1 về 'San_Sang'. |
+| **F5.1** | Yêu cầu tra cứu lịch sử | Truy vấn lịch sử di chuyển và thông tin thuê xe của khách hoặc biển số xe cụ thể. | E2: Nhân viên / E3: Admin | P5.0: Tra cứu lịch sử & Blacklist | User Input | DS_TraCuuLichSu | 20/ngày | Lọc dữ liệu từ D4 (Lịch sử thuê) và D3. |
+| **F5.4** | Kết quả tra cứu | Trả về danh sách chi tiết các chuyến đi, hóa đơn và thông tin GPLX của khách hàng. | P5.0: Tra cứu lịch sử & Blacklist | E2: Nhân viên / E3: Admin | System Output | DS_KetQuaTraCuu | 20/ngày | Hiển thị chi tiết thông tin và cờ cảnh báo vi phạm. |
+| **F5.5** | Ghi chú vi phạm nội bộ | Nhân viên lập ghi chú vi phạm luật giao thông hoặc đền bù chậm của khách. | E2: Nhân viên | P5.0: Tra cứu lịch sử & Blacklist | User Input | DS_GhiChuViPham | 2/ngày | Ghi nhận vào D4, cập nhật DanhDauViPham = TRUE. |
+| **F5.7** | Yêu cầu Blacklist | Admin thực hiện đưa tài khoản vi phạm nghiêm trọng vào danh sách đen để khóa quyền thuê. | E3: Admin | P5.0: Tra cứu lịch sử & Blacklist | User Input | DS_YeuCauBlacklist | 1/tuần | Cập nhật TrangThaiBlacklist = TRUE trong D3. |
+| **F6.1** | Yêu cầu cập nhật thông tin xe máy | Admin thực hiện thêm xe mới, sửa thông tin xe hoặc xóa xe khỏi hệ thống. | E3: Admin | P6.0: Quản trị cấu hình & Tài khoản | User Input | DS_QuanLyXe | 5/tuần | Xe chỉ được xóa khi không trong hợp đồng thuê hoạt động. |
+| **F6.4** | Kết quả cập nhật xe | Phản hồi cập nhật thông tin danh mục xe máy thành công hoặc báo lỗi trùng biển số. | P6.0: Quản trị cấu hình & Tài khoản | E3: Admin | System Output | DS_KetQuaCapNhat | 5/tuần | Cập nhật kho dữ liệu D1. |
+| **F6.5** | Yêu cầu cập nhật cấu hình hệ thống | Admin thiết lập các tham số vận hành (phí trễ giờ, giá đền bù linh kiện, tỉ lệ cọc). | E3: Admin | P6.0: Quản trị cấu hình & Tài khoản | User Input | DS_CapNhatCauHinh | 1/tuần | Cấu hình lưu trữ tại D5. Tỉ lệ đặt cọc phải từ 10% - 50%. |
+| **F6.8** | Kết quả cập nhật cấu hình | Phản hồi cập nhật tham số cấu hình thành công hoặc báo lỗi tham số vượt giới hạn. | P6.0: Quản trị cấu hình & Tài khoản | E3: Admin | System Output | DS_KetQuaCapNhat | 1/tuần | Cập nhật bản ghi cấu hình trong D5. |
+| **F6.9** | Yêu cầu quản lý nhân viên | Admin thêm nhân viên mới, cập nhật phân quyền hoặc khóa tài khoản nhân viên. | E3: Admin | P6.0: Quản trị cấu hình & Tài khoản | User Input | DS_QuanLyNhanVien | 2/tháng | Nhân viên mới thêm phải có Email/SĐT độc nhất. |
+| **F6.12** | Kết quả quản lý nhân viên | Phản hồi kết quả thêm/sửa/khóa nhân sự thành công hoặc báo lỗi trùng thông tin. | P6.0: Quản trị cấu hình & Tài khoản | E3: Admin | System Output | DS_KetQuaCapNhat | 2/tháng | Cập nhật thông tin vào D6. |
+| **F6.13** | Truy xuất Báo cáo Lợi nhuận | Admin xuất báo cáo tổng doanh thu trừ đi chi phí bảo dưỡng xe để tính lợi nhuận ròng. | E3: Admin | P6.0: Quản trị cấu hình & Tài khoản | User Input | DS_TruyXuatBaoCao | 5/tháng | Query dữ liệu từ D2 (Booking), D10 (Hóa đơn) và D7 (Bảo dưỡng). |
 
 ## 4. DANH MỤC CÁC PHẦN TỬ DỮ LIỆU (DATA ELEMENT DICTIONARY)
 
@@ -279,3 +320,155 @@
 | **D7** Bao_Duong | Quản lý Bảo dưỡng | F6.13 | ✅ Hợp lệ |
 | **D8** Danh_Gia | Khách hàng đánh giá | API tính trung bình sao | ✅ Hợp lệ |
 | **D9** Các DM_... | Quản trị viên cập nhật | Các form thao tác Select | ✅ Hợp lệ |
+
+## 6. ĐẶC TẢ CẤU TRÚC DỮ LIỆU CỦA CÁC LUỒNG (DATA STRUCTURES SPECIFICATIONS)
+
+Dưới đây là định nghĩa chi tiết cho các cấu trúc dữ liệu (Data Structures) mô tả thành phần phần tử, kiểu dữ liệu và các ràng buộc logic đi kèm cho từng luồng thông tin:
+
+### 6.1. Nhóm Xác thực & Tài khoản
+
+#### `DS_DangKyTK`
+*   `HoTen`: NVARCHAR(100) — Họ tên đầy đủ khách hàng (Bắt buộc).
+*   `Email`: VARCHAR(100) — Địa chỉ email (Bắt buộc, duy nhất).
+*   `SoDienThoai`: VARCHAR(15) — Số điện thoại liên hệ (Bắt buộc, duy nhất, độ dài 9-11 chữ số).
+*   `CCCD`: VARCHAR(12) — Số căn cước công dân (Bắt buộc, 12 chữ số).
+*   `MatKhau`: VARCHAR(255) — Mật khẩu đăng nhập (Bắt buộc, tối thiểu 8 ký tự).
+*   `CoGPLX`: BOOLEAN — Có bằng lái xe hay không (Mặc định: FALSE).
+*   `HangGPLX`: VARCHAR(20) — Hạng giấy phép lái xe (Nếu CoGPLX = TRUE; ENUM: A1, A2).
+*   `SoGPLX`: VARCHAR(12) — Số GPLX (Nếu CoGPLX = TRUE; duy nhất, 12 chữ số).
+*   `NgayCapGPLX`: DATE — Ngày cấp GPLX (Nếu CoGPLX = TRUE).
+*   `NgayHetHanGPLX`: DATE — Ngày hết hạn GPLX (Nếu CoGPLX = TRUE).
+*   `AnhGPLXMatTruoc`: TEXT — URL ảnh chụp mặt trước bằng lái.
+*   `AnhGPLXMatSau`: TEXT — URL ảnh chụp mặt sau bằng lái.
+
+#### `DS_ThongTinDangNhap`
+*   `Email_Or_SoDienThoai`: VARCHAR(100) — Email hoặc Số điện thoại đăng nhập (Bắt buộc).
+*   `MatKhau`: VARCHAR(255) — Mật khẩu đăng nhập dạng thô (Bắt buộc).
+
+#### `DS_KetQuaDangNhap`
+*   `ThanhCong`: BOOLEAN — Kết quả xác thực (TRUE / FALSE).
+*   `AccessToken`: VARCHAR(512) — JWT Token truy cập hệ thống (Nếu ThanhCong = TRUE).
+*   `Role`: VARCHAR(20) — Vai trò người dùng (Customer, Staff, Admin).
+*   `ThongBaoLoi`: NVARCHAR(250) — Chi tiết thông báo lỗi (Nếu ThanhCong = FALSE).
+
+---
+
+### 6.2. Nhóm Đặt xe & Gia hạn
+
+#### `DS_TimKiemXe`
+*   `LoaiXe`: VARCHAR(20) — Loại xe (Tùy chọn; ENUM: Xe_So, Xe_Ga, Xe_Con_Tay, Xe_PKL, Xe_Dien).
+*   `HangXe`: VARCHAR(30) — Hãng sản xuất (Tùy chọn; VD: Honda, Yamaha).
+*   `KhoangGia_Min`: DECIMAL(12,0) — Giá thuê thấp nhất mong muốn (Mặc định: 0đ).
+*   `KhoangGia_Max`: DECIMAL(12,0) — Giá thuê cao nhất mong muốn.
+*   `ThoiGianNhan`: DATETIME — Thời điểm muốn nhận xe (Bắt buộc, > thời điểm hiện tại).
+*   `ThoiGianTra`: DATETIME — Thời điểm muốn trả xe (Bắt buộc, > ThoiGianNhan).
+
+#### `DS_KetQuaTimKiemXe`
+*   Danh sách các đối tượng xe máy khả dụng dạng mảng: `Array<D1_Xe_May>`
+*   Mỗi đối tượng bao gồm: `MaXe`, `TenXe`, `BienSo` (ẩn 3 số cuối), `HangXe`, `MaLoaiXe`, `PhanKhoi`, `DonGiaNgay`, `HinhAnhXe[]`.
+
+#### `DS_YeuCauDatXe`
+*   `MaKhachHang`: VARCHAR(10) — Mã khách hàng thực hiện đặt xe (Bắt buộc).
+*   `MaXe`: VARCHAR(10) — Mã phương tiện lựa chọn (Bắt buộc).
+*   `ThoiGianNhan`: DATETIME — Thời điểm nhận xe (Bắt buộc).
+*   `ThoiGianTra`: DATETIME — Thời điểm trả xe (Bắt buộc).
+*   `CoThueMuBaoHiem`: BOOLEAN — Có thuê thêm mũ bảo hiểm chất lượng cao không.
+*   `CoThueAoMua`: BOOLEAN — Có thuê thêm áo mưa không.
+
+#### `DS_XacNhanDatXe`
+*   `MaBooking`: VARCHAR(15) — Mã đơn hàng do hệ thống tự sinh (BK-YYYYMMDDNNN).
+*   `TrangThaiBooking`: VARCHAR(20) — Trạng thái đơn hàng (Mặc định: Cho_Thanh_Toan_Coc).
+*   `DonGiaApDung`: DECIMAL(12,0) — Đơn giá thực tế áp dụng sau khi tính Dynamic Pricing.
+*   `TongTienThue`: DECIMAL(15,0) — Tổng tiền thuê gốc = DonGiaApDung × Số ngày thuê.
+*   `TienCoc`: DECIMAL(15,0) — Tiền cọc giữ xe tối thiểu cần thanh toán (thường = 30% TongTienThue).
+*   `HanThanhToan`: DATETIME — Thời điểm hết hạn giữ xe chờ thanh toán cọc (15 phút từ lúc tạo đơn).
+
+#### `DS_YeuCauGiaHan`
+*   `MaBooking`: VARCHAR(15) — Mã đơn đặt xe cần gia hạn (Bắt buộc).
+*   `SoNgayGiaHanThem`: INT — Số ngày muốn thuê thêm (Bắt buộc, CHECK > 0).
+*   `ThoiGianTraMoi`: DATETIME — Thời điểm trả xe mới mong muốn.
+
+---
+
+### 6.3. Nhóm Giao dịch & Tài chính
+
+#### `DS_ThanhToanOnline`
+*   `MaBooking`: VARCHAR(15) — Mã đơn đặt xe thanh toán (Bắt buộc).
+*   `SoTien`: DECIMAL(15,0) — Số tiền thực tế giao dịch (Bắt buộc, CHECK > 0).
+*   `PhuongThucCoc`: VARCHAR(20) — Ví điện tử hoặc ngân hàng (ENUM: Chuyen_Khoan, Vi_Dien_Tu).
+*   `LoaiGiaoDich`: VARCHAR(20) — Mục đích giao dịch (ENUM: Dat_Coc, Gia_Han, Quyet_Toan).
+
+#### `DS_KetQuaGiaoDich`
+*   `MaBooking`: VARCHAR(15) — Mã đơn đặt xe tương ứng.
+*   `SoTien`: DECIMAL(15,0) — Số tiền đã giao dịch.
+*   `TrangThaiGD`: VARCHAR(20) — Kết quả giao dịch từ Gateway (ENUM: SUCCESS, FAILED).
+*   `MaGiaoDichCong`: VARCHAR(100) — Mã giao dịch đối soát do cổng thanh toán trả về.
+*   `ThoiGianThanhToan`: DATETIME — Thời điểm giao dịch thành công.
+
+#### `DS_HoaDonQuyetToan`
+*   `MaHoaDon`: VARCHAR(15) — Mã hóa đơn quyết toán (HD-YYYYMMDDNNN).
+*   `MaBooking`: VARCHAR(15) — Mã đơn đặt xe.
+*   `DonGiaApDung`: DECIMAL(12,0) — Đơn giá áp dụng.
+*   `TongTienThue`: DECIMAL(15,0) — Tiền thuê gốc.
+*   `TienGiamGia`: DECIMAL(15,0) — Tiền ưu đãi dài ngày.
+*   `TienTangGia`: DECIMAL(15,0) — Phụ trội ngày Lễ/Tết.
+*   `TongTienGiaHan`: DECIMAL(15,0) — Tiền các lần gia hạn được duyệt.
+*   `PhiPhatTreHan`: DECIMAL(15,0) — Phí phạt trả trễ quá giờ ân hạn.
+*   `PhiDenBuHuHai`: DECIMAL(15,0) — Phí đền bù hư hỏng xe.
+*   `PhiMatPhuKien`: DECIMAL(15,0) — Phí đền bù mất mũ bảo hiểm/áo mưa.
+*   `TienCoc`: DECIMAL(15,0) — Khoản cọc ban đầu đã đóng (để cấn trừ).
+*   `TongThanhToan`: DECIMAL(15,0) — Số tiền cuối cùng khách phải đóng thêm (nếu > 0) hoặc hoàn trả lại (nếu < 0).
+
+---
+
+### 6.4. Nhóm Vận hành Check-in & Check-out
+
+#### `DS_BienBanCheckIn`
+*   `MaBooking`: VARCHAR(15) — Mã đơn đặt xe (Bắt buộc).
+*   `ODONhan`: INT — Chỉ số km hiện tại lúc giao xe (Bắt buộc, CHECK >= 0).
+*   `MucXangNhan`: VARCHAR(20) — Mức xăng giao (Bắt buộc; ENUM: Day, 3_Phan_4, 1_Phan_2, 1_Phan_4, Gan_Het).
+*   `AnhNgoaiQuanNhan`: TEXT — URL hoặc danh sách ảnh chụp hiện trạng xe lúc nhận.
+*   `SoMuBaoHiemGiao`: INT — Số mũ bảo hiểm thực tế giao (CHECK từ 0 đến 2).
+*   `CoAoMuaGiao`: BOOLEAN — Có bàn giao áo mưa kèm theo không.
+*   `MaNhanVienGiao`: VARCHAR(10) — Mã nhân viên thực hiện Check-in.
+
+#### `DS_BienBanCheckOut`
+*   `MaBooking`: VARCHAR(15) — Mã đơn đặt xe (Bắt buộc).
+*   `ODOTra`: INT — Chỉ số km hiện tại lúc nhận lại xe (Bắt buộc, CHECK >= ODONhan).
+*   `MucXangTra`: VARCHAR(20) — Mức xăng thu hồi (Bắt buộc; ENUM: Day, 3_Phan_4, 1_Phan_2, 1_Phan_4, Gan_Het).
+*   `AnhNgoaiQuanTra`: TEXT — URL hoặc danh sách ảnh chụp hiện trạng xe lúc trả.
+*   `SoMuBaoHiemTra`: INT — Số mũ bảo hiểm nhận lại.
+*   `CoAoMuaTra`: BOOLEAN — Có nhận lại áo mưa không.
+*   `PhiDenBuHuHai`: DECIMAL(15,0) — Phí đền bù hư hại (Do nhân viên nhập tay dựa trên bảng giá cấu hình).
+*   `PhiMatPhuKien`: DECIMAL(15,0) — Phí mất phụ kiện (Tự động tính nếu số lượng trả < số lượng nhận).
+*   `MaNhanVienNhan`: VARCHAR(10) — Mã nhân viên thực hiện Check-out.
+
+---
+
+### 6.5. Nhóm Quản trị Admin
+
+#### `DS_QuanLyXe`
+*   `HanhDong`: VARCHAR(20) — Loại cập nhật (ENUM: CREATE, UPDATE, DELETE).
+*   `MaXe`: VARCHAR(10) — Mã xe máy.
+*   `BienSo`: VARCHAR(12) — Biển số xe.
+*   `TenXe`: VARCHAR(50) — Tên xe.
+*   `MaLoaiXe`: VARCHAR(20) — Loại xe.
+*   `PhanKhoi`: INT — Dung tích xi-lanh.
+*   `DonGiaNgay`: DECIMAL(12,0) — Đơn giá thuê/ngày.
+*   `DoiXe`: INT — Năm sản xuất.
+
+#### `DS_CapNhatCauHinh`
+*   `SoLanGiaHanToiDa`: INT — Giới hạn lần gia hạn qua App (CHECK >= 0).
+*   `DonGiaPhatXeThuong_Gio`: DECIMAL(12,0) — Phí phạt/giờ xe số & xe ga.
+*   `DonGiaPhatXePKL_Gio`: DECIMAL(12,0) — Phí phạt/giờ xe côn & PKL.
+*   `PhatMatMuBaoHiem`: DECIMAL(12,0) — Tiền phạt mất mũ bảo hiểm.
+*   `PhatMatAoMua`: DECIMAL(12,0) — Tiền phạt mất áo mưa.
+*   `PhanTramTangGiaLe`: DECIMAL(4,1) — Tỉ lệ tăng giá ngày lễ.
+
+#### `DS_QuanLyNhanVien`
+*   `HanhDong`: VARCHAR(20) — Lệnh (ENUM: CREATE, UPDATE, LOCK).
+*   `MaNhanVien`: VARCHAR(10) — Mã nhân sự.
+*   `HoTen`: NVARCHAR(100) — Họ tên nhân sự.
+*   `Email`: VARCHAR(100) — Email liên hệ.
+*   `SoDienThoai`: VARCHAR(15) — Số điện thoại.
+*   `VaiTro`: VARCHAR(20) — Vai trò cấp tài khoản (ENUM: Nhan_Vien, Admin).
