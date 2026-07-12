@@ -125,7 +125,6 @@ classDiagram
         - brand: String
         - modelName: String
         - motorbikeType: MotorbikeType
-        - engineDisplacement: Int
         - motorbikeImage: String
         - modelYear: Int
         - fuelConsumption: Decimal
