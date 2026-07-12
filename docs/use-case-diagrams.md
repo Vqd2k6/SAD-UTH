@@ -53,10 +53,6 @@ graph LR
         UC_ReviewCustomer("Xem hồ sơ khách hàng")
         UC_SysAdmin("Quản trị hệ thống<br/>(Xe máy, Nhân viên, Cấu hình, Blacklist)")
         UC_Report("Xem báo cáo thống kê")
-        
-        %% Auto Core
-        UC_Remind("Gửi thông báo nhắc nhở")
-        UC_CancelAuto("Hủy đơn & Đánh dấu Không đến nhận")
     end
 
     %% Relationships - Customer
@@ -112,9 +108,6 @@ graph TB
         UC_Extend("Yêu cầu Gia hạn")
         UC_Early("Yêu cầu Trả xe sớm")
         UC_Rate("Đánh giá chuyến đi")
-        
-        UC_Remind("Gửi thông báo nhắc nhở")
-        UC_CancelAuto("Hủy đơn quá hạn thanh toán")
     end
 
     %% Relationships
