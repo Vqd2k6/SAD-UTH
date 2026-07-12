@@ -84,15 +84,14 @@ graph LR
     B -->|"Không tải / Không có GPLX"| C["TrangThaiGPLX = Khong_Dang_Ky\nNhomXeDuocThue = Nhom_50cc_Dien"]
     B -->|"Có tải ảnh GPLX lên"| D["TrangThaiGPLX = DA_UPLOAD\nChờ NV/Admin duyệt"]
     D --> E{"Kết quả duyệt"}
-    E -->|APPROVE (A2)| F["TrangThaiGPLX = DA_XAC_MINH\nNhomXeDuocThue = Nhom_A2_PKL"]
-    E -->|APPROVE (A1)| G["TrangThaiGPLX = DA_XAC_MINH\nNhomXeDuocThue = Nhom_A1"]
-    E -->|REJECT| H["TrangThaiGPLX = TU_CHOI\nNhomXeDuocThue = Nhom_50cc_Dien"]
+    E -->|"APPROVE (A2)"| F["TrangThaiGPLX = DA_XAC_MINH\nNhomXeDuocThue = Nhom_A2_PKL"]
+    E -->|"APPROVE (A1)"| G["TrangThaiGPLX = DA_XAC_MINH\nNhomXeDuocThue = Nhom_A1"]
+    E -->|"REJECT"| H["TrangThaiGPLX = TU_CHOI\nNhomXeDuocThue = Nhom_50cc_Dien"]
     C --> I["Ghi vào D3"]
     F --> I
     G --> I
     H --> I
-
-
+```
 
 ---
 
@@ -209,7 +208,7 @@ BEGIN
     ENDIF
 
     // Xử lý Hủy đơn tự động (Khách không đến nhận xe quá 2h)
-    IF RECEIVE F2.27: Tín hiệu Cron Job THEN
+    IF Tới chu kỳ tự động quét hệ thống THEN
         READ D2: Hop_Dong_Booking WHERE TrangThaiBooking = 'CHO_NHAN_XE' AND CurrentTime > (ThoiGianNhan + 2 giờ)
         IF Tìm thấy bản ghi THEN
             UPDATE D2: Hop_Dong_Booking SET TrangThaiBooking = 'Khong_Den_Nhan_Xe'
@@ -247,13 +246,13 @@ END
 #### Cây quyết định xét duyệt đặt xe:
 ```mermaid
 graph TD
-    A["Yêu cầu Đặt xe"] -->|Nằm trong Blacklist| B["Từ chối đặt xe: Lỗi Blacklist"]
-    A -->|Không trong Blacklist| C{"Kiểm tra bằng lái & Nhóm xe"}
+    A["Yêu cầu Đặt xe"] -->|"Nằm trong Blacklist"| B["Từ chối đặt xe: Lỗi Blacklist"]
+    A -->|"Không trong Blacklist"| C{"Kiểm tra bằng lái & Nhóm xe"}
     C -->|"Dòng PKL & Khách chỉ có bằng A1 hoặc không có bằng"| D["Từ chối đặt xe: Thiếu GPLX A2"]
     C -->|"Dòng A1 & Khách không có bằng lái"| E["Từ chối đặt xe: Thiếu GPLX A1"]
-    C -->|Khớp bằng lái hợp lệ| F{"Kiểm tra lịch xe máy D2"}
-    F -->|Đã bị đặt trùng lịch| G["Từ chối đặt xe: Xe bận"]
-    F -->|Lịch trống khả dụng| H["Chấp thuận đặt xe: Khóa xe 15 phút"]
+    C -->|"Khớp bằng lái hợp lệ"| F{"Kiểm tra lịch xe máy D2"}
+    F -->|"Đã bị đặt trùng lịch"| G["Từ chối đặt xe: Xe bận"]
+    F -->|"Lịch trống khả dụng"| H["Chấp thuận đặt xe: Khóa xe 15 phút"]
 ```
 
 #### Cây quyết định chính sách hoàn cọc khi hủy đơn:
@@ -390,10 +389,10 @@ graph TD
     A -->|"Thời điểm hợp lệ: từ 2 tiếng trở lên"| C{"Kiểm tra số lần gia hạn"}
     C -->|"Đã gia hạn từ 3 lần trở lên"| D["Từ chối gia hạn: Đạt giới hạn tối đa"]
     C -->|"Gia hạn dưới 3 lần"| E{"Kiểm tra lịch trùng trong D2"}
-    E -->|Trùng lịch đặt tiếp theo| F["Từ chối gia hạn: Xe đã có người đặt"]
-    E -->|Không trùng lịch| G{"Thanh toán phí gia hạn"}
-    G -->|Giao dịch thất bại| H["Từ chối gia hạn: Thanh toán lỗi"]
-    G -->|Giao dịch thành công| I["Phê duyệt gia hạn: Cập nhật thời gian trả mới và tăng số lần gia hạn"]
+    E -->|"Trùng lịch đặt tiếp theo"| F["Từ chối gia hạn: Xe đã có người đặt"]
+    E -->|"Không trùng lịch"| G{"Thanh toán phí gia hạn"}
+    G -->|"Giao dịch thất bại"| H["Từ chối gia hạn: Thanh toán lỗi"]
+    G -->|"Giao dịch thành công"| I["Phê duyệt gia hạn: Cập nhật thời gian trả mới và tăng số lần gia hạn"]
 ```
 
 #### Cây quyết định báo trả xe sớm:
@@ -556,8 +555,8 @@ END
 graph TD
     A["Quyết toán Trễ giờ"] -->|"Trễ dưới hoặc bằng 2 tiếng"| B["PhiPhatTreHan = 0 VNĐ (Ân hạn)"]
     A -->|"Trễ từ trên 2 tiếng đến dưới 6 tiếng"| C{"Phân loại dòng xe"}
-    C -->|Xe số hoặc Xe ga| D["Phạt theo BieuPhiPhatGioThuong, Tối đa = 50% đơn giá ngày"]
-    C -->|Xe côn tay hoặc PKL| E["Phạt theo BieuPhiPhatGioPKL, Tối đa = 50% đơn giá ngày"]
+    C -->|"Xe số hoặc Xe ga"| D["Phạt theo BieuPhiPhatGioThuong, Tối đa = 50% đơn giá ngày"]
+    C -->|"Xe côn tay hoặc PKL"| E["Phạt theo BieuPhiPhatGioPKL, Tối đa = 50% đơn giá ngày"]
     A -->|"Trễ từ trên 6 tiếng đến dưới 12 tiếng"| F["Phạt mặc định = 50% đơn giá ngày"]
     A -->|"Trễ trên 12 tiếng"| G["Tính tròn thành 1 ngày thuê mới (100% đơn giá ngày)"]
 ```
@@ -744,14 +743,14 @@ END
 ```mermaid
 graph TD
     A["Tiếp nhận lệnh Quản trị Admin"] -->|"Lệnh Quản lý xe máy"| B{"Kiểm tra Trạng thái xe"}
-    B -->|Xe đang có hợp đồng thuê hoạt động| C["Từ chối xóa phương tiện"]
+    B -->|"Xe đang có hợp đồng thuê hoạt động"| C["Từ chối xóa phương tiện"]
     B -->|"Xe rảnh hoặc Biển số hợp lệ"| D["Cập nhật danh mục D1 thành công"]
     
     A -->|"Lệnh thiết lập Cấu hình hệ thống"| E{"Kiểm tra tham số cấu hình"}
     E -->|"Tỉ lệ cọc ngoài khoảng 10% đến 50% hoặc Gia hạn trên 5 lần"| F["Từ chối cập nhật: Sai tham số ràng buộc"]
-    E -->|Tham số hợp lệ| G["Ghi đè cấu hình mới vào D5"]
+    E -->|"Tham số hợp lệ"| G["Ghi đè cấu hình mới vào D5"]
     
     A -->|"Lệnh Quản lý nhân viên"| H{"Kiểm tra email trùng trong D6"}
-    H -->|Đã tồn tại Email trùng lắp| I["Từ chối thêm nhân sự mới"]
-    H -->|Email hợp lệ độc nhất| J["Lưu/Cập nhật nhân viên vào D6"]
+    H -->|"Đã tồn tại Email trùng lắp"| I["Từ chối thêm nhân sự mới"]
+    H -->|"Email hợp lệ độc nhất"| J["Lưu/Cập nhật nhân viên vào D6"]
 ```
