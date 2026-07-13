@@ -23,49 +23,62 @@ graph TB
         S5["Tính tiền thuê tạm tính & tiền cọc theo D5"]
         S6["Tạo đơn đặt xe tạm thời<br/>CHO_THANH_TOAN"]
         S7["Khóa xe tạm: TrangThaiXe = KHOA_TAM_15M<br/>Lưu vào D1"]
+        
+        %% Fork Bar
+        Fork1["=================== FORK ==================="]
+        
         S8["Gọi API Cổng Thanh Toán"]
-        S9{"Nhận kết quả<br/>từ Cổng TT?"}
-        S10["Hủy đơn tạm<br/>TrangThaiXe = SAN_SANG<br/>Ghi lại D1 & D2"]
-        S11["Lưu chính thức đơn đặt xe<br/>TrangThaiBooking = CHO_NHAN_XE<br/>Ghi vào D2"]
-        S12["TrangThaiXe = DANG_THUE<br/>Ghi vào D1"]
-        S13["Gửi thông báo điều phối<br/>công việc cho Nhân viên"]
         C1["Bộ đếm ngược 15 phút (tiến trình ngầm)"]
-        C2{"Hết 15 phút<br/>mà chưa có<br/>phản hồi TT?"}
-        C3["Bắn tín hiệu: HET_THOI_GIAN"]
+        
+        %% Join Bar
+        Join1["=================== JOIN ==================="]
+        
+        S9{"Kết quả nhận được?"}
+        S10["Hủy đơn tạm, giải phóng xe:<br/>TrangThaiXe = SAN_SANG<br/>Ghi lại D1 & D2"]
+        S11["Lưu chính thức đơn đặt xe:<br/>TrangThaiBooking = CHO_NHAN_XE<br/>Ghi vào D2"]
+        S12["Gửi thông báo điều phối<br/>công việc cho Nhân viên"]
     end
 
     subgraph E4 [Cổng Thanh Toán - E4]
         P1["Xử lý giao dịch cọc"]
-        P2{"Giao dịch<br/>thành công?"}
-        P3["Bắn tín hiệu: THANH_CONG"]
-        P4["Bắn tín hiệu: THAT_BAI"]
+        P2{"Giao dịch thành công?"}
     end
 
     %% Flow
-    Start --> A1 --> S1
-    S1 --> S2
+    Start --> A1 --> S1 --> S2
     S2 -- Không --> A2 --> End1([Kết thúc])
     S2 -- Có --> S3 --> S4
     S4 -- Có --> A3 --> End2([Kết thúc])
     S4 -- Không --> S5 --> S6 --> S7
-    S7 --> S8
+    
+    %% Forking
+    S7 --> Fork1
+    Fork1 --> S8
+    Fork1 --> C1
+    
+    %% Branch 1: Payment Flow
     S8 --> P1 --> P2
-    S7 --> C1 --> C2
-    C2 -- Chưa hết giờ --> P2
-    C2 -- Hết giờ --> C3
-
-    P2 -- Thành công --> P3 --> S9
-    P2 -- Thất bại --> P4 --> S9
-    C3 --> S9
-
-    S9 -- Thành công --> S11
-    S9 -- Thất bại / Hết giờ --> S10
-
+    P2 -- Có/Thành công --> Join1
+    P2 -- Không/Thất bại --> Join1
+    
+    %% Branch 2: Timeout Flow
+    C1 --> C2{"Hết 15 phút?"}
+    C2 -- Có --> Join1
+    C2 -- Chưa --> C1
+    
+    %% Joining
+    Join1 --> S9
+    
+    S9 -- "Thành công (Thanh toán cọc xong)" --> S11
+    S9 -- "Thất bại (Hủy giao dịch / Quá hạn 15m)" --> S10
+    
     S10 --> A6 --> End3([Kết thúc])
-
     A4 --> P1
+    S11 --> S12 --> A5 --> End4([Kết thúc])
 
-    S11 --> S12 --> S13 --> A5 --> End4([Kết thúc])
+    %% Styling Fork/Join Bars
+    style Fork1 fill:#000,stroke:#000,stroke-width:3px,color:#fff;
+    style Join1 fill:#000,stroke:#000,stroke-width:3px,color:#fff;
 ```
 
 ---
@@ -138,23 +151,52 @@ graph TB
     Start1(["Bắt đầu Check-in"])
 
     subgraph E2_CI [Nhân viên - E2]
-        NV1["Chọn đơn Booking cần bàn giao<br/>từ danh sách công việc"]
-        NV2["Kiểm tra ODO, mức xăng,<br/>phụ kiện, ngoại quan xe"]
-        NV3["Điền & gửi Biên bản Check-in<br/>vào hệ thống"]
+        NV1["Chọn đơn Booking cần bàn giao từ danh sách"]
+        
+        %% Fork Bar for Check-in inspections
+        ForkCI["=================== FORK ==================="]
+        
+        NV2_1["Đối chiếu GPLX thực tế của khách"]
+        NV2_2["Kiểm tra ODO & mức xăng bàn giao"]
+        NV2_3["Kiểm tra ngoại quan xe & chụp ảnh"]
+        NV2_4["Kiểm tra & bàn giao phụ kiện: Mũ bảo hiểm, áo mưa"]
+        
+        %% Join Bar for Check-in
+        JoinCI["=================== JOIN ==================="]
+        
+        NV3["Điền & gửi Biên bản Check-in vào hệ thống"]
     end
 
     subgraph SYS_CI [Hệ thống SmartRental]
-        S1["Đọc thông tin tài khoản<br/>Nhân viên từ D6"]
-        S2{"TrangThaiTaiKhoan<br/>= HOA_DONG?"}
-        S3["Từ chối thao tác:<br/>Hiển thị lỗi tài khoản bị khóa"]
-        S4["Xác nhận dữ liệu<br/>Biên bản Check-in hợp lệ"]
-        S5["Cập nhật D2:<br/>TrangThaiBooking = DANG_THUE<br/>Ghi nhận ODONhan, MucXangNhan<br/>So luong phu kien da giao"]
+        S1["Đọc thông tin tài khoản Nhân viên từ D6"]
+        S2{"TrangThaiTaiKhoan = HOA_DONG?"}
+        S3["Từ chối thao tác: Báo lỗi tài khoản bị khóa"]
+        S4["Xác nhận dữ liệu Biên bản Check-in hợp lệ"]
+        S5["Cập nhật D2:<br/>TrangThaiBooking = DANG_THUE<br/>Ghi nhận ODONhan, MucXangNhan<br/>Số lượng phụ kiện đã giao"]
     end
 
     %% Flow
     Start1 --> NV1 --> S1 --> S2
-    S2 -- Không / Bị Khóa --> S3 --> End_CI_Reject([Kết thúc - Từ chối])
-    S2 -- Hoạt động --> NV2 --> NV3 --> S4 --> S5 --> End_CI_OK([Kết thúc - Thành công])
+    S2 -- Không/Bị Khóa --> S3 --> End_CI_Reject([Kết thúc - Từ chối])
+    S2 -- Hoạt động --> ForkCI
+    
+    %% Forking inspections
+    ForkCI --> NV2_1
+    ForkCI --> NV2_2
+    ForkCI --> NV2_3
+    ForkCI --> NV2_4
+    
+    %% Joining inspections
+    NV2_1 --> JoinCI
+    NV2_2 --> JoinCI
+    NV2_3 --> JoinCI
+    NV2_4 --> JoinCI
+    
+    JoinCI --> NV3 --> S4 --> S5 --> End_CI_OK([Kết thúc - Bàn giao xong])
+
+    %% Styling Fork/Join Bars
+    style ForkCI fill:#000,stroke:#000,stroke-width:3px,color:#fff;
+    style JoinCI fill:#000,stroke:#000,stroke-width:3px,color:#fff;
 ```
 
 ### 3.2. Phân đoạn Nhận lại xe & Quyết toán (Check-out)
@@ -165,7 +207,17 @@ graph TB
 
     subgraph E2_CO [Nhân viên - E2]
         NV1["Chọn đơn Booking cần nhận lại xe"]
-        NV2["Kiểm tra xe: ODO trả, mức xăng,<br/>phụ kiện, ngoại quan"]
+        
+        %% Fork Bar for Check-out
+        ForkCO["=================== FORK ==================="]
+        
+        NV2_1["Kiểm tra ODO trả & mức xăng trả"]
+        NV2_2["Kiểm tra ngoại quan xe, chụp ảnh phát sinh hư hại mới"]
+        NV2_3["Kiểm tra số lượng phụ kiện thu hồi"]
+        
+        %% Join Bar for Check-out
+        JoinCO["=================== JOIN ==================="]
+        
         NV3{"Phát hiện hư hỏng mới<br/>hoặc mất phụ kiện?"}
         NV4["Thương lượng với khách<br/>Nhập PhiDenBuHuHai & PhiMatPhuKien"]
         NV5["Phí đền bù = 0đ"]
@@ -212,8 +264,20 @@ graph TB
     %% Flow
     Start2 --> NV1 --> S1 --> S2
     S2 -- Không / Bị Khóa --> S3 --> End_CO_Reject([Kết thúc - Từ chối])
-    S2 -- Hoạt động --> S4 --> NV2 --> S5
-    S5 -- Không --> S6 --> NV2
+    S2 -- Hoạt động --> S4 --> ForkCO
+    
+    %% Forking
+    ForkCO --> NV2_1
+    ForkCO --> NV2_2
+    ForkCO --> NV2_3
+    
+    %% Joining
+    NV2_1 --> JoinCO
+    NV2_2 --> JoinCO
+    NV2_3 --> JoinCO
+    
+    JoinCO --> S5
+    S5 -- Không --> S6 --> ForkCO
     S5 -- Có --> NV3
     NV3 -- Có --> NV4 --> S7
     NV3 -- Không --> NV5 --> S7
